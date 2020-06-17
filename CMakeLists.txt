@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-project(tfs)
+project(canary-server)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -47,11 +47,11 @@ endif()
 find_package(Boost 1.53.0 COMPONENTS system filesystem iostreams REQUIRED)
 
 add_subdirectory(src)
-add_executable(tfs ${tfs_SRC})
+add_executable(canary-server ${canary_SRC})
 
 include_directories(${MYSQL_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${PUGIXML_INCLUDE_DIR} ${GMP_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR})
-target_link_libraries(tfs ${MYSQL_CLIENT_LIBS} ${LUA_LIBRARIES} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${PUGIXML_LIBRARIES} ${GMP_LIBRARIES} ${ZLIB_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(canary-server ${MYSQL_CLIENT_LIBS} ${LUA_LIBRARIES} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${PUGIXML_LIBRARIES} ${GMP_LIBRARIES} ${ZLIB_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 
-set_target_properties(tfs PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "src/otpch.h")
-set_target_properties(tfs PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
-cotire(tfs)
+set_target_properties(canary-server PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "src/otpch.h")
+set_target_properties(canary-server PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+cotire(canary-server)
