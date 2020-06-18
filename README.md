@@ -1,6 +1,9 @@
 Canary Server
 ===============
 
+## Builds
+[![Build status](https://ci.appveyor.com/api/projects/status/github/opentibiabr/canary-server?branch=develop&passingText=develop%20-%20OK&svg=true)](https://ci.appveyor.com/project/opentibiabr/canary-server "Download nightly builds for Windows")
+
 The Canary Server is a free and open-source MMORPG server emulator written in C++. It is a fork of the optimized version of [OpenTibia Server](https://github.com/opentibia/server) project, made by [SaiyansKing](https://github.com/SaiyansKing/optimized_forgottenserver). To connect to the server, you can use [OTClient](https://github.com/edubart/otclient), [OpenTibiaUnity](https://github.com/slavidodo/OpenTibia-Unity) or [The Forgotten Client](https://github.com/SaiyansKing/The-Forgotten-Client)(work in progress).
 
 ### [WIP] Getting Started
