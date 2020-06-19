@@ -403,17 +403,6 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	}
 	#endif
 
-	#if GAME_FEATURE_CLIENT_VERSION > 0
-	if (clientVersion != CLIENT_VERSION) {
-	#else
-	if (version != CLIENT_VERSION) {
-	#endif
-		std::ostringstream ss;
-		ss << "Only clients with protocol " << CLIENT_VERSION_UPPER << "." << CLIENT_VERSION_LOWER << " allowed!";
-		disconnectClient(ss.str());
-		return;
-	}
-
 	if (g_game.getGameState() == GAME_STATE_STARTUP) {
 		disconnectClient("Gameworld is starting up. Please wait.");
 		return;
