@@ -288,13 +288,14 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	OperatingSystem_t operatingSystem = static_cast<OperatingSystem_t>(msg.getByte());
 	OperatingSystem_t TFCoperatingSystem = static_cast<OperatingSystem_t>(msg.getByte());
 	version = msg.get<uint16_t>();
-	if (version >= 1111) {
+	// if it's not OTC use SEQUENCE checksum
+	if (operatingSystem < CLIENTOS_OTCLIENT_LINUX) {
 		setChecksumMethod(CHECKSUM_METHOD_SEQUENCE);
 		if (TFCoperatingSystem < CLIENTOS_TFC_ANDROID) {
 			//compression on the forgotten client will be implemented in the next client update
 			enableCompression();
 		}
-	} else if (version >= 830) {
+	} else { // if it's OTC use ADLER32 checksum
 		setChecksumMethod(CHECKSUM_METHOD_ADLER32);
 	}
 
