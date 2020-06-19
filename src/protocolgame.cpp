@@ -2669,10 +2669,8 @@ void ProtocolGame::sendContainer(uint8_t cid, const Container* container, bool h
 	playermsg.addByte(container->capacity());
 
 	playermsg.addByte(hasParent ? 0x01 : 0x00);
-	#if CLIENT_VERSION >= 1220
 	//can use depot search
-	playermsg.addByte(0x00);
-	#endif
+	// playermsg.addByte(0x00);
 
 	#if GAME_FEATURE_CONTAINER_PAGINATION > 0
 	playermsg.addByte(container->isUnlocked() ? 0x01 : 0x00); // Drag and drop
@@ -4758,9 +4756,9 @@ void ProtocolGame::AddItem(uint16_t id, uint8_t count)
 	}
 
 	#if GAME_FEATURE_QUICK_LOOT > 0
-	if (it.isContainer()) {
-		playermsg.addByte(0);
-	}
+	// if (it.isContainer()) {
+	// 	playermsg.addByte(0);
+	// }
 	#endif
 
 	#if GAME_FEATURE_ITEM_ANIMATION_PHASES > 0
