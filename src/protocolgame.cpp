@@ -3502,24 +3502,24 @@ void ProtocolGame::sendPingBack()
 
 void ProtocolGame::sendDistanceShoot(const Position& from, const Position& to, uint8_t type)
 {
-	#if CLIENT_VERSION >= 1203
-	playermsg.reset();
-	playermsg.addByte(0x83);
-	playermsg.addPosition(from);
-	playermsg.addByte(MAGIC_EFFECTS_CREATE_DISTANCEEFFECT);
-	playermsg.addByte(type);
-	playermsg.addByte(static_cast<uint8_t>(static_cast<int8_t>(static_cast<int16_t>(to.x - from.x))));
-	playermsg.addByte(static_cast<uint8_t>(static_cast<int8_t>(static_cast<int16_t>(to.y - from.y))));
-	playermsg.addByte(MAGIC_EFFECTS_END_LOOP);
-	writeToOutputBuffer(playermsg);
-	#else
+	// #if CLIENT_VERSION >= 1203
+	// playermsg.reset();
+	// playermsg.addByte(0x83);
+	// playermsg.addPosition(from);
+	// playermsg.addByte(MAGIC_EFFECTS_CREATE_DISTANCEEFFECT);
+	// playermsg.addByte(type);
+	// playermsg.addByte(static_cast<uint8_t>(static_cast<int8_t>(static_cast<int16_t>(to.x - from.x))));
+	// playermsg.addByte(static_cast<uint8_t>(static_cast<int8_t>(static_cast<int16_t>(to.y - from.y))));
+	// playermsg.addByte(MAGIC_EFFECTS_END_LOOP);
+	// writeToOutputBuffer(playermsg);
+	// #else
 	playermsg.reset();
 	playermsg.addByte(0x85);
 	playermsg.addPosition(from);
 	playermsg.addPosition(to);
 	playermsg.addByte(type);
 	writeToOutputBuffer(playermsg);
-	#endif
+	// #endif
 }
 
 void ProtocolGame::sendMagicEffect(const Position& pos, uint8_t type)
@@ -3528,21 +3528,21 @@ void ProtocolGame::sendMagicEffect(const Position& pos, uint8_t type)
 		return;
 	}
 
-	#if CLIENT_VERSION >= 1203
+	// #if CLIENT_VERSION >= 1203
+	// playermsg.reset();
+	// playermsg.addByte(0x83);
+	// playermsg.addPosition(pos);
+	// playermsg.addByte(MAGIC_EFFECTS_CREATE_EFFECT);
+	// playermsg.addByte(type);
+	// playermsg.addByte(MAGIC_EFFECTS_END_LOOP);
+	// writeToOutputBuffer(playermsg);
+	// #else
 	playermsg.reset();
 	playermsg.addByte(0x83);
 	playermsg.addPosition(pos);
-	playermsg.addByte(MAGIC_EFFECTS_CREATE_EFFECT);
-	playermsg.addByte(type);
-	playermsg.addByte(MAGIC_EFFECTS_END_LOOP);
-	writeToOutputBuffer(playermsg);
-	#else
-	playermsg.reset();
-	playermsg.addByte(0x83);
-	playermsg.addPosition(pos);
 	playermsg.addByte(type);
 	writeToOutputBuffer(playermsg);
-	#endif
+	// #endif
 }
 
 void ProtocolGame::sendCreatureHealth(const Creature* creature, uint8_t healthPercent)
