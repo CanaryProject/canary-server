@@ -2811,8 +2811,8 @@
 		<monster name="Nightmare" x="-1" y="-1" z="6" spawntime="60" />
 		<monster name="Destroyer" x="0" y="1" z="6" spawntime="60" />
 	</spawn>
-	<spawn centerx="5013" centery="4833" centerz="6" radius="1">
-		<monster name="Hydra" x="0" y="-1" z="6" spawntime="60" />
+	<spawn centerx="5012" centery="4833" centerz="6" radius="1">
+		<monster name="Hydra" x="-1" y="1" z="6" spawntime="60" />
 	</spawn>
 	<spawn centerx="4958" centery="4834" centerz="6" radius="1">
 		<monster name="Nightmare" x="1" y="0" z="6" spawntime="60" />
@@ -5602,7 +5602,7 @@
 		<monster name="Dragon" x="-1" y="0" z="7" spawntime="60" />
 	</spawn>
 	<spawn centerx="5005" centery="4833" centerz="7" radius="1">
-		<monster name="Hydra" x="-1" y="1" z="7" spawntime="60" />
+		<monster name="Hydra" x="1" y="0" z="7" spawntime="60" />
 	</spawn>
 	<spawn centerx="4851" centery="4834" centerz="7" radius="1">
 		<monster name="Dragon Lord" x="-1" y="-1" z="7" spawntime="60" />
@@ -7430,9 +7430,6 @@
 	<spawn centerx="5087" centery="5164" centerz="7" radius="1">
 		<monster name="Midnight Asura" x="0" y="0" z="7" spawntime="60" />
 	</spawn>
-	<spawn centerx="5183" centery="5164" centerz="7" radius="2">
-		<monster name="Hydra" x="2" y="1" z="7" spawntime="60" />
-	</spawn>
 	<spawn centerx="5787" centery="5164" centerz="7" radius="2">
 		<monster name="Minotaur" x="1" y="0" z="7" spawntime="60" />
 	</spawn>
@@ -7456,9 +7453,6 @@
 	</spawn>
 	<spawn centerx="5798" centery="5168" centerz="7" radius="2">
 		<monster name="Minotaur" x="0" y="2" z="7" spawntime="60" />
-	</spawn>
-	<spawn centerx="5175" centery="5169" centerz="7" radius="2">
-		<monster name="Hydra" x="1" y="1" z="7" spawntime="60" />
 	</spawn>
 	<spawn centerx="5781" centery="5169" centerz="7" radius="2">
 		<monster name="Minotaur" x="1" y="-1" z="7" spawntime="60" />
@@ -8544,7 +8538,6 @@
 	<spawn centerx="5608" centery="5372" centerz="7" radius="1">
 		<monster name="Tarantula" x="0" y="-1" z="7" spawntime="75" />
 	</spawn>
-
 	<spawn centerx="5425" centery="5373" centerz="7" radius="2">
 		<monster name="Tarantula" x="0" y="-1" z="7" spawntime="60" />
 	</spawn>
@@ -12256,7 +12249,6 @@
 		<monster name="Banshee" x="1" y="-1" z="9" spawntime="60" />
 	</spawn>
 	<spawn centerx="4952" centery="4789" centerz="9" radius="1">
-
 		<monster name="Vampire" x="0" y="-1" z="9" spawntime="60" />
 	</spawn>
 	<spawn centerx="4952" centery="4793" centerz="9" radius="1">

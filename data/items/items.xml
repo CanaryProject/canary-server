@@ -161,7 +161,7 @@
 	<item id="169" article="a" name="scarab cheese">
 		<attribute key="description" value="It smells horrible and should not be in the sun for too long."/>
 		<attribute key="weight" value="400"/>
-		<attribute key="decayTo" value="2235"/>
+		<attribute key="decayTo" value="3120"/>
 		<attribute key="duration" value="1800"/>
 	</item>
 	<item id="170" article="a" name="fake dwarven beard">
@@ -176,7 +176,7 @@
 		<attribute key="description" value="It says 'Roses are red, violets are blue, sugar is sweet, there's mud on my shoe.' You blew it."/>
 		<attribute key="maxTextLen" value="1023"/>
 		<attribute key="writeable" value="1"/>
-		<attribute key="weight" value="200"/> 
+		<attribute key="weight" value="200"/>
 	</item>
 	<item id="174" article="a" name="parchment">
 		<attribute key="description" value="It says 'Roses are red, and so is my blood.' Damn, that sounds stupid. You have to start over."/>
@@ -774,11 +774,11 @@
 		<attribute key="floorchange" value="down"/>
 	</item>
 	<item fromid="596" toid="599" article="a" name="strange carving"/>
-	<item fromid="600" toid="601" article="a" name="hole">
+	<item fromid="600" toid="601" article="a" name="ramp">
 		<attribute key="floorchange" value="down"/>
 	</item>
-	<item fromid="602" toid="603" article="a" name="ramp"/>
-	<item fromid="604" toid="605" article="a" name="hole">
+	<item fromid="602" toid="603" article="a" name="rocks"/>
+	<item fromid="604" toid="605" article="a" name="ramp">
 		<attribute key="floorchange" value="down"/>
 	</item>
 	<item id="606" article="a" name="loose stone pile"/>
@@ -1300,7 +1300,7 @@
 		<attribute key="type" value="teleport"/>
 	</item>
 	<item fromid="776" toid="778" article="an" name="archway"/>
-	<!-- DEPRECATED ||| START--> 
+	<!-- DEPRECATED ||| START-->
 	<item id="779" article="an" name="earth spike sword"/>
 	<item id="780" article="an" name="earth relic sword"/>
 	<item id="781" article="an" name="earth mystic blade"/>
@@ -1335,7 +1335,7 @@
 	<item id="808" article="an" name="energy cranial basher"/>
 	<item id="809" article="an" name="energy orcish maul"/>
 	<item id="810" article="an" name="energy war hammer"/>
-	<!-- DEPRECATED ||| END--> 
+	<!-- DEPRECATED ||| END-->
 	<item id="811" article="a" name="terra mantle">
 		<attribute key="weight" value="2250"/>
 		<attribute key="armor" value="11"/>
@@ -1687,7 +1687,7 @@
 		<attribute key="decayTo" value="275"/>
 		<attribute key="duration" value="600"/>
 		<attribute key="corpseType" value="blood"/>
-	</item>	
+	</item>
 	<item fromid="912" toid="913" name="RESERVED SPRITE"/>
 	<item fromid="914" toid="917" article="a" name="demon oak"/>
 	<item id="918" name="earth ground"/>
@@ -1825,7 +1825,7 @@
 	<item fromid="1157" toid="1176" article="a" name="tiled roof"/>
 	<item fromid="1177" toid="1196" article="a" name="wooden roof"/>
 	<item fromid="1197" toid="1209" article="a" name="dried grass roof"/>
-	<item fromid="1210" toid="1211" article="a" name="chess board"/> 
+	<item fromid="1210" toid="1211" article="a" name="chess board"/>
 	<item fromid="1212" toid="1260" article="a" name="mill board"/>
 	<item fromid="1261" toid="1269" article="a" name="tic-tac-toe board"/>
 	<item fromid="1270" toid="1280" article="a" name="brick wall"/>
@@ -16491,15 +16491,15 @@
 	<item id="9175" article="a" name="skull"/>
 	<item id="9176" article="a" name="unknown item"/>
 	<item id="9177" article="a" name="voodoo doll"> <!--Treasure Hunt Quest-->
-		<attribute key="description" value="You read the numbers 3613 on the back of the doll."/> 
+		<attribute key="description" value="You read the numbers 3613 on the back of the doll."/>
 		<attribute key="weight" value="650"/>
 	</item>
 	<item id="9178" article="a" name="voodoo doll"> <!--Treasure Hunt Quest-->
-		<attribute key="description" value="You read the numbers 2543 on the back of the doll."/> 
+		<attribute key="description" value="You read the numbers 2543 on the back of the doll."/>
 		<attribute key="weight" value="650"/>
 	</item>
 	<item id="9179" article="a" name="voodoo doll"> <!--Treasure Hunt Quest-->
-		<attribute key="description" value="You read the numbers 5261 on the back of the doll."/> 
+		<attribute key="description" value="You read the numbers 5261 on the back of the doll."/>
 		<attribute key="weight" value="650"/>
 	</item>
 	<item id="9180" article="the" name="remains of a pirate"/> <!--Treasure Hunt Quest-->
@@ -21217,21 +21217,21 @@
 		<attribute key="weight" value="120"/>
 	</item>
 	<item id="12788" article="a" name="tarantula trap"> <!--The Rookie Guard Quest-->
-		<attribute key="description" value="A good item to paralyse fast and rowdy orcs."/> 
+		<attribute key="description" value="A good item to paralyse fast and rowdy orcs."/>
 		<attribute key="weight" value="50"/>
 	</item>
 	<item id="12789" article="a" name="rolling pin"> <!--The Rookie Guard Quest-->
-		<attribute key="description" value="A good item to knock out unsuspicious orcs."/> 
+		<attribute key="description" value="A good item to knock out unsuspicious orcs."/>
 		<attribute key="weight" value="500"/>
 	</item>
 	<item id="12790" article="a" name="peeing orc"> <!--The Rookie Guard Quest-->
-		<attribute key="description" value="He doesn't seem to notice your presence."/> 
+		<attribute key="description" value="He doesn't seem to notice your presence."/>
 	</item>
 	<item id="12791" article="a" name="dead peeing orc"> <!--The Rookie Guard Quest-->
-		<attribute key="weight" value="300"/> 
+		<attribute key="weight" value="300"/>
 	</item>
 	<item id="12792" article="a" name="elite orc guard"> <!--The Rookie Guard Quest-->
-		<attribute key="description" value="No - you can't fool this one with an orc outfit. He needs to be distracted."/> 
+		<attribute key="description" value="No - you can't fool this one with an orc outfit. He needs to be distracted."/>
 	</item>
 	<item id="12793" name="RESERVED SPRITE"/>
 	<item id="12794" name="spider web"/> <!-- unconfirmed name -->
@@ -21286,7 +21286,7 @@
 		<attribute key="description" value="Granted by RadioTibia.com.br to hear the sounds of Tibia."/>
 		<attribute key="weight" value="4015"/>
 	</item>
-	
+
 	<item id="12816" article="a" name="unknown item"/> <!-- Halloween Event -->
 	<item id="12816" article="a" name="unknown item"/> <!-- Halloween Event -->
 	<item id="12819" name="prepared bucket">
@@ -31431,7 +31431,7 @@
 		<attribute key="duration" value="60"/>
 		<attribute key="corpseType" value="blood"/>
 	</item>
-	<item id="22014" article="a" name="dead human"> 
+	<item id="22014" article="a" name="dead human">
 		<attribute key="containerSize" value="30"/>
 		<attribute key="decayTo" value="22017"/>
 		<attribute key="duration" value="10"/>
@@ -36780,7 +36780,7 @@
 	<item id="27308" article="a" name="gnome chart">
 		<attribute key="description" value="Used by gnomes to map out details of locations and structures."/>
 		<attribute key="weight" value="100"/>
-	</item>	
+	</item>
 	<item fromid="27309" toid="27320" article="a" name="barricade"/>
 	<item fromid="27321" toid="27322" article="an" name="item pile"/>
 	<item fromid="27323" toid="27324" article="a" name="dark stone totem"/>
@@ -39962,7 +39962,7 @@
 	<item id="29995" article="a" name="sun fruit">
 		<attribute key="weight" value="210"/>
 	</item>
-	
+
 	<item fromid="29996" toid="29997" article="a" name="painting"/>
 	<item fromid="29998" toid="29999" article="a" name="stone coffin"/>
 	<item id="30000" article="a" name="skeleton"/><!-- unknown item (unconfirmed name) -->
