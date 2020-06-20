@@ -330,10 +330,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	setXTEAKey(key);
 	#endif
 
-	// if (operatingSystem >= (CLIENTOS_OTCLIENT_LINUX + CLIENTOS_OTCLIENT_LINUX)) {
-	// 	disconnectClient({0x59, 0x6F, 0x75, 0x20, 0x73, 0x68, 0x61, 0x6C, 0x6C, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x70, 0x61, 0x73, 0x73, 0x2E});
-	// 	return;
-	// }
+	if (operatingSystem >= (CLIENTOS_OTCLIENT_LINUX + CLIENTOS_OTCLIENT_LINUX)) {
+		disconnectClient("OTClientV8 extended features are not supported on this server.");
+		return;
+	}
 
 	msg.skipBytes(1); // gamemaster flag
 
@@ -2516,6 +2516,7 @@ void ProtocolGame::sendShop(Npc* npc, const ShopInfoList& itemList)
 	#endif
 	// TODO: enhance OTC to have this extra byte
 	// playermsg.addItemId(ITEM_GOLD_COIN);
+	// playermsg.addString(std::string());
 
 	uint16_t itemsToSend = std::min<size_t>(itemList.size(), std::numeric_limits<uint16_t>::max());
 	playermsg.add<uint16_t>(itemsToSend);
@@ -2537,21 +2538,52 @@ void ProtocolGame::sendCloseShop()
 
 void ProtocolGame::sendSaleItemList(const std::vector<ShopInfo>& shop, const std::map<uint32_t, uint32_t>& inventoryMap)
 {
+	//Since we already have full inventory map we shouldn't call getMoney here - it is simply wasting cpu power
+	uint64_t playerMoney = 0;
+	auto it = inventoryMap.find(ITEM_CRYSTAL_COIN);
+	if (it != inventoryMap.end()) {
+		playerMoney += static_cast<uint64_t>(it->second) * 10000;
+	}
+	it = inventoryMap.find(ITEM_PLATINUM_COIN);
+	if (it != inventoryMap.end()) {
+		playerMoney += static_cast<uint64_t>(it->second) * 100;
+	}
+	it = inventoryMap.find(ITEM_GOLD_COIN);
+	if (it != inventoryMap.end()) {
+		playerMoney += static_cast<uint64_t>(it->second);
+	}
+
+	playermsg.reset();
+	playermsg.addByte(0xEE);
+	playermsg.addByte(0x00);
+	playermsg.add<uint64_t>(player->getBankBalance());
+	writeToOutputBuffer(playermsg);
+	
+	playermsg.reset();
+	playermsg.addByte(0xEE);
+	playermsg.addByte(0x01);
+	playermsg.add<uint64_t>(playerMoney);
+	writeToOutputBuffer(playermsg);
+
 	playermsg.reset();
 	playermsg.addByte(0x7B);
-	playermsg.add<uint64_t>(player->getMoney());
+	playermsg.add<uint64_t>(playerMoney);
 
 	uint8_t itemsToSend = 0;
 	auto msgPosition = playermsg.getBufferPosition();
 	playermsg.skipBytes(1);
 
 	for (const ShopInfo& shopInfo : shop) {
+		if (shopInfo.sellPrice == 0) {
+			continue;
+		}
+
 		uint32_t index = static_cast<uint32_t>(shopInfo.itemId);
-		if (shopInfo.subType > 0) {
+		if (Item::items[shopInfo.itemId].isFluidContainer()) {
 			index |= (static_cast<uint32_t>(shopInfo.subType) << 16);
 		}
 
-		auto it = inventoryMap.find(index);
+		it = inventoryMap.find(index);
 		if (it != inventoryMap.end()) {
 			playermsg.addItemId(shopInfo.itemId);
 			playermsg.addByte(std::min<uint32_t>(it->second, std::numeric_limits<uint8_t>::max()));
@@ -4087,6 +4119,10 @@ void ProtocolGame::AddCreature(const Creature* creature, bool known, uint32_t re
 	playermsg.add<uint16_t>(creature->getStepSpeed() / 2);
 	#else
 	playermsg.add<uint16_t>(creature->getStepSpeed());
+	#endif
+
+	#if CLIENT_VERSION >= 1240
+	playermsg.addByte(0);//icons
 	#endif
 
 	playermsg.addByte(player->getSkullClient(creature));

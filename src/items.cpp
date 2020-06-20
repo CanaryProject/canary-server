@@ -23,9 +23,15 @@
 #include "spells.h"
 #include "movement.h"
 #include "weapons.h"
-
-#include <boost/filesystem.hpp>
 #include "pugicast.h"
+
+#ifdef __cpp_lib_filesystem
+#include <filesystem>
+namespace fs = std::filesystem;
+#else
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#endif
 
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
@@ -183,7 +189,7 @@ constexpr auto OTBI = OTB::Identifier{{'O','T', 'B', 'I'}};
 
 bool Items::loadFromOtb(const std::string& file)
 {
-	if (!boost::filesystem::exists(file)) {
+	if (!fs::exists(file)) {
 		std::cout << "[Error - Items::loadFromOtb] Failed to load " << file << ": File doesn't exist." << std::endl;
 		return false;
 	}
