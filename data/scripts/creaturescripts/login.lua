@@ -1,4 +1,6 @@
-function onLogin(player)
+local login = CreatureEvent("PlayerLogin")
+
+function login.onLogin(player)
 	local loginStr = "Welcome to " .. configManager.getString(configKeys.SERVER_NAME) .. "!"
 	if player:getLastLoginSaved() <= 0 then
 		loginStr = loginStr .. " Please choose your outfit."
@@ -8,9 +10,8 @@ function onLogin(player)
 			player:sendTextMessage(MESSAGE_STATUS_DEFAULT, loginStr)
 		end
 
-		loginStr = string.format("Your last visit was on %s.", os.date("%a %b %d %X %Y", player:getLastLoginSaved()))
+		player:sendTextMessage(MESSAGE_STATUS_DEFAULT, string.format("Your last visit in ".. SERVER_NAME ..": %s.", os.date("%d. %b %Y %X", player:getLastLoginSaved())))
 	end
-	player:sendTextMessage(MESSAGE_STATUS_DEFAULT, loginStr)
 
 	-- Stamina
 	nextUseStaminaTime[player.uid] = 0
@@ -19,7 +20,7 @@ function onLogin(player)
 	local vocation = player:getVocation()
 	local promotion = vocation:getPromotion()
 	if player:isPremium() then
-		local value = player:getStorageValue(PlayerStorageKeys.promotion)
+		local value = player:getStorageValue(Storage.promotion)
 		if not promotion and value ~= 1 then
 			player:setStorageValue(STORAGEVALUE_PROMOTION, 1)
 		elseif value == 1 then
@@ -34,3 +35,5 @@ function onLogin(player)
 	player:registerEvent("DropLoot")
 	return true
 end
+
+login:register()
