@@ -25,9 +25,14 @@ local function firstServerSaveWarning()
 	addEvent(secondServerSaveWarning, 120000)
 end
 
-function onTime(interval)
+local serverSave = GlobalEvent("Server Save")
+
+function serverSave.onTime(interval)
 	broadcastMessage("Server is saving game in 5 minutes. Please logout.", MESSAGE_STATUS_WARNING)
 	Game.setGameState(GAME_STATE_STARTUP)
 	addEvent(firstServerSaveWarning, 120000)
 	return not shutdownAtServerSave
 end
+
+serverSave:time("06:00:00")
+serverSave:register()

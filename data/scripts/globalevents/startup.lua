@@ -1,4 +1,8 @@
-function onStartup()
+local startup = GlobalEvent("Startup")
+
+function startup.onStartup()
+	math.randomseed(os.mtime())
+
 	db.query("TRUNCATE TABLE `players_online`")
 	db.asyncQuery("DELETE FROM `guild_wars` WHERE `status` = 0")
 	db.asyncQuery("DELETE FROM `players` WHERE `deletion` != 0 AND `deletion` < " .. os.time())
@@ -42,3 +46,5 @@ function onStartup()
 		db.query("INSERT INTO `towns` (`id`, `name`, `posx`, `posy`, `posz`) VALUES (" .. town:getId() .. ", " .. db.escapeString(town:getName()) .. ", " .. position.x .. ", " .. position.y .. ", " .. position.z .. ")")
 	end
 end
+
+startup:register()
