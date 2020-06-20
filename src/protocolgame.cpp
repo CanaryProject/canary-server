@@ -517,9 +517,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0x70: g_game.playerTurn(player, DIRECTION_EAST); break;
 		case 0x71: g_game.playerTurn(player, DIRECTION_SOUTH); break;
 		case 0x72: g_game.playerTurn(player, DIRECTION_WEST); break;
-		#if CLIENT_VERSION >= 1150
 		case 0x73: parseTeleport(msg); break;
-		#endif
 		case 0x77: parseEquipObject(msg); break;
 		case 0x78: parseThrow(msg); break;
 		case 0x79: parseLookInShop(msg); break;
@@ -538,9 +536,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0x88: parseUpArrowContainer(msg); break;
 		case 0x89: parseTextWindow(msg); break;
 		case 0x8A: parseHouseWindow(msg); break;
-		#if CLIENT_VERSION >= 1092
 		case 0x8B: parseWrapableItem(msg); break;
-		#endif
 		case 0x8C: parseLookAt(msg); break;
 		case 0x8D: parseLookInBattleList(msg); break;
 		case 0x8E: /* join aggression */ break;
@@ -605,9 +601,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0xF7: parseMarketCancelOffer(msg); break;
 		case 0xF8: parseMarketAcceptOffer(msg); break;
 		#endif
-		#if CLIENT_VERSION >= 960
 		case 0xF9: parseModalWindowAnswer(msg); break;
-		#endif
 
 		default:
 			// std::cout << "Player: " << player->getName() << " sent an unknown packet header: 0x" << std::hex << static_cast<uint16_t>(recvbyte) << std::dec << "!" << std::endl;
@@ -737,15 +731,7 @@ void ProtocolGame::checkCreatureAsKnown(uint32_t id, bool& known, uint32_t& remo
 		return;
 	}
 	known = false;
-	#if CLIENT_VERSION >= 870
 	if (knownCreatureSet.size() > 1300) {
-	#elif CLIENT_VERSION >= 840
-	if (knownCreatureSet.size() > 250) {
-	#elif CLIENT_VERSION >= 713
-	if (knownCreatureSet.size() > 150) {
-	#else
-	if (knownCreatureSet.size() > 100) {
-	#endif
 		// Look for a creature to remove
 		#if GAME_FEATURE_PARTY_LIST > 0
 		for (auto it = knownCreatureSet.begin(), end = knownCreatureSet.end(); it != end; ++it) {
@@ -914,9 +900,6 @@ void ProtocolGame::parseAutoWalk(NetworkMessage& msg)
 void ProtocolGame::parseSetOutfit(NetworkMessage& msg)
 {
 	uint8_t outfitType = 0;
-	#if CLIENT_VERSION >= 1220
-	outfitType = msg.getByte();
-	#endif
 
 	Outfit_t newOutfit;
 	#if GAME_FEATURE_LOOKTYPE_U16 > 0
@@ -929,18 +912,11 @@ void ProtocolGame::parseSetOutfit(NetworkMessage& msg)
 	newOutfit.lookLegs = msg.getByte();
 	newOutfit.lookFeet = msg.getByte();
 	newOutfit.lookAddons = msg.getByte();
-	if (outfitType == 0) {
-		#if GAME_FEATURE_MOUNTS > 0
-		newOutfit.lookMount = msg.get<uint16_t>();
-		#endif
-	} else if (outfitType == 1) {
-		//This value probably has something to do with try outfit variable inside outfit window dialog
-		//if try outfit is set to 2 it expects uint32_t value after mounted and disable mounts from outfit window dialog
-		#if GAME_FEATURE_MOUNTS > 0
-		newOutfit.lookMount = 0;
-		#endif
-		msg.get<uint32_t>();
-	}
+
+	#if GAME_FEATURE_MOUNTS > 0
+	newOutfit.lookMount = msg.get<uint16_t>();
+	#endif
+
 	g_game.playerChangeOutfit(player, newOutfit);
 }
 
@@ -1011,7 +987,6 @@ void ProtocolGame::parseThrow(NetworkMessage& msg)
 	}
 }
 
-#if CLIENT_VERSION >= 1092
 void ProtocolGame::parseWrapableItem(NetworkMessage& msg)
 {
 	Position pos = msg.getPosition();
@@ -1019,7 +994,6 @@ void ProtocolGame::parseWrapableItem(NetworkMessage& msg)
 	uint8_t stackpos = msg.getByte();
 	g_game.playerWrapableItem(player->getID(), pos, stackpos, spriteId);
 }
-#endif
 
 void ProtocolGame::parseLookAt(NetworkMessage& msg)
 {
@@ -1110,13 +1084,11 @@ void ProtocolGame::parseEquipObject(NetworkMessage& msg)
 	g_game.playerEquipItem(player, spriteId);
 }
 
-#if CLIENT_VERSION >= 1150
 void ProtocolGame::parseTeleport(NetworkMessage& msg)
 {
 	Position position = msg.getPosition();
 	g_game.playerTeleport(player, position);
 }
-#endif
 
 void ProtocolGame::parseTextWindow(NetworkMessage& msg)
 {
@@ -1345,7 +1317,6 @@ void ProtocolGame::parseTournamentLeaderboard(NetworkMessage& msg)
 
 void ProtocolGame::parseBugReport(NetworkMessage& msg)
 {
-	#if CLIENT_VERSION >= 1071
 	uint8_t category = msg.getByte();
 	std::string message = msg.getString();
 
@@ -1353,11 +1324,6 @@ void ProtocolGame::parseBugReport(NetworkMessage& msg)
 	if (category == BUG_CATEGORY_MAP) {
 		position = msg.getPosition();
 	}
-	#else
-	uint8_t category = BUG_CATEGORY_MAP;
-	std::string message = msg.getString();
-	Position position = player->getPosition();
-	#endif
 
 	g_game.playerReportBug(player, message, position, category);
 }
@@ -1461,7 +1427,6 @@ void ProtocolGame::parseMarketAcceptOffer(NetworkMessage& msg)
 }
 #endif
 
-#if CLIENT_VERSION >= 960
 void ProtocolGame::parseModalWindowAnswer(NetworkMessage& msg)
 {
 	uint32_t id = msg.get<uint32_t>();
@@ -1469,7 +1434,6 @@ void ProtocolGame::parseModalWindowAnswer(NetworkMessage& msg)
 	uint8_t choice = msg.getByte();
 	g_game.playerAnswerModalWindow(player, id, button, choice);
 }
-#endif
 
 #if GAME_FEATURE_BROWSEFIELD > 0
 void ProtocolGame::parseBrowseField(NetworkMessage& msg)
@@ -1513,11 +1477,7 @@ void ProtocolGame::sendItemInspection(uint16_t itemId, uint8_t itemCount, const 
 	playermsg.reset();
 	playermsg.addByte(0x76);
 	playermsg.addByte(0x00);//item
-	#if CLIENT_VERSION >= 1220
 	playermsg.addByte(cyclopedia ? 0x01 : 0x00);
-	#else
-	(void)cyclopedia;
-	#endif
 	playermsg.addByte(0x01);
 
 	const ItemType& it = Item::items.getItemIdByClientId(itemId);
@@ -1592,7 +1552,6 @@ void ProtocolGame::sendWorldLight(LightInfo lightInfo)
 	writeToOutputBuffer(playermsg);
 }
 
-#if CLIENT_VERSION >= 1121
 void ProtocolGame::sendTibiaTime(int32_t time)
 {
 	playermsg.reset();
@@ -1601,7 +1560,6 @@ void ProtocolGame::sendTibiaTime(int32_t time)
 	playermsg.addByte(time % 60);
 	writeToOutputBuffer(playermsg);
 }
-#endif
 
 void ProtocolGame::updateCreatureData(const Creature* creature)
 {
@@ -1659,7 +1617,6 @@ void ProtocolGame::updateCreatureData(const Creature* creature)
 	}
 }
 
-#if CLIENT_VERSION >= 854
 void ProtocolGame::sendCreatureWalkthrough(const Creature* creature, bool walkthrough)
 {
 	if (!canSee(creature)) {
@@ -1672,7 +1629,6 @@ void ProtocolGame::sendCreatureWalkthrough(const Creature* creature, bool walkth
 	playermsg.addByte(walkthrough ? 0x00 : 0x01);
 	writeToOutputBuffer(playermsg);
 }
-#endif
 
 void ProtocolGame::sendCreatureShield(const Creature* creature)
 {
@@ -1704,13 +1660,11 @@ void ProtocolGame::sendCreatureSkull(const Creature* creature)
 	writeToOutputBuffer(playermsg);
 }
 
-#if CLIENT_VERSION >= 910
 void ProtocolGame::sendCreatureType(const Creature* creature, uint8_t creatureType)
 {
 	playermsg.reset();
 	playermsg.addByte(0x95);
 	playermsg.add<uint32_t>(creature->getID());
-	#if CLIENT_VERSION >= 1121
 	if (creatureType == CREATURETYPE_SUMMON_OTHERS) {
 		creatureType = CREATURETYPE_SUMMON_OWN;
 	}
@@ -1723,14 +1677,9 @@ void ProtocolGame::sendCreatureType(const Creature* creature, uint8_t creatureTy
 			playermsg.add<uint32_t>(0);
 		}
 	}
-	#else
-	playermsg.addByte(creatureType);
-	#endif
 	writeToOutputBuffer(playermsg);
 }
-#endif
 
-#if CLIENT_VERSION >= 1000 && CLIENT_VERSION < 1185
 void ProtocolGame::sendCreatureHelpers(uint32_t creatureId, uint16_t helpers)
 {
 	playermsg.reset();
@@ -1739,7 +1688,6 @@ void ProtocolGame::sendCreatureHelpers(uint32_t creatureId, uint16_t helpers)
 	playermsg.add<uint16_t>(helpers);
 	writeToOutputBuffer(playermsg);
 }
-#endif
 
 void ProtocolGame::sendCreatureSquare(const Creature* creature, SquareColor_t color)
 {
@@ -1750,9 +1698,6 @@ void ProtocolGame::sendCreatureSquare(const Creature* creature, SquareColor_t co
 	playermsg.reset();
 	#if GAME_FEATURE_CREATURE_MARK > 0
 	playermsg.addByte(0x93);
-	#if CLIENT_VERSION < 1035
-	playermsg.addByte(0x01);
-	#endif
 	playermsg.add<uint32_t>(creature->getID());
 	playermsg.addByte(0x01);
 	playermsg.addByte(color);
@@ -1776,9 +1721,7 @@ void ProtocolGame::sendAddMarker(const Position& pos, uint8_t markType, const st
 {
 	playermsg.reset();
 	playermsg.addByte(0xDD);
-	#if CLIENT_VERSION >= 1200
 	playermsg.addByte(0x00);
-	#endif
 	playermsg.addPosition(pos);
 	playermsg.addByte(markType);
 	playermsg.addString(desc);
@@ -2377,9 +2320,7 @@ void ProtocolGame::sendReLoginWindow(uint8_t unfairFightReduction)
 	#else
 	(void)unfairFightReduction;
 	#endif
-	#if CLIENT_VERSION >= 1121
 	playermsg.addByte(0x01); // use death redemption (boolean)
-	#endif
 	writeToOutputBuffer(playermsg);
 }
 
@@ -2390,7 +2331,6 @@ void ProtocolGame::sendStats()
 	writeToOutputBuffer(playermsg);
 }
 
-#if CLIENT_VERSION >= 950
 void ProtocolGame::sendBasicData()
 {
 	playermsg.reset();
@@ -2407,9 +2347,7 @@ void ProtocolGame::sendBasicData()
 		#endif
 	}
 	playermsg.addByte(player->getVocation()->getClientId());
-	#if CLIENT_VERSION >= 1100
 	playermsg.addByte(((player->getVocation()->getId() != 0) ? 0x01 : 0x00));
-	#endif
 
 	std::vector<uint16_t> spells = g_spells->getSpellsByVocation(player->getVocationId());
 	playermsg.add<uint16_t>(spells.size());
@@ -2418,7 +2356,6 @@ void ProtocolGame::sendBasicData()
 	}
 	writeToOutputBuffer(playermsg);
 }
-#endif
 
 /*void ProtocolGame::sendBlessStatus()
 {
@@ -2450,56 +2387,6 @@ void ProtocolGame::sendBasicData()
 void ProtocolGame::sendTextMessage(const TextMessage& message)
 {
 	uint8_t messageType = translateMessageClassToClient(message.type);
-	if (messageType == MESSAGE_NONE) {
-		//Backward compatibility
-		switch (message.type) {
-			#if CLIENT_VERSION < 900
-			case MESSAGE_DAMAGE_DEALT:
-			case MESSAGE_DAMAGE_RECEIVED:
-			case MESSAGE_DAMAGE_OTHERS: {
-				playermsg.reset();
-				if (message.primary.value != 0) {
-					playermsg.addByte(0x84);
-					playermsg.addPosition(message.position);
-					playermsg.addByte(message.primary.color);
-					playermsg.addString(std::to_string(message.primary.value));
-				}
-				if (message.secondary.value != 0) {
-					playermsg.addByte(0x84);
-					playermsg.addPosition(message.position);
-					playermsg.addByte(message.secondary.color);
-					playermsg.addString(std::to_string(message.secondary.value));
-				}
-				playermsg.addByte(0xB4);
-				playermsg.addByte(translateMessageClassToClient(MESSAGE_EVENT_DEFAULT));
-				playermsg.addString(message.text);
-				writeToOutputBuffer(playermsg);
-				break;
-			}
-			case MESSAGE_MANA:
-			case MESSAGE_HEALED:
-			case MESSAGE_HEALED_OTHERS:
-			case MESSAGE_EXPERIENCE:
-			case MESSAGE_EXPERIENCE_OTHERS: {
-				playermsg.reset();
-				playermsg.addByte(0x84);
-				playermsg.addPosition(message.position);
-				playermsg.addByte(message.primary.color);
-				playermsg.addString(std::to_string(message.primary.value));
-				playermsg.addByte(0xB4);
-				playermsg.addByte(translateMessageClassToClient(MESSAGE_EVENT_DEFAULT));
-				playermsg.addString(message.text);
-				writeToOutputBuffer(playermsg);
-				break;
-			}
-			#endif
-			default: {
-				break;
-			}
-		}
-		return;
-	}
-
 	playermsg.reset();
 	playermsg.addByte(0xB4);
 	playermsg.addByte(messageType);
@@ -2709,17 +2596,11 @@ void ProtocolGame::sendShop(Npc* npc, const ShopInfoList& itemList)
 	#else
 	(void)npc;
 	#endif
-	#if CLIENT_VERSION >= 1203
-	playermsg.addItemId(ITEM_GOLD_COIN);
-	#endif
+	// TODO: enhance OTC to have this extra byte
+	// playermsg.addItemId(ITEM_GOLD_COIN);
 
-	#if CLIENT_VERSION >= 980
 	uint16_t itemsToSend = std::min<size_t>(itemList.size(), std::numeric_limits<uint16_t>::max());
 	playermsg.add<uint16_t>(itemsToSend);
-	#else
-	uint16_t itemsToSend = std::min<size_t>(itemList.size(), std::numeric_limits<uint8_t>::max());
-	playermsg.addByte(itemsToSend);
-	#endif
 
 	uint16_t i = 0;
 	for (auto it = itemList.begin(); i < itemsToSend; ++it, ++i) {
@@ -2740,11 +2621,7 @@ void ProtocolGame::sendSaleItemList(const std::vector<ShopInfo>& shop, const std
 {
 	playermsg.reset();
 	playermsg.addByte(0x7B);
-	#if CLIENT_VERSION >= 973
 	playermsg.add<uint64_t>(player->getMoney());
-	#else
-	playermsg.add<uint32_t>(std::min<uint64_t>(player->getMoney(), std::numeric_limits<uint32_t>::max()));
-	#endif
 
 	uint8_t itemsToSend = 0;
 	auto msgPosition = playermsg.getBufferPosition();
@@ -3322,9 +3199,7 @@ void ProtocolGame::sendCreatureTurn(const Creature* creature, uint32_t stackPos)
 	playermsg.add<uint16_t>(0x63);
 	playermsg.add<uint32_t>(creature->getID());
 	playermsg.addByte(creature->getDirection());
-	#if CLIENT_VERSION >= 953
 	playermsg.addByte(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
-	#endif
 	writeToOutputBuffer(playermsg);
 }
 
@@ -3450,16 +3325,11 @@ void ProtocolGame::sendChangeSpeed(const Creature* creature, uint32_t speed)
 	playermsg.reset();
 	playermsg.addByte(0x8F);
 	playermsg.add<uint32_t>(creature->getID());
-	#if CLIENT_VERSION >= 1059
 	#if GAME_FEATURE_NEWSPEED_LAW > 0
 	playermsg.add<uint16_t>(creature->getBaseSpeed() / 2);
-	#else
-	playermsg.add<uint16_t>(creature->getBaseSpeed());
-	#endif
-	#endif
-	#if GAME_FEATURE_NEWSPEED_LAW > 0
 	playermsg.add<uint16_t>(speed / 2);
 	#else
+	playermsg.add<uint16_t>(creature->getBaseSpeed());
 	playermsg.add<uint16_t>(speed);
 	#endif
 	writeToOutputBuffer(playermsg);
@@ -3500,6 +3370,7 @@ void ProtocolGame::sendPingBack()
 
 void ProtocolGame::sendDistanceShoot(const Position& from, const Position& to, uint8_t type)
 {
+	// TODO: improve OTC to parse new effect model
 	// #if CLIENT_VERSION >= 1203
 	// playermsg.reset();
 	// playermsg.addByte(0x83);
@@ -3526,6 +3397,7 @@ void ProtocolGame::sendMagicEffect(const Position& pos, uint8_t type)
 		return;
 	}
 
+	// TODO: improve OTC to parse new effect model
 	// #if CLIENT_VERSION >= 1203
 	// playermsg.reset();
 	// playermsg.addByte(0x83);
@@ -3548,15 +3420,7 @@ void ProtocolGame::sendCreatureHealth(const Creature* creature, uint8_t healthPe
 	playermsg.reset();
 	playermsg.addByte(0x8C);
 	playermsg.add<uint32_t>(creature->getID());
-	#if CLIENT_VERSION >= 1121
 	playermsg.addByte(healthPercent);
-	#else
-	if (creature->isHealthHidden()) {
-		playermsg.addByte(0x00);
-	} else {
-		playermsg.addByte(healthPercent);
-	}
-	#endif
 	writeToOutputBuffer(playermsg);
 }
 
@@ -3740,7 +3604,6 @@ void ProtocolGame::sendUpdateTile(const Tile* tile, const Position& pos)
 	writeToOutputBuffer(playermsg);
 }
 
-#if CLIENT_VERSION >= 1000
 void ProtocolGame::sendFightModes()
 {
 	playermsg.reset();
@@ -3751,7 +3614,6 @@ void ProtocolGame::sendFightModes()
 	playermsg.addByte(PVP_MODE_DOVE);
 	writeToOutputBuffer(playermsg);
 }
-#endif
 
 void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos, int32_t stackpos, bool isLogin)
 {
@@ -3803,12 +3665,8 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 		playermsg.addByte(0x00);
 	}
 
-	#if CLIENT_VERSION >= 1054
 	playermsg.addByte(0x00); // can change pvp framing option
-	#endif
-	#if CLIENT_VERSION >= 1058
 	playermsg.addByte(0x00); // expert mode button enabled
-	#endif
 
 	#if GAME_FEATURE_STORE > 0
 	playermsg.addString(g_config.getString(ConfigManager::STORE_URL)); // URL (string) to ingame store images
@@ -3833,9 +3691,7 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 
 	writeToOutputBuffer(playermsg);
 
-	#if CLIENT_VERSION >= 1121
 	sendTibiaTime(g_game.getLightHour());
-	#endif
 	sendMapDescription(pos);
 	if (isLogin) {
 		sendMagicEffect(pos, CONST_ME_TELEPORT);
@@ -3853,9 +3709,7 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 	sendCreatureLight(creature);
 	sendVIPEntries();
 
-	#if CLIENT_VERSION >= 950
 	sendBasicData();
-	#endif
 	player->sendIcons();
 }
 
@@ -3961,19 +3815,9 @@ void ProtocolGame::sendItems(const std::map<uint32_t, uint32_t>& inventoryMap)
 		playermsg.add<uint16_t>(std::min<uint32_t>(inventoryInfo.second, std::numeric_limits<uint16_t>::max()));
 
 		//Limit it to upper networkmessage buffer size incase player have very large inventory
-		#if CLIENT_VERSION >= 1057
 		if (++itemsToSend >= 0x32F0) {
 			break;
 		}
-		#elif CLIENT_VERSION >= 940
-		if (++itemsToSend >= 0x12F0) {
-			break;
-		}
-		#else
-		if (++itemsToSend >= 0xC80) {
-			break;
-		}
-		#endif
 	}
 
 	playermsg.setBufferPosition(msgPosition);
@@ -4114,21 +3958,16 @@ void ProtocolGame::sendOutfitWindow()
 
 	AddOutfit(currentOutfit);
 
-	#if GAME_FEATURE_OUTFITS > 0
 	std::vector<ProtocolOutfit> protocolOutfits;
 	if (player->isAccessPlayer()) {
 		static const std::string gmOutfitName = "Gamemaster";
 		protocolOutfits.emplace_back(gmOutfitName, 75, 0);
 		
-		#if CLIENT_VERSION >= 800
 		static const std::string csOutfitName = "Customer Support";
 		protocolOutfits.emplace_back(csOutfitName, 266, 0);
-		#endif
 
-		#if CLIENT_VERSION >= 830
 		static const std::string cmOutfitName = "Community Manager";
 		protocolOutfits.emplace_back(cmOutfitName, 302, 0);
-		#endif
 	}
 
 	const auto& outfits = Outfits::getInstance().getOutfits(player->getSex());
@@ -4139,34 +3978,14 @@ void ProtocolGame::sendOutfitWindow()
 			continue;
 		}
 		protocolOutfits.emplace_back(outfit.name, outfit.lookType, addons);
-		#if CLIENT_VERSION < 800
-		if (protocolOutfits.size() == 15) {
-			break;
-		}
-		#elif CLIENT_VERSION < 870
-		if (protocolOutfits.size() == 25) {
-			break;
-		}
-		#elif CLIENT_VERSION < 1062
-		if (protocolOutfits.size() == 50) {
-			break;
-		}
-		#endif
 	}
 
-	#if CLIENT_VERSION >= 1185
 	playermsg.add<uint16_t>(protocolOutfits.size());
-	#else
-	playermsg.addByte(protocolOutfits.size());
-	#endif
-
 	for (const ProtocolOutfit& outfit : protocolOutfits) {
 		playermsg.add<uint16_t>(outfit.lookType);
 		playermsg.addString(outfit.name);
 		playermsg.addByte(outfit.addons);
-		#if CLIENT_VERSION >= 1185
 		playermsg.addByte(0x00);
-		#endif
 	}
 
 	#if GAME_FEATURE_MOUNTS > 0
@@ -4175,41 +3994,18 @@ void ProtocolGame::sendOutfitWindow()
 		if (player->hasMount(&mount)) {
 			mounts.push_back(&mount);
 		}
-		#if CLIENT_VERSION < 1062
-		if (mounts.size() == 50) {
-			break;
-		}
-		#endif
 	}
 	
-	#if CLIENT_VERSION >= 1185
 	playermsg.add<uint16_t>(mounts.size());
-	#else
-	playermsg.addByte(mounts.size());
-	#endif
-
 	for (const Mount* mount : mounts) {
 		playermsg.add<uint16_t>(mount->clientId);
 		playermsg.addString(mount->name);
-		#if CLIENT_VERSION >= 1185
 		playermsg.addByte(0x00);
-		#endif
 	}
 	#endif
 	
-	#if CLIENT_VERSION >= 1185
 	playermsg.addByte(0x00);//Try outfit
 	playermsg.addByte(mounted ? 0x01 : 0x00);
-	#endif
-	#else
-	#if GAME_FEATURE_LOOKTYPE_U16 > 0
-	playermsg.add<uint16_t>(player->sex % 2 ? 128 : 136);
-	playermsg.add<uint16_t>(player->isPremium() ? (player->sex % 2 ? 134 : 142) : (player->sex % 2 ? 131 : 139));
-	#else
-	playermsg.addByte(player->sex % 2 ? 128 : 136);
-	playermsg.addByte(player->isPremium() ? (player->sex % 2 ? 134 : 142) : (player->sex % 2 ? 131 : 139));
-	#endif
-	#endif
 	writeToOutputBuffer(playermsg);
 }
 
@@ -4285,16 +4081,10 @@ void ProtocolGame::sendVIPEntries()
 	g_databaseTasks.addTask(query.str(), callback, true);
 }
 
-#if CLIENT_VERSION >= 870
 void ProtocolGame::sendSpellCooldown(uint8_t spellId, uint32_t time)
 {
 	playermsg.reset();
 	playermsg.addByte(0xA4);
-	#if CLIENT_VERSION >= 1121
-	if (spellId >= 170) {
-		spellId = 150;
-	}
-	#endif
 	playermsg.addByte(spellId);
 	playermsg.add<uint32_t>(time);
 	writeToOutputBuffer(playermsg);
@@ -4308,9 +4098,7 @@ void ProtocolGame::sendSpellGroupCooldown(SpellGroup_t groupId, uint32_t time)
 	playermsg.add<uint32_t>(time);
 	writeToOutputBuffer(playermsg);
 }
-#endif
 
-#if CLIENT_VERSION >= 960
 void ProtocolGame::sendModalWindow(const ModalWindow& modalWindow)
 {
 	playermsg.reset();
@@ -4326,23 +4114,18 @@ void ProtocolGame::sendModalWindow(const ModalWindow& modalWindow)
 		playermsg.addByte(it.second);
 	}
 
-	#if CLIENT_VERSION >= 970
 	playermsg.addByte(modalWindow.choices.size());
 	for (const auto& it : modalWindow.choices) {
 		playermsg.addString(it.first);
 		playermsg.addByte(it.second);
 	}
-	#endif
 
 	playermsg.addByte(modalWindow.defaultEscapeButton);
 	playermsg.addByte(modalWindow.defaultEnterButton);
-	#if CLIENT_VERSION >= 970
 	playermsg.addByte(modalWindow.priority ? 0x01 : 0x00);
-	#endif
 
 	writeToOutputBuffer(playermsg);
 }
-#endif
 
 ////////////// Add common messages
 void ProtocolGame::AddCreature(const Creature* creature, bool known, uint32_t remove)
@@ -4439,9 +4222,7 @@ void ProtocolGame::AddCreature(const Creature* creature, bool known, uint32_t re
 	playermsg.addByte(0); // inspection type
 	#endif
 
-	#if CLIENT_VERSION >= 854
 	playermsg.addByte(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
-	#endif
 }
 
 void ProtocolGame::AddPlayerStats()
@@ -4462,10 +4243,6 @@ void ProtocolGame::AddPlayerStats()
 	playermsg.add<uint16_t>(player->getFreeCapacity());
 	#endif
 
-	#if GAME_FEATURE_TOTAL_CAPACITY > 0 && CLIENT_VERSION < 1150
-	playermsg.add<uint32_t>(player->getCapacity());
-	#endif
-
 	#if GAME_FEATURE_DOUBLE_EXPERIENCE > 0
 	playermsg.add<uint64_t>(player->getExperience());
 	#else
@@ -4478,9 +4255,6 @@ void ProtocolGame::AddPlayerStats()
 	#if GAME_FEATURE_EXPERIENCE_BONUS > 0
 	#if GAME_FEATURE_DETAILED_EXPERIENCE_BONUS > 0
 	playermsg.add<uint16_t>(100); // base xp gain rate
-	#if CLIENT_VERSION < 1150
-	playermsg.add<uint16_t>(0); // xp voucher
-	#endif
 	playermsg.add<uint16_t>(0); // low level bonus
 	playermsg.add<uint16_t>(0); // xp boost
 	playermsg.add<uint16_t>(100); // stamina multiplier (100 = x1.0)
@@ -4495,14 +4269,6 @@ void ProtocolGame::AddPlayerStats()
 	#else
 	playermsg.add<uint16_t>(std::min<int32_t>(player->getMana(), std::numeric_limits<uint16_t>::max()));
 	playermsg.add<uint16_t>(std::min<int32_t>(player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
-	#endif
-
-	#if CLIENT_VERSION < 1200
-	playermsg.addByte(std::min<uint32_t>(player->getMagicLevel(), std::numeric_limits<uint8_t>::max()));
-	#if GAME_FEATURE_BASE_SKILLS > 0
-	playermsg.addByte(std::min<uint32_t>(player->getBaseMagicLevel(), std::numeric_limits<uint8_t>::max()));
-	#endif
-	playermsg.addByte(player->getMagicLevelPercent());
 	#endif
 
 	playermsg.addByte(player->getSoul());
@@ -4804,7 +4570,6 @@ void ProtocolGame::parseExtendedOpcode(NetworkMessage& msg)
 
 SpeakClasses ProtocolGame::translateSpeakClassFromClient(uint8_t talkType)
 {
-	#if CLIENT_VERSION >= 1055
 	switch (talkType) {
 		case 0x01: return TALKTYPE_SAY;
 		case 0x02: return TALKTYPE_WHISPER;
@@ -4825,151 +4590,10 @@ SpeakClasses ProtocolGame::translateSpeakClassFromClient(uint8_t talkType)
 		case 0x25: return TALKTYPE_MONSTER_YELL;
 		default: return TALKTYPE_NONE;
 	}
-	#elif CLIENT_VERSION >= 1036
-	switch (talkType) {
-		case 0x01: return TALKTYPE_SAY;
-		case 0x02: return TALKTYPE_WHISPER;
-		case 0x03: return TALKTYPE_YELL;
-		case 0x04: return TALKTYPE_PRIVATE_FROM;
-		case 0x05: return TALKTYPE_PRIVATE_TO;
-		case 0x06: return TALKTYPE_CHANNEL_M;
-		case 0x07: return TALKTYPE_CHANNEL_Y;
-		case 0x08: return TALKTYPE_CHANNEL_O;
-		case 0x09: return TALKTYPE_SPELL;
-		case 0x0A: return TALKTYPE_PRIVATE_NP;
-		case 0x0C: return TALKTYPE_PRIVATE_PN;
-		case 0x0D: return TALKTYPE_BROADCAST;
-		case 0x0E: return TALKTYPE_CHANNEL_R1;
-		case 0x0F: return TALKTYPE_PRIVATE_RED_FROM;
-		case 0x10: return TALKTYPE_PRIVATE_RED_TO;
-		case 0x23: return TALKTYPE_MONSTER_SAY;
-		case 0x24: return TALKTYPE_MONSTER_YELL;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 900
-	switch (talkType) {
-		case 0x01: return TALKTYPE_SAY;
-		case 0x02: return TALKTYPE_WHISPER;
-		case 0x03: return TALKTYPE_YELL;
-		case 0x04: return TALKTYPE_PRIVATE_FROM;
-		case 0x05: return TALKTYPE_PRIVATE_TO;
-		case 0x06: return TALKTYPE_CHANNEL_M;
-		case 0x07: return TALKTYPE_CHANNEL_Y;
-		case 0x08: return TALKTYPE_CHANNEL_O;
-		case 0x09: return TALKTYPE_SPELL;
-		case 0x0A: return TALKTYPE_PRIVATE_NP;
-		case 0x0B: return TALKTYPE_PRIVATE_PN;
-		case 0x0C: return TALKTYPE_BROADCAST;
-		case 0x0D: return TALKTYPE_CHANNEL_R1;
-		case 0x0E: return TALKTYPE_PRIVATE_RED_FROM;
-		case 0x0F: return TALKTYPE_PRIVATE_RED_TO;
-		case 0x22: return TALKTYPE_MONSTER_SAY;
-		case 0x23: return TALKTYPE_MONSTER_YELL;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 861
-	switch (talkType) {
-		case 0x01: return TALKTYPE_SAY;
-		case 0x02: return TALKTYPE_WHISPER;
-		case 0x03: return TALKTYPE_YELL;
-		case 0x06: return TALKTYPE_PRIVATE_TO;
-		case 0x08: return TALKTYPE_CHANNEL_M;
-		case 0x07: return TALKTYPE_CHANNEL_Y;
-		case 0x0C: return TALKTYPE_CHANNEL_O;
-		case 0x05: return TALKTYPE_PRIVATE_NP;
-		case 0x04: return TALKTYPE_PRIVATE_PN;
-		case 0x09: return TALKTYPE_BROADCAST;
-		case 0x0A: return TALKTYPE_CHANNEL_R1;
-		case 0x0B: return TALKTYPE_PRIVATE_RED_TO;
-		case 0x0D: return TALKTYPE_MONSTER_SAY;
-		case 0x0E: return TALKTYPE_MONSTER_YELL;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 840
-	switch (talkType) {
-		case 0x01: return TALKTYPE_SAY;
-		case 0x02: return TALKTYPE_WHISPER;
-		case 0x03: return TALKTYPE_YELL;
-		case 0x06: return TALKTYPE_PRIVATE_TO;
-		case 0x08: return TALKTYPE_CHANNEL_M;
-		case 0x07: return TALKTYPE_CHANNEL_Y;
-		case 0x0F: return TALKTYPE_CHANNEL_O;
-		case 0x09: return TALKTYPE_RVR_CHANNEL;
-		case 0x0A: return TALKTYPE_RVR_ANSWER;
-		case 0x0B: return TALKTYPE_RVR_CONTINUE;
-		case 0x05: return TALKTYPE_PRIVATE_NP;
-		case 0x04: return TALKTYPE_PRIVATE_PN;
-		case 0x0C: return TALKTYPE_BROADCAST;
-		case 0x0D: return TALKTYPE_CHANNEL_R1;
-		case 0x0E: return TALKTYPE_PRIVATE_RED_TO;
-		case 0x13: return TALKTYPE_MONSTER_SAY;
-		case 0x14: return TALKTYPE_MONSTER_YELL;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 820
-	switch (talkType) {
-		case 0x01: return TALKTYPE_SAY;
-		case 0x02: return TALKTYPE_WHISPER;
-		case 0x03: return TALKTYPE_YELL;
-		case 0x06: return TALKTYPE_PRIVATE_TO;
-		case 0x07: return TALKTYPE_CHANNEL_Y;
-		case 0x0E: return TALKTYPE_CHANNEL_O;
-		case 0x08: return TALKTYPE_RVR_CHANNEL;
-		case 0x09: return TALKTYPE_RVR_ANSWER;
-		case 0x0A: return TALKTYPE_RVR_CONTINUE;
-		case 0x05: return TALKTYPE_PRIVATE_NP;
-		case 0x04: return TALKTYPE_PRIVATE_PN;
-		case 0x0B: return TALKTYPE_BROADCAST;
-		case 0x0C: return TALKTYPE_CHANNEL_R1;
-		case 0x0D: return TALKTYPE_PRIVATE_RED_TO;
-		case 0x12: return TALKTYPE_MONSTER_SAY;
-		case 0x13: return TALKTYPE_MONSTER_YELL;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 723
-	switch (talkType) {
-		case 0x01: return TALKTYPE_SAY;
-		case 0x02: return TALKTYPE_WHISPER;
-		case 0x03: return TALKTYPE_YELL;
-		case 0x04: return TALKTYPE_PRIVATE_TO;
-		case 0x05: return TALKTYPE_CHANNEL_Y;
-		case 0x0C: return TALKTYPE_CHANNEL_O;
-		case 0x06: return TALKTYPE_RVR_CHANNEL;
-		case 0x07: return TALKTYPE_RVR_ANSWER;
-		case 0x08: return TALKTYPE_RVR_CONTINUE;
-		case 0x09: return TALKTYPE_BROADCAST;
-		case 0x0A: return TALKTYPE_CHANNEL_R1;
-		case 0x0B: return TALKTYPE_PRIVATE_RED_TO;
-		case 0x10: return TALKTYPE_MONSTER_SAY;
-		case 0x11: return TALKTYPE_MONSTER_YELL;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 710
-	switch (talkType) {
-		case 0x01: return TALKTYPE_SAY;
-		case 0x02: return TALKTYPE_WHISPER;
-		case 0x03: return TALKTYPE_YELL;
-		case 0x04: return TALKTYPE_PRIVATE_TO;
-		case 0x05: return TALKTYPE_CHANNEL_Y;
-		case 0x06: return TALKTYPE_RVR_CHANNEL;
-		case 0x07: return TALKTYPE_RVR_ANSWER;
-		case 0x08: return TALKTYPE_RVR_CONTINUE;
-		case 0x09: return TALKTYPE_BROADCAST;
-		case 0x0A: return TALKTYPE_PRIVATE_RED_TO;
-		case 0x0D: return TALKTYPE_MONSTER_SAY;
-		case 0x0E: return TALKTYPE_MONSTER_YELL;
-		default: return TALKTYPE_NONE;
-	}
-	#endif
 }
 
 uint8_t ProtocolGame::translateSpeakClassToClient(SpeakClasses talkType)
 {
-	#if CLIENT_VERSION >= 1055
-	#if CLIENT_VERSION >= 1200
-	if(talkType == TALKTYPE_BOOSTED_CREATURE)
-		return 0x31;
-	#endif
 	switch (talkType) {
 		case TALKTYPE_SAY: return 0x01;
 		case TALKTYPE_WHISPER: return 0x02;
@@ -4988,181 +4612,13 @@ uint8_t ProtocolGame::translateSpeakClassToClient(SpeakClasses talkType)
 		case TALKTYPE_PRIVATE_RED_TO: return 0x10;
 		case TALKTYPE_MONSTER_SAY: return 0x24;
 		case TALKTYPE_MONSTER_YELL: return 0x25;
+		case TALKTYPE_BOOSTED_CREATURE: return 0x31;
 		default: return TALKTYPE_NONE;
 	}
-	#elif CLIENT_VERSION >= 1036
-	switch (talkType) {
-		case TALKTYPE_SAY: return 0x01;
-		case TALKTYPE_WHISPER: return 0x02;
-		case TALKTYPE_YELL: return 0x03;
-		case TALKTYPE_PRIVATE_FROM: return 0x04;
-		case TALKTYPE_PRIVATE_TO: return 0x05;
-		case TALKTYPE_CHANNEL_M: return 0x06;
-		case TALKTYPE_CHANNEL_Y: return 0x07;
-		case TALKTYPE_CHANNEL_O: return 0x08;
-		case TALKTYPE_SPELL: return 0x09;
-		case TALKTYPE_PRIVATE_NP: return 0x0A;
-		case TALKTYPE_PRIVATE_PN: return 0x0C;
-		case TALKTYPE_BROADCAST: return 0x0D;
-		case TALKTYPE_CHANNEL_R1: return 0x0E;
-		case TALKTYPE_PRIVATE_RED_FROM: return 0x0F;
-		case TALKTYPE_PRIVATE_RED_TO: return 0x10;
-		case TALKTYPE_MONSTER_SAY: return 0x23;
-		case TALKTYPE_MONSTER_YELL: return 0x24;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 900
-	switch (talkType) {
-		case TALKTYPE_SAY: return 0x01;
-		case TALKTYPE_WHISPER: return 0x02;
-		case TALKTYPE_YELL: return 0x03;
-		case TALKTYPE_PRIVATE_FROM: return 0x04;
-		case TALKTYPE_PRIVATE_TO: return 0x05;
-		case TALKTYPE_CHANNEL_M: return 0x06;
-		case TALKTYPE_CHANNEL_Y: return 0x07;
-		case TALKTYPE_CHANNEL_O: return 0x08;
-		case TALKTYPE_SPELL: return 0x09;
-		case TALKTYPE_PRIVATE_NP: return 0x0A;
-		case TALKTYPE_PRIVATE_PN: return 0x0B;
-		case TALKTYPE_BROADCAST: return 0x0C;
-		case TALKTYPE_CHANNEL_R1: return 0x0D;
-		case TALKTYPE_PRIVATE_RED_FROM: return 0x0E;
-		case TALKTYPE_PRIVATE_RED_TO: return 0x0F;
-		case TALKTYPE_MONSTER_SAY: return 0x22;
-		case TALKTYPE_MONSTER_YELL: return 0x23;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 861
-	switch (talkType) {
-		case TALKTYPE_SAY: return 0x01;
-		case TALKTYPE_WHISPER: return 0x02;
-		case TALKTYPE_YELL: return 0x03;
-		case TALKTYPE_PRIVATE_FROM: return 0x06;
-		case TALKTYPE_PRIVATE_TO: return 0x06;
-		case TALKTYPE_CHANNEL_M: return 0x08;
-		case TALKTYPE_CHANNEL_Y: return 0x07;
-		case TALKTYPE_CHANNEL_O: return 0x0C;
-		case TALKTYPE_SPELL: return 0x01;
-		case TALKTYPE_PRIVATE_NP: return 0x05;
-		case TALKTYPE_PRIVATE_PN: return 0x04;
-		case TALKTYPE_BROADCAST: return 0x09;
-		case TALKTYPE_CHANNEL_R1: return 0x0A;
-		case TALKTYPE_PRIVATE_RED_FROM: return 0x0B;
-		case TALKTYPE_PRIVATE_RED_TO: return 0x0B;
-		case TALKTYPE_MONSTER_SAY: return 0x0D;
-		case TALKTYPE_MONSTER_YELL: return 0x0E;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 840
-	switch (talkType) {
-		case TALKTYPE_SAY: return 0x01;
-		case TALKTYPE_WHISPER: return 0x02;
-		case TALKTYPE_YELL: return 0x03;
-		case TALKTYPE_PRIVATE_FROM: return 0x06;
-		case TALKTYPE_PRIVATE_TO: return 0x06;
-		case TALKTYPE_CHANNEL_M: return 0x08;
-		case TALKTYPE_CHANNEL_Y: return 0x07;
-		case TALKTYPE_CHANNEL_O: return 0x0F;
-		case TALKTYPE_RVR_CHANNEL: return 0x09;
-		case TALKTYPE_RVR_ANSWER: return 0x0A;
-		case TALKTYPE_RVR_CONTINUE: return 0x0B;
-		case TALKTYPE_SPELL: return 0x01;
-		case TALKTYPE_PRIVATE_NP: return 0x05;
-		case TALKTYPE_PRIVATE_PN: return 0x04;
-		case TALKTYPE_BROADCAST: return 0x0C;
-		case TALKTYPE_CHANNEL_R1: return 0x0D;
-		case TALKTYPE_PRIVATE_RED_FROM: return 0x0E;
-		case TALKTYPE_PRIVATE_RED_TO: return 0x0E;
-		case TALKTYPE_MONSTER_SAY: return 0x13;
-		case TALKTYPE_MONSTER_YELL: return 0x14;
-		case TALKTYPE_CHANNEL_R2: return TALKTYPE_NONE;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 820
-	switch (talkType) {
-		case TALKTYPE_SAY: return 0x01;
-		case TALKTYPE_WHISPER: return 0x02;
-		case TALKTYPE_YELL: return 0x03;
-		case TALKTYPE_PRIVATE_FROM: return 0x06;
-		case TALKTYPE_PRIVATE_TO: return 0x06;
-		case TALKTYPE_CHANNEL_M: return 0x07;
-		case TALKTYPE_CHANNEL_Y: return 0x07;
-		case TALKTYPE_CHANNEL_O: return 0x0E;
-		case TALKTYPE_RVR_CHANNEL: return 0x08;
-		case TALKTYPE_RVR_ANSWER: return 0x09;
-		case TALKTYPE_RVR_CONTINUE: return 0x0A;
-		case TALKTYPE_SPELL: return 0x01;
-		case TALKTYPE_PRIVATE_NP: return 0x05;
-		case TALKTYPE_PRIVATE_PN: return 0x04;
-		case TALKTYPE_BROADCAST: return 0x0B;
-		case TALKTYPE_CHANNEL_R1: return 0x0C;
-		case TALKTYPE_PRIVATE_RED_FROM: return 0x0D;
-		case TALKTYPE_PRIVATE_RED_TO: return 0x0D;
-		case TALKTYPE_MONSTER_SAY: return 0x12;
-		case TALKTYPE_MONSTER_YELL: return 0x13;
-		case TALKTYPE_CHANNEL_R2: return TALKTYPE_NONE;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 723
-	switch (talkType) {
-		case TALKTYPE_SAY: return 0x01;
-		case TALKTYPE_WHISPER: return 0x02;
-		case TALKTYPE_YELL: return 0x03;
-		case TALKTYPE_PRIVATE_FROM: return 0x04;
-		case TALKTYPE_PRIVATE_TO: return 0x04;
-		case TALKTYPE_CHANNEL_M: return 0x05;
-		case TALKTYPE_CHANNEL_Y: return 0x05;
-		case TALKTYPE_CHANNEL_O: return 0x0C;
-		case TALKTYPE_RVR_CHANNEL: return 0x06;
-		case TALKTYPE_RVR_ANSWER: return 0x07;
-		case TALKTYPE_RVR_CONTINUE: return 0x08;
-		case TALKTYPE_SPELL: return 0x01;
-		case TALKTYPE_PRIVATE_NP: return 0x01;
-		case TALKTYPE_PRIVATE_PN: return 0x01;
-		case TALKTYPE_BROADCAST: return 0x09;
-		case TALKTYPE_CHANNEL_R1: return 0x0A;
-		case TALKTYPE_PRIVATE_RED_FROM: return 0x0B;
-		case TALKTYPE_PRIVATE_RED_TO: return 0x0B;
-		case TALKTYPE_MONSTER_SAY: return 0x10;
-		case TALKTYPE_MONSTER_YELL: return 0x11;
-		case TALKTYPE_CHANNEL_R2: return TALKTYPE_NONE;
-		default: return TALKTYPE_NONE;
-	}
-	#elif CLIENT_VERSION >= 710
-	switch (talkType) {
-		case TALKTYPE_SAY: return 0x01;
-		case TALKTYPE_WHISPER: return 0x02;
-		case TALKTYPE_YELL: return 0x03;
-		case TALKTYPE_PRIVATE_FROM: return 0x04;
-		case TALKTYPE_PRIVATE_TO: return 0x04;
-		case TALKTYPE_CHANNEL_M: return 0x05;
-		case TALKTYPE_CHANNEL_Y: return 0x05;
-		case TALKTYPE_CHANNEL_O: return 0x05;
-		case TALKTYPE_RVR_CHANNEL: return 0x06;
-		case TALKTYPE_RVR_ANSWER: return 0x07;
-		case TALKTYPE_RVR_CONTINUE: return 0x08;
-		case TALKTYPE_SPELL: return 0x01;
-		case TALKTYPE_PRIVATE_NP: return 0x01;
-		case TALKTYPE_PRIVATE_PN: return 0x01;
-		case TALKTYPE_BROADCAST: return 0x09;
-		case TALKTYPE_CHANNEL_R1: return 0x05;
-		case TALKTYPE_PRIVATE_RED_FROM: return 0x0A;
-		case TALKTYPE_PRIVATE_RED_TO: return 0x0A;
-		case TALKTYPE_MONSTER_SAY: return 0x0D;
-		case TALKTYPE_MONSTER_YELL: return 0x0E;
-		case TALKTYPE_CHANNEL_R2: return TALKTYPE_NONE;
-		default: return TALKTYPE_NONE;
-	}
-	#endif
 }
 
 uint8_t ProtocolGame::translateMessageClassToClient(MessageClasses messageType)
 {
-	#if CLIENT_VERSION >= 1055
-	#if CLIENT_VERSION >= 1094
-	if(messageType == MESSAGE_MANA)
-		return 0x2B;
-	#endif
 	switch (messageType) {
 		case MESSAGE_STATUS_CONSOLE_BLUE: return 0x04;
 		case MESSAGE_STATUS_CONSOLE_RED: return 0x0D;
@@ -5179,7 +4635,7 @@ uint8_t ProtocolGame::translateMessageClassToClient(MessageClasses messageType)
 		case MESSAGE_STATUS_CONSOLE_ORANGE: return 0x25;
 		case MESSAGE_DAMAGE_DEALT: return 0x17;
 		case MESSAGE_DAMAGE_RECEIVED: return 0x18;
-		case MESSAGE_MANA: return 0x19;
+		case MESSAGE_MANA: return 0x2B;
 		case MESSAGE_HEALED: return 0x19;
 		case MESSAGE_EXPERIENCE: return 0x1A;
 		case MESSAGE_DAMAGE_OTHERS: return 0x1B;
@@ -5201,216 +4657,4 @@ uint8_t ProtocolGame::translateMessageClassToClient(MessageClasses messageType)
 		case MESSAGE_MARKET: return 0x2A;
 		default: return MESSAGE_NONE;
 	}
-	#elif CLIENT_VERSION >= 1036
-	switch (messageType) {
-		case MESSAGE_STATUS_CONSOLE_BLUE: return 0x04;
-		case MESSAGE_STATUS_CONSOLE_RED: return 0x0D;
-		case MESSAGE_STATUS_DEFAULT: return 0x11;
-		case MESSAGE_STATUS_WARNING: return 0x12;
-		case MESSAGE_EVENT_ADVANCE: return 0x13;
-		case MESSAGE_STATUS_SMALL: return 0x14;
-		case MESSAGE_INFO_DESCR: return 0x15;
-		case MESSAGE_EVENT_DEFAULT: return 0x1D;
-		case MESSAGE_GUILD: return 0x20;
-		case MESSAGE_PARTY_MANAGEMENT: return 0x21;
-		case MESSAGE_PARTY: return 0x22;
-		case MESSAGE_EVENT_ORANGE: return 0x23;
-		case MESSAGE_STATUS_CONSOLE_ORANGE: return 0x24;
-		case MESSAGE_DAMAGE_DEALT: return 0x16;
-		case MESSAGE_DAMAGE_RECEIVED: return 0x17;
-		case MESSAGE_MANA: return 0x18;
-		case MESSAGE_HEALED: return 0x18;
-		case MESSAGE_EXPERIENCE: return 0x19;
-		case MESSAGE_DAMAGE_OTHERS: return 0x1A;
-		case MESSAGE_HEALED_OTHERS: return 0x1B;
-		case MESSAGE_EXPERIENCE_OTHERS: return 0x1C;
-		case MESSAGE_LOOT: return 0x1E;
-		case MESSAGE_LOGIN: return 0x11;
-		case MESSAGE_WARNING: return 0x12;
-		case MESSAGE_GAME: return 0x13;
-		case MESSAGE_GAME_HIGHLIGHT: return 0x12;
-		case MESSAGE_FAILURE: return 0x14;
-		case MESSAGE_LOOK: return 0x15;
-		case MESSAGE_STATUS: return 0x1D;
-		case MESSAGE_TRADENPC: return 0x1F;
-		case MESSAGE_REPORT: return 0x25;
-		case MESSAGE_HOTKEY: return 0x26;
-		case MESSAGE_TUTORIAL: return 0x27;
-		case MESSAGE_THANKYOU: return 0x28;
-		default: return MESSAGE_NONE;
-	}
-	#elif CLIENT_VERSION >= 900
-	switch (messageType) {
-		case MESSAGE_STATUS_CONSOLE_BLUE: return 0x04;
-		case MESSAGE_STATUS_CONSOLE_RED: return 0x0C;
-		case MESSAGE_STATUS_DEFAULT: return 0x10;
-		case MESSAGE_STATUS_WARNING: return 0x11;
-		case MESSAGE_EVENT_ADVANCE: return 0x12;
-		case MESSAGE_STATUS_SMALL: return 0x13;
-		case MESSAGE_INFO_DESCR: return 0x14;
-		case MESSAGE_EVENT_DEFAULT: return 0x1C;
-		case MESSAGE_GUILD: return 0x1F;
-		case MESSAGE_PARTY_MANAGEMENT: return 0x20;
-		case MESSAGE_PARTY: return 0x21;
-		case MESSAGE_EVENT_ORANGE: return 0x22;
-		case MESSAGE_STATUS_CONSOLE_ORANGE: return 0x23;
-		case MESSAGE_DAMAGE_DEALT: return 0x15;
-		case MESSAGE_DAMAGE_RECEIVED: return 0x16;
-		case MESSAGE_MANA: return 0x17;
-		case MESSAGE_HEALED: return 0x17;
-		case MESSAGE_EXPERIENCE: return 0x18;
-		case MESSAGE_DAMAGE_OTHERS: return 0x19;
-		case MESSAGE_HEALED_OTHERS: return 0x1A;
-		case MESSAGE_EXPERIENCE_OTHERS: return 0x1B;
-		case MESSAGE_LOOT: return 0x1D;
-		case MESSAGE_LOGIN: return 0x10;
-		case MESSAGE_WARNING: return 0x11;
-		case MESSAGE_GAME: return 0x12;
-		case MESSAGE_GAME_HIGHLIGHT: return 0x11;
-		case MESSAGE_FAILURE: return 0x13;
-		case MESSAGE_LOOK: return 0x14;
-		case MESSAGE_STATUS: return 0x1C;
-		case MESSAGE_TRADENPC: return 0x1E;
-		case MESSAGE_REPORT: return 0x24;
-		case MESSAGE_HOTKEY: return 0x25;
-		case MESSAGE_TUTORIAL: return 0x26;
-		case MESSAGE_THANKYOU: return 0x27;
-		default: return MESSAGE_NONE;
-	}
-	#elif CLIENT_VERSION >= 861
-	switch (messageType) {
-		case MESSAGE_STATUS_CONSOLE_BLUE: return 0x15;
-		case MESSAGE_STATUS_CONSOLE_RED: return 0x16;
-		case MESSAGE_STATUS_DEFAULT: return 0x11;
-		case MESSAGE_STATUS_WARNING: return 0x0F;
-		case MESSAGE_EVENT_ADVANCE: return 0x10;
-		case MESSAGE_STATUS_SMALL: return 0x14;
-		case MESSAGE_INFO_DESCR: return 0x13;
-		case MESSAGE_EVENT_DEFAULT: return 0x12;
-		case MESSAGE_EVENT_ORANGE: return 0x0D;
-		case MESSAGE_STATUS_CONSOLE_ORANGE: return 0x0E;
-		case MESSAGE_LOOT: return 0x13;
-		case MESSAGE_LOGIN: return 0x11;
-		case MESSAGE_WARNING: return 0x0F;
-		case MESSAGE_GAME: return 0x10;
-		case MESSAGE_GAME_HIGHLIGHT: return 0x0F;
-		case MESSAGE_FAILURE: return 0x14;
-		case MESSAGE_LOOK: return 0x13;
-		case MESSAGE_STATUS: return 0x12;
-		case MESSAGE_TRADENPC: return 0x13;
-		case MESSAGE_REPORT: return 0x13;
-		case MESSAGE_HOTKEY: return 0x13;
-		case MESSAGE_TUTORIAL: return 0x13;
-		case MESSAGE_THANKYOU: return 0x13;
-		default: return MESSAGE_NONE;
-	}
-	#elif CLIENT_VERSION >= 840
-	switch (messageType) {
-		case MESSAGE_STATUS_CONSOLE_BLUE: return 0x1B;
-		case MESSAGE_STATUS_CONSOLE_RED: return 0x12;
-		case MESSAGE_STATUS_DEFAULT: return 0x17;
-		case MESSAGE_STATUS_WARNING: return 0x15;
-		case MESSAGE_EVENT_ADVANCE: return 0x16;
-		case MESSAGE_STATUS_SMALL: return 0x1A;
-		case MESSAGE_INFO_DESCR: return 0x19;
-		case MESSAGE_EVENT_DEFAULT: return 0x18;
-		case MESSAGE_EVENT_ORANGE: return 0x13;
-		case MESSAGE_STATUS_CONSOLE_ORANGE: return 0x14;
-		case MESSAGE_LOOT: return 0x19;
-		case MESSAGE_LOGIN: return 0x17;
-		case MESSAGE_WARNING: return 0x15;
-		case MESSAGE_GAME: return 0x16;
-		case MESSAGE_GAME_HIGHLIGHT: return 0x15;
-		case MESSAGE_FAILURE: return 0x1A;
-		case MESSAGE_LOOK: return 0x19;
-		case MESSAGE_STATUS: return 0x18;
-		case MESSAGE_TRADENPC: return 0x19;
-		case MESSAGE_REPORT: return 0x19;
-		case MESSAGE_HOTKEY: return 0x19;
-		case MESSAGE_TUTORIAL: return 0x19;
-		case MESSAGE_THANKYOU: return 0x19;
-		default: return MESSAGE_NONE;
-	}
-	#elif CLIENT_VERSION >= 820
-	switch (messageType) {
-		case MESSAGE_STATUS_CONSOLE_BLUE: return 0x1A;
-		case MESSAGE_STATUS_CONSOLE_RED: return 0x11;
-		case MESSAGE_STATUS_DEFAULT: return 0x16;
-		case MESSAGE_STATUS_WARNING: return 0x14;
-		case MESSAGE_EVENT_ADVANCE: return 0x15;
-		case MESSAGE_STATUS_SMALL: return 0x19;
-		case MESSAGE_INFO_DESCR: return 0x18;
-		case MESSAGE_EVENT_DEFAULT: return 0x17;
-		case MESSAGE_EVENT_ORANGE: return 0x12;
-		case MESSAGE_STATUS_CONSOLE_ORANGE: return 0x13;
-		case MESSAGE_LOOT: return 0x18;
-		case MESSAGE_LOGIN: return 0x16;
-		case MESSAGE_WARNING: return 0x14;
-		case MESSAGE_GAME: return 0x15;
-		case MESSAGE_GAME_HIGHLIGHT: return 0x14;
-		case MESSAGE_FAILURE: return 0x19;
-		case MESSAGE_LOOK: return 0x18;
-		case MESSAGE_STATUS: return 0x17;
-		case MESSAGE_TRADENPC: return 0x18;
-		case MESSAGE_REPORT: return 0x18;
-		case MESSAGE_HOTKEY: return 0x18;
-		case MESSAGE_TUTORIAL: return 0x18;
-		case MESSAGE_THANKYOU: return 0x18;
-		default: return MESSAGE_NONE;
-	}
-	#elif CLIENT_VERSION >= 723
-	switch (messageType) {
-		case MESSAGE_STATUS_CONSOLE_BLUE: return 0x18;
-		case MESSAGE_STATUS_CONSOLE_RED: return 0x19;
-		case MESSAGE_STATUS_DEFAULT: return 0x14;
-		case MESSAGE_STATUS_WARNING: return 0x12;
-		case MESSAGE_EVENT_ADVANCE: return 0x13;
-		case MESSAGE_STATUS_SMALL: return 0x17;
-		case MESSAGE_INFO_DESCR: return 0x16;
-		case MESSAGE_EVENT_DEFAULT: return 0x15;
-		case MESSAGE_EVENT_ORANGE: return 0x10;
-		case MESSAGE_STATUS_CONSOLE_ORANGE: return 0x11;
-		case MESSAGE_LOOT: return 0x16;
-		case MESSAGE_LOGIN: return 0x14;
-		case MESSAGE_WARNING: return 0x12;
-		case MESSAGE_GAME: return 0x13;
-		case MESSAGE_GAME_HIGHLIGHT: return 0x12;
-		case MESSAGE_FAILURE: return 0x17;
-		case MESSAGE_LOOK: return 0x16;
-		case MESSAGE_STATUS: return 0x15;
-		case MESSAGE_TRADENPC: return 0x16;
-		case MESSAGE_REPORT: return 0x16;
-		case MESSAGE_HOTKEY: return 0x16;
-		case MESSAGE_TUTORIAL: return 0x16;
-		case MESSAGE_THANKYOU: return 0x16;
-		default: return MESSAGE_NONE;
-	}
-	#elif CLIENT_VERSION >= 710
-	switch (messageType) {
-		case MESSAGE_STATUS_CONSOLE_BLUE: return 0x04;
-		case MESSAGE_STATUS_CONSOLE_RED: return 0x09;
-		case MESSAGE_STATUS_DEFAULT: return 0x11;
-		case MESSAGE_STATUS_WARNING: return 0x0F;
-		case MESSAGE_EVENT_ADVANCE: return 0x10;
-		case MESSAGE_STATUS_SMALL: return 0x14;
-		case MESSAGE_INFO_DESCR: return 0x13;
-		case MESSAGE_EVENT_DEFAULT: return 0x12;
-		case MESSAGE_EVENT_ORANGE: return 0x0D;
-		case MESSAGE_STATUS_CONSOLE_ORANGE: return 0x0E;
-		case MESSAGE_LOOT: return 0x13;
-		case MESSAGE_LOGIN: return 0x11;
-		case MESSAGE_WARNING: return 0x0F;
-		case MESSAGE_GAME: return 0x10;
-		case MESSAGE_GAME_HIGHLIGHT: return 0x0F;
-		case MESSAGE_FAILURE: return 0x14;
-		case MESSAGE_LOOK: return 0x13;
-		case MESSAGE_STATUS: return 0x12;
-		case MESSAGE_TRADENPC: return 0x13;
-		case MESSAGE_REPORT: return 0x13;
-		case MESSAGE_HOTKEY: return 0x13;
-		case MESSAGE_TUTORIAL: return 0x13;
-		case MESSAGE_THANKYOU: return 0x13;
-		default: return MESSAGE_NONE;
-	}
-	#endif
 }
