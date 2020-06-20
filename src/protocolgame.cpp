@@ -1671,15 +1671,6 @@ void ProtocolGame::sendCreatureType(const Creature* creature, uint8_t creatureTy
 	writeToOutputBuffer(playermsg);
 }
 
-void ProtocolGame::sendCreatureHelpers(uint32_t creatureId, uint16_t helpers)
-{
-	playermsg.reset();
-	playermsg.addByte(0x94);
-	playermsg.add<uint32_t>(creatureId);
-	playermsg.add<uint16_t>(helpers);
-	writeToOutputBuffer(playermsg);
-}
-
 void ProtocolGame::sendCreatureSquare(const Creature* creature, SquareColor_t color)
 {
 	if (!canSee(creature)) {
