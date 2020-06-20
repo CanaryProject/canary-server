@@ -2558,7 +2558,7 @@ void ProtocolGame::sendSaleItemList(const std::vector<ShopInfo>& shop, const std
 	playermsg.addByte(0x00);
 	playermsg.add<uint64_t>(player->getBankBalance());
 	writeToOutputBuffer(playermsg);
-	
+
 	playermsg.reset();
 	playermsg.addByte(0xEE);
 	playermsg.addByte(0x01);
@@ -4121,9 +4121,10 @@ void ProtocolGame::AddCreature(const Creature* creature, bool known, uint32_t re
 	playermsg.add<uint16_t>(creature->getStepSpeed());
 	#endif
 
-	#if CLIENT_VERSION >= 1240
-	playermsg.addByte(0);//icons
-	#endif
+	// TODO: sync with 1240 protocol
+	// #if CLIENT_VERSION >= 1240
+	// playermsg.addByte(0);//icons
+	// #endif
 
 	playermsg.addByte(player->getSkullClient(creature));
 	playermsg.addByte(player->getPartyShield(otherPlayer));
