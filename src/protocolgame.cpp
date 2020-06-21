@@ -300,7 +300,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	}
 
 	#if GAME_FEATURE_CLIENT_VERSION > 0
-	uint32_t clientVersion = msg.get<uint32_t>();
+	msg.skipBytes(4);
 	#endif
 	#if GAME_FEATURE_CONTENT_REVISION > 0
 	msg.skipBytes(2);
@@ -309,12 +309,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	msg.skipBytes(1);
 	#endif
 	#if GAME_FEATURE_CLIENT_VERSION > 0
-	if (clientVersion >= 1149 && clientVersion < 1200) {
-		if (msg.getLength() - msg.getBufferPosition() > 128) {
-			addExivaRestrictions = true;
-			msg.skipBytes(1);
-		}
-	}
+	// if (msg.getLength() - msg.getBufferPosition() > 128) {
+	// 	addExivaRestrictions = true;
+	// 	msg.skipBytes(1);
+	// }
 	#endif
 
 	#if GAME_FEATURE_RSA1024 > 0
