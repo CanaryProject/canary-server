@@ -64,13 +64,6 @@ bool ScriptingManager::loadScriptSystems()
 		std::cout << "[Warning - ScriptingManager::loadScriptSystems] Can not load data/global.lua" << std::endl;
 	}
 
-	g_weapons = new Weapons();
-	if (!g_weapons) {
-		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_weapons!" << std::endl;
-		return false;
-	}
-	g_weapons->loadDefaults();
-	g_actions = new Actions();
 	if (!g_actions) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_actions!" << std::endl;
 		return false;
@@ -99,7 +92,13 @@ bool ScriptingManager::loadScriptSystems()
 	if (!g_spells) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_spells!" << std::endl;
 		return false;
+ 	}
+	g_weapons = new Weapons();
+	if (!g_weapons) {
+		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_weapons!" << std::endl;
+		return false;
 	}
+	g_actions = new Actions();
 
 	g_scripts = new Scripts();
 	std::cout << ">> Loading lua libs" << std::endl;
