@@ -63,7 +63,8 @@ bool ScriptingManager::loadScriptSystems()
 	if (g_luaEnvironment.loadFile("data/global.lua") == -1) {
 		std::cout << "[Warning - ScriptingManager::loadScriptSystems] Can not load data/global.lua" << std::endl;
 	}
-
+  
+	g_actions = new Actions();
 	if (!g_actions) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_actions!" << std::endl;
 		return false;
@@ -98,8 +99,7 @@ bool ScriptingManager::loadScriptSystems()
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_weapons!" << std::endl;
 		return false;
 	}
-	g_actions = new Actions();
-
+	
 	g_scripts = new Scripts();
 	std::cout << ">> Loading lua libs" << std::endl;
 	if (!g_scripts->loadScripts("scripts/lib", true, false)) {
