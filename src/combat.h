@@ -75,6 +75,8 @@ struct CombatParams {
 	bool targetCasterOrTopMost = false;
 	bool aggressive = true;
 	bool useCharges = false;
+
+	TargetsParam_t validTargets = COMBAT_TARGET_PARAM_ALL;
 };
 
 using CombatFunction = std::function<void(Creature*, Creature*, const CombatParams&, CombatDamage*)>;
@@ -259,8 +261,8 @@ class Combat
 		static CombatType_t ConditionToDamageType(ConditionType_t type);
 		static ConditionType_t DamageToConditionType(CombatType_t type);
 		static ReturnValue canTargetCreature(Player* attacker, Creature* target);
-		static ReturnValue canDoCombat(Creature* caster, Tile* tile, bool aggressive);
-		static ReturnValue canDoCombat(Creature* attacker, Creature* target);
+		static ReturnValue canDoTileCombat(Creature* caster, Tile* tile, bool aggressive);
+		static ReturnValue canDoTargetCombat(Creature* attacker, Creature* target, const CombatParams& params);
 		static void postCombatEffects(Creature* caster, const Position& pos, const CombatParams& params);
 
 		static void addDistanceEffect(Creature* caster, const Position& fromPos, const Position& toPos, uint8_t effect);
@@ -303,6 +305,7 @@ class Combat
 	private:
 		static void doCombatDefault(Creature* caster, Creature* target, const CombatParams& params);
 
+		static void CombatFunc(Creature* caster, Creature* target, const CombatParams& params, CombatDamage* damage, CombatFunction func);
 		static void CombatFunc(Creature* caster, const Position& pos, const AreaCombat* area, const CombatParams& params, CombatFunction func, CombatDamage* data);
 
 		static void CombatHealthFunc(Creature* caster, Creature* target, const CombatParams& params, CombatDamage* data);
