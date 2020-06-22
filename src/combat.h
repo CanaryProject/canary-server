@@ -76,7 +76,7 @@ struct CombatParams {
 	bool aggressive = true;
 	bool useCharges = false;
 
-	TargetsParam_t validTargets = COMBAT_TARGET_PARAM_ALL;
+	TargetsParam_t validTargets = COMBAT_TARGET_PARAM_PLAYERSANDMONSTERS;
 };
 
 using CombatFunction = std::function<void(Creature*, Creature*, const CombatParams&, CombatDamage*)>;
