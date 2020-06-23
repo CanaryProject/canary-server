@@ -343,7 +343,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	std::string sessionKey = msg.getString();
 
 	auto sessionArgs = explodeString(sessionKey, "\n", 4);
-	if (sessionArgs.size() != 4) {
+	if (sessionArgs.size() < 4) {
 		disconnect();
 		return;
 	}
@@ -352,6 +352,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	std::string& password = sessionArgs[1];
 	std::string& token = sessionArgs[2];
 	uint32_t tokenTime = 0;
+
 	try {
 		tokenTime = std::stoul(sessionArgs[3]);
 	} catch (const std::invalid_argument&) {
