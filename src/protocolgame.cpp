@@ -343,7 +343,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	std::string sessionKey = msg.getString();
 
 	auto sessionArgs = explodeString(sessionKey, "\n", 4);
-	if (sessionArgs.size() < 4) {
+	if (sessionArgs.size() != 4) {
 		disconnect();
 		return;
 	}
