@@ -304,7 +304,7 @@ bool CombatSpell::castSpell(Creature* creature)
 		pos = creature->getPosition();
 	}
 
-	combat->doCombat(creature, pos);
+	combat->executeAreaCombat(creature, pos);
 	return true;
 }
 
@@ -332,12 +332,12 @@ bool CombatSpell::castSpell(Creature* creature, Creature* target)
 
 	if (combat->hasArea()) {
 		if (needTarget) {
-			combat->doCombat(creature, target->getPosition());
+			combat->executeAreaCombat(creature, target->getPosition());
 		} else {
 			return castSpell(creature);
 		}
 	} else {
-		combat->doCombat(creature, target);
+		combat->executeTargetCombat(creature, target);
 	}
 	return true;
 }
