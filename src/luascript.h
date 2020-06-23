@@ -20,12 +20,10 @@
 #ifndef FS_LUASCRIPT_H_5344B2BC907E46E3943EA78574A212D8
 #define FS_LUASCRIPT_H_5344B2BC907E46E3943EA78574A212D8
 
-#if __has_include(<luajit/lua.hpp>)
-#include <luajit/lua.hpp>
-#elif __has_include(<lua.hpp>)
-#include <lua.hpp>
+#if __has_include("luajit/lua.hpp")
+  #include <luajit/lua.hpp>
 #else
-#error "Cannot detect lua library"
+  #include <lua.hpp>
 #endif
 
 #if LUA_VERSION_NUM >= 502
@@ -751,7 +749,7 @@ class LuaScriptInterface
 		static int luaContainerAddItem(lua_State* L);
 		static int luaContainerAddItemEx(lua_State* L);
 		static int luaContainerGetCorpseOwner(lua_State* L);
-		
+
 		// Teleport
 		static int luaTeleportCreate(lua_State* L);
 
