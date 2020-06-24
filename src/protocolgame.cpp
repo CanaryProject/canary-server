@@ -2565,16 +2565,6 @@ void ProtocolGame::sendSaleItemList(const std::vector<ShopInfo>& shop, const std
 	writeToOutputBuffer(playermsg);
 
 	playermsg.reset();
-	#if CLIENT_VERSION >= 1100
-	playermsg.addByte(0xEE);
-	playermsg.addByte(0x00);
-	playermsg.add<uint64_t>(player->getBankBalance());
-	playermsg.addByte(0xEE);
-	playermsg.addByte(0x01);
-	playermsg.add<uint64_t>(playerMoney);
-	playermsg.addByte(0x7B);
-	playermsg.add<uint64_t>(playerMoney);
-	#elif CLIENT_VERSION >= 973
 	playermsg.addByte(0x7B);
 	playermsg.add<uint64_t>(playerMoney);
 
