@@ -1834,7 +1834,7 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 					break;
 				}
 
-                case ITEM_PARSE_ELEMENTDEATH: {
+				case ITEM_PARSE_ELEMENTDEATH: {
 					abilities.elementDamage = pugi::cast<uint16_t>(valueAttribute.value());
 					abilities.elementType = COMBAT_DEATHDAMAGE;
 					break;
