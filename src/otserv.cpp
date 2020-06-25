@@ -38,11 +38,9 @@
 #include <fstream>
 
 Database g_database;
-Scheduler g_scheduler;
 
 Game g_game;
 ConfigManager g_config;
-Vocations g_vocations;
 
 std::mutex g_loaderLock;
 std::condition_variable g_loaderSignal;
@@ -76,7 +74,7 @@ int main(int argc, char* argv[])
 	ServiceManager serviceManager;
 
 	g_dispatcher().start();
-	g_scheduler.start();
+	g_scheduler().start();
 
 	g_dispatcher().addTask(std::bind(mainLoader, argc, argv, &serviceManager));
 
@@ -87,12 +85,12 @@ int main(int argc, char* argv[])
 		serviceManager.run();
 	} else {
 		std::cout << ">> No services running. The server is NOT online." << std::endl;
-		g_scheduler.shutdown();
+		g_scheduler().shutdown();
 		g_databaseTasks().shutdown();
 		g_dispatcher().shutdown();
 	}
 
-	g_scheduler.join();
+	g_scheduler().join();
 	g_databaseTasks().join();
 	g_dispatcher().join();
 	g_database.end();
@@ -193,7 +191,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 
 	//load vocations
 	std::cout << ">> Loading vocations" << std::endl;
-	if (!g_vocations.loadFromXml()) {
+	if (!g_vocations().loadFromXml()) {
 		startupErrorMessage("Unable to load vocations!");
 		return;
 	}

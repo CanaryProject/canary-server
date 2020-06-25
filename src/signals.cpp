@@ -38,15 +38,7 @@
 #include "scheduler.h"
 #include "databasetasks.h"
 
-extern Scheduler g_scheduler;
-
-extern ConfigManager g_config;
-extern TalkActions* g_talkActions;
-extern MoveEvents* g_moveEvents;
-extern Spells* g_spells;
-extern Weapons* g_weapons;
 extern Game g_game;
-extern LuaEnvironment g_luaEnvironment;
 
 using ErrorCode = boost::system::error_code;
 
@@ -103,7 +95,7 @@ void Signals::dispatchSignalHandler(int signal)
 		case SIGBREAK: //Shuts the server down
 			g_dispatcher().addTask(sigbreakHandler);
 			// hold the thread until other threads end
-			g_scheduler.join();
+			g_scheduler().join();
 			g_databaseTasks().join();
 			g_dispatcher().join();
 			break;
@@ -148,7 +140,7 @@ void Signals::sighupHandler()
 	g_creatureEvents().reload();
 	std::cout << "Reloaded creature scripts." << std::endl;
 
-	g_moveEvents->reload();
+	g_moveEvents().reload();
 	std::cout << "Reloaded movements." << std::endl;
 
 	Npcs::reload();
@@ -158,20 +150,20 @@ void Signals::sighupHandler()
 	g_game.raids.startup();
 	std::cout << "Reloaded raids." << std::endl;
 
-	g_spells->reload();
+	g_spells().reload();
 	std::cout << "Reloaded monsters." << std::endl;
 
 	g_monsters().reload();
 	std::cout << "Reloaded spells." << std::endl;
 
-	g_talkActions->reload();
+	g_talkActions().reload();
 	std::cout << "Reloaded talk actions." << std::endl;
 
 	Item::items.reload();
 	std::cout << "Reloaded items." << std::endl;
 
-	g_weapons->reload();
-	g_weapons->loadDefaults();
+	g_weapons().reload();
+	g_weapons().loadDefaults();
 	std::cout << "Reloaded weapons." << std::endl;
 
 	g_game.quests.reload();
@@ -189,10 +181,10 @@ void Signals::sighupHandler()
 	g_chat().load();
 	std::cout << "Reloaded chatchannels." << std::endl;
 
-	g_luaEnvironment.loadFile("data/global.lua");
+	g_luaEnvironment().loadFile("data/global.lua");
 	std::cout << "Reloaded global.lua." << std::endl;
 
-	lua_gc(g_luaEnvironment.getLuaState(), LUA_GCCOLLECT, 0);
+	lua_gc(g_luaEnvironment().getLuaState(), LUA_GCCOLLECT, 0);
 }
 
 void Signals::sigintHandler()

@@ -31,47 +31,10 @@
 #include "events.h"
 #include "scripts.h"
 
-Spells* g_spells = nullptr;
-TalkActions* g_talkActions = nullptr;
-MoveEvents* g_moveEvents = nullptr;
-Weapons* g_weapons = nullptr;
-
-extern LuaEnvironment g_luaEnvironment;
-
-ScriptingManager::~ScriptingManager()
-{
-	delete g_weapons;
-	delete g_spells;
-	delete g_talkActions;
-	delete g_moveEvents;
-}
-
 bool ScriptingManager::loadScriptSystems()
 {
-	if (g_luaEnvironment.loadFile("data/global.lua") == -1) {
+	if (g_luaEnvironment().loadFile("data/global.lua") == -1) {
 		std::cout << "[Warning - ScriptingManager::loadScriptSystems] Can not load data/global.lua" << std::endl;
-	}
-
-	g_weapons = new Weapons();
-	if (!g_weapons) {
-		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_weapons!" << std::endl;
-		return false;
-	}
-	g_weapons->loadDefaults();
-	g_talkActions = new TalkActions();
-	if (!g_talkActions) {
-		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_talkActions!" << std::endl;
-		return false;
-	}
-	g_moveEvents = new MoveEvents();
-	if (!g_moveEvents) {
-		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_moveEvents!" << std::endl;
-		return false;
-	}
-	g_spells = new Spells();
-	if (!g_spells) {
-		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_spells!" << std::endl;
-		return false;
 	}
 
 	return true;

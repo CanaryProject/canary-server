@@ -27,10 +27,7 @@
 #include "spells.h"
 
 extern Game g_game;
-extern Spells* g_spells;
-extern Vocations g_vocations;
 extern ConfigManager g_config;
-extern LuaEnvironment g_luaEnvironment;
 
 Spells::Spells()
 {
@@ -257,7 +254,7 @@ Position Spells::getCasterPosition(Creature* creature, Direction dir)
 }
 
 CombatSpell::CombatSpell(Combat* combat, bool needTarget, bool needDirection) :
-	Event(&g_spells->getScriptInterface()),
+	Event(&g_spells().getScriptInterface()),
 	combat(combat),
 	needDirection(needDirection),
 	needTarget(needTarget)
@@ -274,7 +271,7 @@ CombatSpell::~CombatSpell()
 
 bool CombatSpell::loadScriptCombat()
 {
-	combat = g_luaEnvironment.getCombatObject(g_luaEnvironment.lastCombatId);
+	combat = g_luaEnvironment().getCombatObject(g_luaEnvironment().lastCombatId);
 	if (combat) {
 		combat->incrementReferenceCounter();
 	}
@@ -538,7 +535,7 @@ bool Spell::configureSpell(const pugi::xml_node& node)
 			continue;
 		}
 
-		int32_t vocationId = g_vocations.getVocationId(attr.as_string());
+		int32_t vocationId = g_vocations().getVocationId(attr.as_string());
 		if (vocationId != -1) {
 			attr = vocationNode.attribute("showInDescription");
 			vocSpellMap[vocationId] = !attr || attr.as_bool();

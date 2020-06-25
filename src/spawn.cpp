@@ -169,7 +169,7 @@ bool Spawns::isInZone(const Position& centerPos, int32_t radius, const Position&
 void Spawn::startSpawnCheck()
 {
 	if (checkSpawnEvent == 0) {
-		checkSpawnEvent = g_scheduler.addEvent(createSchedulerTask(getInterval(), std::bind(&Spawn::checkSpawn, this)));
+		checkSpawnEvent = g_scheduler().addEvent(createSchedulerTask(getInterval(), std::bind(&Spawn::checkSpawn, this)));
 	}
 }
 
@@ -273,7 +273,7 @@ void Spawn::checkSpawn()
 	}
 
 	if (spawnedCount < spawnMap.size()) {
-		checkSpawnEvent = g_scheduler.addEvent(createSchedulerTask(getInterval(), std::bind(&Spawn::checkSpawn, this)));
+		checkSpawnEvent = g_scheduler().addEvent(createSchedulerTask(getInterval(), std::bind(&Spawn::checkSpawn, this)));
 	}
 }
 
@@ -291,7 +291,7 @@ void Spawn::scheduleSpawn(uint32_t spawnId, int32_t interval)
 		}
 	} else {
 		g_game.addMagicEffect(sb.pos, CONST_ME_TELEPORT);
-		g_scheduler.addEvent(createSchedulerTask(1500, std::bind(&Spawn::scheduleSpawn, this, spawnId, interval - 1500)));
+		g_scheduler().addEvent(createSchedulerTask(1500, std::bind(&Spawn::scheduleSpawn, this, spawnId, interval - 1500)));
 	}
 }
 
@@ -323,7 +323,7 @@ void Spawn::removeMonster(Monster* monster)
 void Spawn::stopEvent()
 {
 	if (checkSpawnEvent != 0) {
-		g_scheduler.stopEvent(checkSpawnEvent);
+		g_scheduler().stopEvent(checkSpawnEvent);
 		checkSpawnEvent = 0;
 	}
 }

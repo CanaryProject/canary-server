@@ -27,7 +27,6 @@
 #include "events.h"
 
 extern Game g_game;
-extern Weapons* g_weapons;
 extern ConfigManager g_config;
 
 CombatDamage Combat::getCombatDamage(Creature* creature, Creature* target) const
@@ -55,7 +54,7 @@ CombatDamage Combat::getCombatDamage(Creature* creature, Creature* target) const
 				);
 			} else if (formulaType == COMBAT_FORMULA_SKILL) {
 				Item* tool = player->getWeapon();
-				const Weapon* weapon = g_weapons->getWeapon(tool);
+				const Weapon* weapon = g_weapons().getWeapon(tool);
 				if (weapon) {
 					damage.primary.value = normal_random(
 						static_cast<int32_t>(minb),
@@ -905,7 +904,7 @@ void ValueCallback::getMinMaxValues(Player* player, CombatDamage& damage, bool u
 		case COMBAT_FORMULA_SKILL: {
 			//onGetPlayerMinMaxValues(player, attackSkill, attackValue, attackFactor)
 			Item* tool = player->getWeapon();
-			const Weapon* weapon = g_weapons->getWeapon(tool);
+			const Weapon* weapon = g_weapons().getWeapon(tool);
 
 			int32_t attackValue = 7;
 			if (weapon) {

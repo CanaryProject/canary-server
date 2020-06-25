@@ -40,20 +40,10 @@
 #include "scripts.h"
 #include "weapons.h"
 
-extern Game g_game;
-extern ConfigManager g_config;
-extern Vocations g_vocations;
-extern Spells* g_spells;
-extern TalkActions* g_talkActions;
-extern MoveEvents* g_moveEvents;
-extern Weapons* g_weapons;
-
 ScriptEnvironment::DBResultMap ScriptEnvironment::tempResults;
 uint32_t ScriptEnvironment::lastResultId = 0;
 
 std::multimap<ScriptEnvironment*, Item*> ScriptEnvironment::tempItems;
-
-LuaEnvironment g_luaEnvironment;
 
 ScriptEnvironment::ScriptEnvironment()
 {
@@ -264,8 +254,8 @@ int32_t LuaScriptInterface::scriptEnvIndex = -1;
 
 LuaScriptInterface::LuaScriptInterface(std::string interfaceName) : interfaceName(std::move(interfaceName))
 {
-	if (!g_luaEnvironment.getLuaState()) {
-		g_luaEnvironment.initState();
+	if (!g_luaEnvironment().getLuaState()) {
+		g_luaEnvironment().initState();
 	}
 }
 
@@ -276,8 +266,8 @@ LuaScriptInterface::~LuaScriptInterface()
 
 bool LuaScriptInterface::reInitState()
 {
-	g_luaEnvironment.clearCombatObjects(this);
-	g_luaEnvironment.clearAreaObjects(this);
+	g_luaEnvironment().clearCombatObjects(this);
+	g_luaEnvironment().clearAreaObjects(this);
 
 	closeState();
 	return initState();
@@ -497,7 +487,7 @@ bool LuaScriptInterface::pushFunction(int32_t functionId)
 
 bool LuaScriptInterface::initState()
 {
-	luaState = g_luaEnvironment.getLuaState();
+	luaState = g_luaEnvironment().getLuaState();
 	if (!luaState) {
 		return false;
 	}
@@ -510,7 +500,7 @@ bool LuaScriptInterface::initState()
 
 bool LuaScriptInterface::closeState()
 {
-	if (!g_luaEnvironment.getLuaState() || !luaState) {
+	if (!g_luaEnvironment().getLuaState() || !luaState) {
 		return false;
 	}
 
@@ -824,7 +814,7 @@ LuaVariant LuaScriptInterface::getVariant(lua_State* L, int32_t arg)
 
 InstantSpell* LuaScriptInterface::getInstantSpell(lua_State* L, int32_t arg)
 {
-	InstantSpell* spell = g_spells->getInstantSpellByName(getFieldString(L, arg, "name"));
+	InstantSpell* spell = g_spells().getInstantSpellByName(getFieldString(L, arg, "name"));
 	lua_pop(L, 1);
 	return spell;
 }
@@ -3415,8 +3405,8 @@ int LuaScriptInterface::luaCreateCombatArea(lua_State* L)
 		return 1;
 	}
 
-	uint32_t areaId = g_luaEnvironment.createAreaObject(env->getScriptInterface());
-	AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
+	uint32_t areaId = g_luaEnvironment().createAreaObject(env->getScriptInterface());
+	AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
 
 	int parameters = lua_gettop(L);
 	if (parameters >= 2) {
@@ -3454,7 +3444,7 @@ int LuaScriptInterface::luaDoAreaCombatHealth(lua_State* L)
 	}
 
 	uint32_t areaId = getNumber<uint32_t>(L, 4);
-	const AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
+	const AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatType_t combatType = getNumber<CombatType_t>(L, 2);
 
@@ -3520,7 +3510,7 @@ int LuaScriptInterface::luaDoAreaCombatMana(lua_State* L)
 	}
 
 	uint32_t areaId = getNumber<uint32_t>(L, 3);
-	const AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
+	const AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatParams params;
 		params.impactEffect = getNumber<uint8_t>(L, 6);
@@ -3588,7 +3578,7 @@ int LuaScriptInterface::luaDoAreaCombatCondition(lua_State* L)
 	}
 
 	uint32_t areaId = getNumber<uint32_t>(L, 3);
-	const AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
+	const AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatParams params;
 		params.impactEffect = getNumber<uint8_t>(L, 5);
@@ -3645,7 +3635,7 @@ int LuaScriptInterface::luaDoAreaCombatDispel(lua_State* L)
 	}
 
 	uint32_t areaId = getNumber<uint32_t>(L, 3);
-	const AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
+	const AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatParams params;
 		params.impactEffect = getNumber<uint8_t>(L, 5);
@@ -3841,7 +3831,7 @@ int LuaScriptInterface::luaDoSetCreatureLight(lua_State* L)
 int LuaScriptInterface::luaAddEvent(lua_State* L)
 {
 	//addEvent(callback, delay, ...)
-	lua_State* globalState = g_luaEnvironment.getLuaState();
+	lua_State* globalState = g_luaEnvironment().getLuaState();
 	if (!globalState) {
 		reportErrorFunc("No valid script interface!");
 		pushBoolean(L, false);
@@ -3945,12 +3935,12 @@ int LuaScriptInterface::luaAddEvent(lua_State* L)
 	eventDesc.function = luaL_ref(globalState, LUA_REGISTRYINDEX);
 	eventDesc.scriptId = getScriptEnv()->getScriptId();
 
-	auto& lastTimerEventId = g_luaEnvironment.lastEventTimerId;
-	eventDesc.eventId = g_scheduler.addEvent(createSchedulerTask(
-		delay, std::bind(&LuaEnvironment::executeTimerEvent, &g_luaEnvironment, lastTimerEventId)
+	auto& lastTimerEventId = g_luaEnvironment().lastEventTimerId;
+	eventDesc.eventId = g_scheduler().addEvent(createSchedulerTask(
+		delay, std::bind(g_luaEnvironment().executeTimerEvent)
 	));
 
-	g_luaEnvironment.timerEvents.emplace(lastTimerEventId, std::move(eventDesc));
+	g_luaEnvironment().timerEvents.emplace(lastTimerEventId, std::move(eventDesc));
 	lua_pushnumber(L, lastTimerEventId++);
 	return 1;
 }
@@ -3958,7 +3948,7 @@ int LuaScriptInterface::luaAddEvent(lua_State* L)
 int LuaScriptInterface::luaStopEvent(lua_State* L)
 {
 	//stopEvent(eventid)
-	lua_State* globalState = g_luaEnvironment.getLuaState();
+	lua_State* globalState = g_luaEnvironment().getLuaState();
 	if (!globalState) {
 		reportErrorFunc("No valid script interface!");
 		pushBoolean(L, false);
@@ -3967,7 +3957,7 @@ int LuaScriptInterface::luaStopEvent(lua_State* L)
 
 	uint32_t eventId = getNumber<uint32_t>(L, 1);
 
-	auto& timerEvents = g_luaEnvironment.timerEvents;
+	auto& timerEvents = g_luaEnvironment().timerEvents;
 	auto it = timerEvents.find(eventId);
 	if (it == timerEvents.end()) {
 		pushBoolean(L, false);
@@ -3977,7 +3967,7 @@ int LuaScriptInterface::luaStopEvent(lua_State* L)
 	LuaTimerEventDesc timerEventDesc = std::move(it->second);
 	timerEvents.erase(it);
 
-	g_scheduler.stopEvent(timerEventDesc.eventId);
+	g_scheduler().stopEvent(timerEventDesc.eventId);
 	luaL_unref(globalState, LUA_REGISTRYINDEX, timerEventDesc.function);
 
 	for (auto parameter : timerEventDesc.parameters) {
@@ -4186,7 +4176,7 @@ int LuaScriptInterface::luaDatabaseAsyncExecute(lua_State* L)
 		int32_t ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		auto scriptId = getScriptEnv()->getScriptId();
 		callback = [ref, scriptId, params](DBResult_ptr, bool success) {
-			lua_State* luaState = g_luaEnvironment.getLuaState();
+			lua_State* luaState = g_luaEnvironment().getLuaState();
 			if (!luaState) {
 				return;
 			}
@@ -4209,8 +4199,8 @@ int LuaScriptInterface::luaDatabaseAsyncExecute(lua_State* L)
 			}
 
 			auto env = getScriptEnv();
-			env->setScriptId(scriptId, &g_luaEnvironment);
-			g_luaEnvironment.callFunction(1 + static_cast<int>(params.size()));
+			env->setScriptId(scriptId, g_luaEnvironment());
+			g_luaEnvironment().callFunction(1 + static_cast<int>(params.size()));
 
 			luaL_unref(luaState, LUA_REGISTRYINDEX, ref);
 			for (auto parameter : params) {
@@ -4245,7 +4235,7 @@ int LuaScriptInterface::luaDatabaseAsyncStoreQuery(lua_State* L)
 		int32_t ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		auto scriptId = getScriptEnv()->getScriptId();
 		callback = [ref, scriptId, params](DBResult_ptr result, bool) {
-			lua_State* luaState = g_luaEnvironment.getLuaState();
+			lua_State* luaState = g_luaEnvironment().getLuaState();
 			if (!luaState) {
 				return;
 			}
@@ -4272,8 +4262,8 @@ int LuaScriptInterface::luaDatabaseAsyncStoreQuery(lua_State* L)
 			}
 
 			auto env = getScriptEnv();
-			env->setScriptId(scriptId, &g_luaEnvironment);
-			g_luaEnvironment.callFunction(1 + static_cast<int>(params.size()));
+			env->setScriptId(scriptId, g_luaEnvironment());
+			g_luaEnvironment().callFunction(1 + static_cast<int>(params.size()));
 
 			luaL_unref(luaState, LUA_REGISTRYINDEX, ref);
 			for (auto parameter : params) {
@@ -4877,12 +4867,12 @@ int LuaScriptInterface::luaGameReload(lua_State* L)
 	// Game.reload(reloadType)
 	ReloadTypes_t reloadType = getNumber<ReloadTypes_t>(L, 1);
 	if (reloadType == RELOAD_TYPE_GLOBAL) {
-		pushBoolean(L, g_luaEnvironment.loadFile("data/global.lua") == 0);
+		pushBoolean(L, g_luaEnvironment().loadFile("data/global.lua") == 0);
 		pushBoolean(L, g_scripts().loadScripts("scripts/lib", true, true));
 	} else {
 		pushBoolean(L, g_game.reload(reloadType));
 	}
-	lua_gc(g_luaEnvironment.getLuaState(), LUA_GCCOLLECT, 0);
+	lua_gc(g_luaEnvironment().getLuaState(), LUA_GCCOLLECT, 0);
 	return 1;
 }
 
@@ -8987,9 +8977,9 @@ int LuaScriptInterface::luaPlayerSetVocation(lua_State* L)
 
 	Vocation* vocation;
 	if (isNumber(L, 2)) {
-		vocation = g_vocations.getVocation(getNumber<uint16_t>(L, 2));
+		vocation = g_vocations().getVocation(getNumber<uint16_t>(L, 2));
 	} else if (isString(L, 2)) {
-		vocation = g_vocations.getVocation(g_vocations.getVocationId(getString(L, 2)));
+		vocation = g_vocations().getVocation(g_vocations().getVocationId(getString(L, 2)));
 	} else if (isUserdata(L, 2)) {
 		vocation = getUserdata<Vocation>(L, 2);
 	} else {
@@ -10009,7 +9999,7 @@ int LuaScriptInterface::luaPlayerCanLearnSpell(lua_State* L)
 	}
 
 	const std::string& spellName = getString(L, 2);
-	InstantSpell* spell = g_spells->getInstantSpellByName(spellName);
+	InstantSpell* spell = g_spells().getInstantSpellByName(spellName);
 	if (!spell) {
 		reportErrorFunc("Spell \"" + spellName + "\" not found");
 		pushBoolean(L, false);
@@ -10337,7 +10327,7 @@ int LuaScriptInterface::luaPlayerGetInstantSpells(lua_State* L)
 	}
 
 	std::vector<const InstantSpell*> spells;
-	for (auto& spell : g_spells->getInstantSpells()) {
+	for (auto& spell : g_spells().getInstantSpells()) {
 		if (spell.second->canCast(player)) {
 			spells.push_back(spell.second.get());
 		}
@@ -11053,10 +11043,10 @@ int LuaScriptInterface::luaVocationCreate(lua_State* L)
 	if (isNumber(L, 2)) {
 		id = getNumber<uint32_t>(L, 2);
 	} else {
-		id = g_vocations.getVocationId(getString(L, 2));
+		id = g_vocations().getVocationId(getString(L, 2));
 	}
 
-	Vocation* vocation = g_vocations.getVocation(id);
+	Vocation* vocation = g_vocations().getVocation(id);
 	if (vocation) {
 		pushUserdata<Vocation>(L, vocation);
 		setMetatable(L, -1, "Vocation");
@@ -11288,7 +11278,7 @@ int LuaScriptInterface::luaVocationGetDemotion(lua_State* L)
 		return 1;
 	}
 
-	Vocation* demotedVocation = g_vocations.getVocation(fromId);
+	Vocation* demotedVocation = g_vocations().getVocation(fromId);
 	if (demotedVocation && demotedVocation != vocation) {
 		pushUserdata<Vocation>(L, demotedVocation);
 		setMetatable(L, -1, "Vocation");
@@ -11307,13 +11297,13 @@ int LuaScriptInterface::luaVocationGetPromotion(lua_State* L)
 		return 1;
 	}
 
-	uint16_t promotedId = g_vocations.getPromotedVocation(vocation->getId());
+	uint16_t promotedId = g_vocations().getPromotedVocation(vocation->getId());
 	if (promotedId == VOCATION_NONE) {
 		lua_pushnil(L);
 		return 1;
 	}
 
-	Vocation* promotedVocation = g_vocations.getVocation(promotedId);
+	Vocation* promotedVocation = g_vocations().getVocation(promotedId);
 	if (promotedVocation && promotedVocation != vocation) {
 		pushUserdata<Vocation>(L, promotedVocation);
 		setMetatable(L, -1, "Vocation");
@@ -12297,7 +12287,7 @@ int LuaScriptInterface::luaItemTypeHasSubType(lua_State* L)
 int LuaScriptInterface::luaCombatCreate(lua_State* L)
 {
 	// Combat()
-	Combat* combat = g_luaEnvironment.createCombatObject(getScriptEnv()->getScriptInterface());
+	Combat* combat = g_luaEnvironment().createCombatObject(getScriptEnv()->getScriptInterface());
 	combat->incrementReferenceCounter();
 
 	pushUserdata<Combat>(L, combat);
@@ -12364,7 +12354,7 @@ int LuaScriptInterface::luaCombatSetArea(lua_State* L)
 		return 1;
 	}
 
-	const AreaCombat* area = g_luaEnvironment.getAreaObject(getNumber<uint32_t>(L, 2));
+	const AreaCombat* area = g_luaEnvironment().getAreaObject(getNumber<uint32_t>(L, 2));
 	if (!area) {
 		reportErrorFunc(getErrorDesc(LUA_ERROR_AREA_NOT_FOUND));
 		lua_pushnil(L);
@@ -14357,13 +14347,13 @@ int LuaScriptInterface::luaSpellCreate(lua_State* L)
 
 	// isNumber(L, 2) doesn't work here for some reason, maybe a bug?
 	if (getNumber<uint32_t>(L, 2)) {
-		InstantSpell* instant = g_spells->getInstantSpellById(getNumber<uint32_t>(L, 2));
+		InstantSpell* instant = g_spells().getInstantSpellById(getNumber<uint32_t>(L, 2));
 		if (instant) {
 			pushUserdata<Spell>(L, instant);
 			setMetatable(L, -1, "Spell");
 			return 1;
 		}
-		RuneSpell* rune = g_spells->getRuneSpell(getNumber<uint32_t>(L, 2));
+		RuneSpell* rune = g_spells().getRuneSpell(getNumber<uint32_t>(L, 2));
 		if (rune) {
 			pushUserdata<Spell>(L, rune);
 			setMetatable(L, -1, "Spell");
@@ -14371,19 +14361,19 @@ int LuaScriptInterface::luaSpellCreate(lua_State* L)
 		}
 	} else if (isString(L, 2)) {
 		std::string arg = getString(L, 2);
-		InstantSpell* instant = g_spells->getInstantSpellByName(arg);
+		InstantSpell* instant = g_spells().getInstantSpellByName(arg);
 		if (instant) {
 			pushUserdata<Spell>(L, instant);
 			setMetatable(L, -1, "Spell");
 			return 1;
 		}
-		instant = g_spells->getInstantSpell(arg);
+		instant = g_spells().getInstantSpell(arg);
 		if (instant) {
 			pushUserdata<Spell>(L, instant);
 			setMetatable(L, -1, "Spell");
 			return 1;
 		}
-		RuneSpell* rune = g_spells->getRuneSpellByName(arg);
+		RuneSpell* rune = g_spells().getRuneSpellByName(arg);
 		if (rune) {
 			pushUserdata<Spell>(L, rune);
 			setMetatable(L, -1, "Spell");
@@ -14434,7 +14424,7 @@ int LuaScriptInterface::luaSpellRegister(lua_State* L)
 				pushBoolean(L, false);
 				delete spell;
 			} else {
-				pushBoolean(L, g_spells->registerInstantLuaEvent(instant));
+				pushBoolean(L, g_spells().registerInstantLuaEvent(instant));
 			}
 		} else if (spell->spellType == SPELL_RUNE) {
 			RuneSpell* rune = dynamic_cast<RuneSpell*>(spell);
@@ -14450,7 +14440,7 @@ int LuaScriptInterface::luaSpellRegister(lua_State* L)
 				pushBoolean(L, false);
 				delete spell;
 			} else {
-				pushBoolean(L, g_spells->registerRuneLuaEvent(rune));
+				pushBoolean(L, g_spells().registerRuneLuaEvent(rune));
 			}
 		}
 		*spellPtr = nullptr; // Remove luascript reference
@@ -14853,7 +14843,7 @@ int LuaScriptInterface::luaSpellVocation(lua_State* L)
 				++it;
 				std::string s = std::to_string(it);
 				char const *pchar = s.c_str();
-				std::string name = g_vocations.getVocation(voc.first)->getVocName();
+				std::string name = g_vocations().getVocation(voc.first)->getVocName();
 				setField(L, pchar, name);
 			}
 			setMetatable(L, -1, "Spell");
@@ -14862,7 +14852,7 @@ int LuaScriptInterface::luaSpellVocation(lua_State* L)
 			for (int i = 0; i < parameters; ++i) {
 				if (getString(L, 2 + i).find(";") != std::string::npos) {
 					std::vector<std::string> vocList = explodeString(getString(L, 2 + i), ";");
-					int32_t vocationId = g_vocations.getVocationId(vocList[0]);
+					int32_t vocationId = g_vocations().getVocationId(vocList[0]);
 					if (vocList.size() > 0) {
 						if (!tfs_strcmp(vocList[1].c_str(), "true")) {
 							spell->addVocMap(vocationId, true);
@@ -14871,7 +14861,7 @@ int LuaScriptInterface::luaSpellVocation(lua_State* L)
 						}
 					}
 				} else {
-					int32_t vocationId = g_vocations.getVocationId(getString(L, 2 + i));
+					int32_t vocationId = g_vocations().getVocationId(getString(L, 2 + i));
 					spell->addVocMap(vocationId, false);
 				}
 			}
@@ -15349,7 +15339,7 @@ int LuaScriptInterface::luaTalkactionRegister(lua_State* L)
 			pushBoolean(L, false);
 			delete talk;
 		} else {
-			pushBoolean(L, g_talkActions->registerLuaEvent(talk));
+			pushBoolean(L, g_talkActions().registerLuaEvent(talk));
 		}
 		*talkPtr = nullptr; // Remove luascript reference
 	} else {
@@ -15522,9 +15512,9 @@ int LuaScriptInterface::luaMoveEventRegister(lua_State* L)
 	if (moveeventPtr && *moveeventPtr) {
 		MoveEvent_ptr moveEvent{ *moveeventPtr };
 		if (!moveEvent->isScripted()) {
-			pushBoolean(L, g_moveEvents->registerLuaFunction(moveEvent));
+			pushBoolean(L, g_moveEvents().registerLuaFunction(moveEvent));
 		} else {
-			pushBoolean(L, g_moveEvents->registerLuaEvent(moveEvent));
+			pushBoolean(L, g_moveEvents().registerLuaEvent(moveEvent));
 		}
 		moveEvent->getItemIdRange().clear();
 		moveEvent->getItemIdRange().shrink_to_fit();
@@ -16009,7 +15999,7 @@ int LuaScriptInterface::luaWeaponRegister(lua_State* L)
 		}
 
 		weapon->configureWeapon(it);
-		pushBoolean(L, g_weapons->registerLuaEvent(weapon));
+		pushBoolean(L, g_weapons().registerLuaEvent(weapon));
 		*weaponPtr = nullptr; // Remove luascript reference
 	} else {
 		lua_pushnil(L);

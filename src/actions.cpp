@@ -28,7 +28,6 @@
 #include "spells.h"
 
 extern Game g_game;
-extern Spells* g_spells;
 extern ConfigManager g_config;
 
 Actions::Actions() :
@@ -301,7 +300,7 @@ Action* Actions::getAction(const Item* item)
 	}
 
 	//rune items
-	return g_spells->getRuneSpell(item->getID());
+	return g_spells().getRuneSpell(item->getID());
 }
 
 ReturnValue Actions::internalUseItem(Player* player, const Position& pos, uint8_t index, Item* item, bool isHotkey)

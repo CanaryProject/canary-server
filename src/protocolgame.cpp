@@ -40,7 +40,6 @@
 
 extern ConfigManager g_config;
 extern Actions actions;
-extern Spells* g_spells;
 
 NetworkMessage ProtocolGame::playermsg;
 
@@ -195,7 +194,7 @@ void ProtocolGame::login(const std::string accountName, const std::string passwo
 			foundPlayer->disconnect();
 			foundPlayer->isConnecting = true;
 
-			eventConnect = g_scheduler.addEvent(createSchedulerTask(1000, std::bind(&ProtocolGame::connect, getThis(), foundPlayer->getID(), operatingSystem, tfcOperatingSystem)));
+			eventConnect = g_scheduler().addEvent(createSchedulerTask(1000, std::bind(&ProtocolGame::connect, getThis(), foundPlayer->getID(), operatingSystem, tfcOperatingSystem)));
 		} else {
 			connect(foundPlayer->getID(), operatingSystem, tfcOperatingSystem);
 		}
@@ -2268,7 +2267,7 @@ void ProtocolGame::sendBasicData()
 	playermsg.addByte(player->getVocation()->getClientId());
 	playermsg.addByte(((player->getVocation()->getId() != 0) ? 0x01 : 0x00));
 
-	std::vector<uint16_t> spells = g_spells->getSpellsByVocation(player->getVocationId());
+	std::vector<uint16_t> spells = g_spells().getSpellsByVocation(player->getVocationId());
 	playermsg.add<uint16_t>(spells.size());
 	for (auto spellId : spells) {
 		playermsg.addByte(spellId);

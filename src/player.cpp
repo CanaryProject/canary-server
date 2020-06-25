@@ -34,12 +34,6 @@
 #include "scheduler.h"
 #include "weapons.h"
 
-extern ConfigManager g_config;
-extern Game g_game;
-extern Vocations g_vocations;
-extern MoveEvents* g_moveEvents;
-extern Weapons* g_weapons;
-
 MuteCountMap Player::muteCountMap;
 
 uint32_t Player::playerAutoID = 0x10000000;
@@ -92,7 +86,7 @@ Player::~Player()
 
 bool Player::setVocation(uint16_t vocId, bool internal /*=false*/)
 {
-	Vocation* voc = g_vocations.getVocation(vocId);
+	Vocation* voc = g_vocations().getVocation(vocId);
 	if (!voc) {
 		return false;
 	}
@@ -1136,7 +1130,7 @@ void Player::onCreatureAppear(Creature* creature, bool isLogin)
 		for (int32_t slot = CONST_SLOT_FIRST; slot <= CONST_SLOT_LAST; ++slot) {
 			Item* item = inventory[slot];
 			if (item) {
-				g_moveEvents->onPlayerEquip(this, item, static_cast<slots_t>(slot), false);
+				g_moveEvents().onPlayerEquip(this, item, static_cast<slots_t>(slot), false);
 			}
 		}
 
@@ -1510,7 +1504,7 @@ void Player::checkTradeState(const Item* item)
 void Player::setNextWalkActionTask(SchedulerTask* task)
 {
 	if (walkTaskEvent != 0) {
-		g_scheduler.stopEvent(walkTaskEvent);
+		g_scheduler().stopEvent(walkTaskEvent);
 		walkTaskEvent = 0;
 	}
 
@@ -1521,12 +1515,12 @@ void Player::setNextWalkActionTask(SchedulerTask* task)
 void Player::setNextWalkTask(SchedulerTask* task)
 {
 	if (nextStepEvent != 0) {
-		g_scheduler.stopEvent(nextStepEvent);
+		g_scheduler().stopEvent(nextStepEvent);
 		nextStepEvent = 0;
 	}
 
 	if (task) {
-		nextStepEvent = g_scheduler.addEvent(task);
+		nextStepEvent = g_scheduler().addEvent(task);
 		resetIdleTime();
 	}
 }
@@ -1534,12 +1528,12 @@ void Player::setNextWalkTask(SchedulerTask* task)
 void Player::setNextActionTask(SchedulerTask* task)
 {
 	if (actionTaskEvent != 0) {
-		g_scheduler.stopEvent(actionTaskEvent);
+		g_scheduler().stopEvent(actionTaskEvent);
 		actionTaskEvent = 0;
 	}
 
 	if (task) {
-		actionTaskEvent = g_scheduler.addEvent(task);
+		actionTaskEvent = g_scheduler().addEvent(task);
 		resetIdleTime();
 	}
 }
@@ -2598,7 +2592,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 		return RETURNVALUE_NOTENOUGHCAPACITY;
 	}
 
-	if (!g_moveEvents->onPlayerEquip(const_cast<Player*>(this), const_cast<Item*>(item), static_cast<slots_t>(index), true)) {
+	if (!g_moveEvents().onPlayerEquip(const_cast<Player*>(this), const_cast<Item*>(item), static_cast<slots_t>(index), true)) {
 		return RETURNVALUE_CANNOTBEDRESSED;
 	}
 	return ret;
@@ -3118,7 +3112,7 @@ void Player::postAddNotification(Thing* thing, const Cylinder* oldParent, int32_
 {
 	if (link == LINK_OWNER) {
 		//calling movement scripts
-		g_moveEvents->onPlayerEquip(this, thing->getItem(), static_cast<slots_t>(index), false);
+		g_moveEvents().onPlayerEquip(this, thing->getItem(), static_cast<slots_t>(index), false);
 	}
 
 	bool requireListUpdate = false;
@@ -3175,7 +3169,7 @@ void Player::postRemoveNotification(Thing* thing, const Cylinder* newParent, int
 {
 	if (link == LINK_OWNER) {
 		//calling movement scripts
-		g_moveEvents->onPlayerDeEquip(this, thing->getItem(), static_cast<slots_t>(index));
+		g_moveEvents().onPlayerDeEquip(this, thing->getItem(), static_cast<slots_t>(index));
 	}
 
 	bool requireListUpdate = false;
@@ -3363,7 +3357,7 @@ void Player::doAttacking(uint32_t)
 		bool result = false;
 
 		Item* tool = getWeapon();
-		const Weapon* weapon = g_weapons->getWeapon(tool);
+		const Weapon* weapon = g_weapons().getWeapon(tool);
 		uint32_t delay = getAttackSpeed();
 		bool classicSpeed = g_config.getBoolean(ConfigManager::CLASSIC_ATTACK_SPEED);
 
@@ -3383,7 +3377,7 @@ void Player::doAttacking(uint32_t)
 		if (!classicSpeed) {
 			setNextActionTask(task);
 		} else {
-			g_scheduler.addEvent(task);
+			g_scheduler().addEvent(task);
 		}
 
 		if (result) {
@@ -3437,7 +3431,7 @@ void Player::onWalkAborted()
 void Player::onWalkComplete()
 {
 	if (walkTask) {
-		walkTaskEvent = g_scheduler.addEvent(walkTask);
+		walkTaskEvent = g_scheduler().addEvent(walkTask);
 		walkTask = nullptr;
 	}
 }
@@ -4048,7 +4042,7 @@ void Player::checkSkullTicks(int64_t ticks)
 
 bool Player::isPromoted() const
 {
-	uint16_t promotedVocation = g_vocations.getPromotedVocation(vocation->getId());
+	uint16_t promotedVocation = g_vocations().getPromotedVocation(vocation->getId());
 	return promotedVocation == VOCATION_NONE && vocation->getId() != promotedVocation;
 }
 
@@ -4760,7 +4754,7 @@ void Player::addScheduledUpdates(uint32_t flags)
 {
 	scheduledUpdates |= flags;
 	if (!scheduledUpdate) {
-		g_scheduler.addEvent(createSchedulerTask(SCHEDULER_MINTICKS, std::bind(&Game::updatePlayerEvent, &g_game, getID())));
+		g_scheduler().addEvent(createSchedulerTask(SCHEDULER_MINTICKS, std::bind(&Game::updatePlayerEvent, &g_game, getID())));
 		scheduledUpdate = true;
 	}
 }

@@ -126,6 +126,17 @@ class Vocation
 class Vocations
 {
 	public:
+		Vocations() {}
+
+		// Singleton - ensures we don't accidentally copy it
+		Vocations(Vocations const&) = delete;
+		void operator=(Vocations const&) = delete;
+
+		static Vocations& getInstance() {
+			static Vocations instance; // Guaranteed to be destroyed.
+														// Instantiated on first use.
+			return instance;
+		}
 		bool loadFromXml();
 
 		Vocation* getVocation(uint16_t id);
@@ -135,5 +146,7 @@ class Vocations
 	private:
 		std::map<uint16_t, Vocation> vocationsMap;
 };
+
+constexpr auto g_vocations = &Vocations::getInstance;
 
 #endif

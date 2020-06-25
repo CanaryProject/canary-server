@@ -30,7 +30,6 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 #endif
 
-extern LuaEnvironment g_luaEnvironment;
 extern ConfigManager g_config;
 
 Scripts::Scripts() :

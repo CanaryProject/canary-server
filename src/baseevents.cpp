@@ -24,8 +24,6 @@
 #include "pugicast.h"
 #include "tools.h"
 
-extern LuaEnvironment g_luaEnvironment;
-
 bool BaseEvents::loadFromXml()
 {
 	if (loaded) {
@@ -99,7 +97,7 @@ Event::Event(LuaScriptInterface* interface) : scriptInterface(interface) {}
 
 bool Event::checkScript(const std::string& basePath, const std::string& scriptsName, const std::string& scriptFile) const
 {
-	LuaScriptInterface* testInterface = g_luaEnvironment.getTestInterface();
+	LuaScriptInterface* testInterface = g_luaEnvironment().getTestInterface();
 	testInterface->reInitState();
 
 	if (testInterface->loadFile(std::string(basePath + "lib/" + scriptsName + ".lua")) == -1) {

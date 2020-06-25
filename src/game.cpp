@@ -44,11 +44,6 @@
 #include "scripts.h"
 
 extern ConfigManager g_config;
-extern TalkActions* g_talkActions;
-extern Spells* g_spells;
-extern Vocations g_vocations;
-extern MoveEvents* g_moveEvents;
-extern Weapons* g_weapons;
 
 Game::Game()
 {
@@ -75,8 +70,8 @@ void Game::start(ServiceManager* manager)
 {
 	serviceManager = manager;
 
-	g_scheduler.addEvent(createSchedulerTask(EVENT_LIGHTINTERVAL, std::bind(&Game::checkLight, this)));
-	g_scheduler.addEvent(createSchedulerTask(EVENT_CREATURE_THINK_INTERVAL, std::bind(&Game::checkCreatures, this, 0)));
+	g_scheduler().addEvent(createSchedulerTask(EVENT_LIGHTINTERVAL, std::bind(&Game::checkLight, this)));
+	g_scheduler().addEvent(createSchedulerTask(EVENT_CREATURE_THINK_INTERVAL, std::bind(&Game::checkCreatures, this, 0)));
 }
 
 GameState_t Game::getGameState() const
@@ -145,7 +140,7 @@ void Game::setGameState(GameState_t newState)
 
 			g_dispatcher().addTask(std::bind(&Game::shutdown, this));
 
-			g_scheduler.stop();
+			g_scheduler().stop();
 			g_databaseTasks().stop();
 			g_dispatcher().stop();
 			break;
@@ -2208,7 +2203,7 @@ void Game::playerMoveUpContainer(Player* player, uint8_t cid)
 			parentContainer = new Container(tile);
 			parentContainer->incrementReferenceCounter();
 			browseFields[tile] = parentContainer;
-			g_scheduler.addEvent(createSchedulerTask(30000, std::bind(&Game::decreaseBrowseFieldRef, this, tile->getPosition())));
+			g_scheduler().addEvent(createSchedulerTask(30000, std::bind(&Game::decreaseBrowseFieldRef, this, tile->getPosition())));
 		} else {
 			parentContainer = it->second;
 		}
@@ -2455,7 +2450,7 @@ void Game::playerBrowseField(uint32_t playerId, const Position& pos)
 		container = new Container(tile);
 		container->incrementReferenceCounter();
 		browseFields[tile] = container;
-		g_scheduler.addEvent(createSchedulerTask(30000, std::bind(&Game::decreaseBrowseFieldRef, this, tile->getPosition())));
+		g_scheduler().addEvent(createSchedulerTask(30000, std::bind(&Game::decreaseBrowseFieldRef, this, tile->getPosition())));
 	} else {
 		container = it->second;
 	}
@@ -3298,13 +3293,13 @@ bool Game::playerSaySpell(Player* player, SpeakClasses type, const std::string& 
 
 	TalkActionResult_t result;
 	if (text.front() == '/' || text.front() == '!') {
-		result = g_talkActions->playerSaySpell(player, type, words);
+		result = g_talkActions().playerSaySpell(player, type, words);
 		if (result == TALKACTION_BREAK) {
 			return true;
 		}
 	}
 
-	result = g_spells->playerSaySpell(player, words, lowerWords);
+	result = g_spells().playerSaySpell(player, words, lowerWords);
 	if (result == TALKACTION_BREAK) {
 		if (!g_config.getBoolean(ConfigManager::EMOTE_SPELLS)) {
 			return internalCreatureSay(player, TALKTYPE_SPELL, words, false);
@@ -3521,7 +3516,7 @@ void Game::removeCreatureCheck(Creature* creature)
 
 void Game::checkCreatures(size_t index)
 {
-	g_scheduler.addEvent(createSchedulerTask(EVENT_CHECK_CREATURE_INTERVAL, std::bind(&Game::checkCreatures, this, (index + 1) % EVENT_CREATURECOUNT)));
+	g_scheduler().addEvent(createSchedulerTask(EVENT_CHECK_CREATURE_INTERVAL, std::bind(&Game::checkCreatures, this, (index + 1) % EVENT_CREATURECOUNT)));
 
 	auto& checkCreatureList = checkCreatureLists[index];
 	size_t it = 0, end = checkCreatureList.size();
@@ -4418,7 +4413,7 @@ void Game::internalDecayItem(Item* item)
 
 void Game::checkLight()
 {
-	g_scheduler.addEvent(createSchedulerTask(EVENT_LIGHTINTERVAL, std::bind(&Game::checkLight, this)));
+	g_scheduler().addEvent(createSchedulerTask(EVENT_LIGHTINTERVAL, std::bind(&Game::checkLight, this)));
 
 	lightHour += lightHourDelta;
 
@@ -4484,7 +4479,7 @@ void Game::shutdown()
 {
 	std::cout << "Shutting down..." << std::flush;
 
-	g_scheduler.shutdown();
+	g_scheduler().shutdown();
 	g_databaseTasks().shutdown();
 	g_dispatcher().shutdown();
 	map.spawns.clear();
@@ -5648,7 +5643,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 		#else
 			return false;
 		#endif
-		case RELOAD_TYPE_MOVEMENTS: return g_moveEvents->reload();
+		case RELOAD_TYPE_MOVEMENTS: return g_moveEvents().reload();
 		case RELOAD_TYPE_NPCS: {
 			Npcs::reload();
 			return true;
@@ -5658,7 +5653,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 		case RELOAD_TYPE_RAIDS: return raids.reload() && raids.startup();
 
 		case RELOAD_TYPE_SPELLS: {
-			if (!g_spells->reload()) {
+			if (!g_spells().reload()) {
 				std::cout << "[Error - Game::reload] Failed to reload spells." << std::endl;
 				std::terminate();
 			} else if (!g_monsters().reload()) {
@@ -5668,23 +5663,23 @@ bool Game::reload(ReloadTypes_t reloadType)
 			return true;
 		}
 
-		case RELOAD_TYPE_TALKACTIONS: return g_talkActions->reload();
+		case RELOAD_TYPE_TALKACTIONS: return g_talkActions().reload();
 
 		case RELOAD_TYPE_WEAPONS: {
-			bool results = g_weapons->reload();
-			g_weapons->loadDefaults();
+			bool results = g_weapons().reload();
+			g_weapons().loadDefaults();
 			return results;
 		}
 
 		case RELOAD_TYPE_SCRIPTS: {
 			// commented out stuff is TODO, once we approach further in revscriptsys
 			g_actions().clear(true);
-			g_moveEvents->clear(true);
-			g_talkActions->clear(true);
+			g_moveEvents().clear(true);
+			g_talkActions().clear(true);
 			g_globalEvents().clear(true);
-			g_weapons->clear(true);
-			g_weapons->loadDefaults();
-			g_spells->clear(true);
+			g_weapons().clear(true);
+			g_weapons().loadDefaults();
+			g_spells().clear(true);
 			reloadCreatureScripts(true, false); //Keep it as the last because it'll call loadScripts
 			/*
 			Npcs::reload();
@@ -5700,7 +5695,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 		}
 
 		default: {
-			if (!g_spells->reload()) {
+			if (!g_spells().reload()) {
 				std::cout << "[Error - Game::reload] Failed to reload spells." << std::endl;
 				std::terminate();
 			} else if (!g_monsters().reload()) {
@@ -5711,14 +5706,14 @@ bool Game::reload(ReloadTypes_t reloadType)
 			g_actions().reload();
 			g_config.reload();
 			g_monsters().reload();
-			g_moveEvents->reload();
+			g_moveEvents().reload();
 			Npcs::reload();
 			raids.reload() && raids.startup();
-			g_talkActions->reload();
+			g_talkActions().reload();
 			Item::items.reload();
-			g_weapons->reload();
-			g_weapons->clear(true);
-			g_weapons->loadDefaults();
+			g_weapons().reload();
+			g_weapons().clear(true);
+			g_weapons().loadDefaults();
 			quests.reload();
 			#if GAME_FEATURE_MOUNTS > 0
 			mounts.reload();
@@ -5727,10 +5722,10 @@ bool Game::reload(ReloadTypes_t reloadType)
 			g_events().load();
 			g_chat().load();
 			g_actions().clear(true);
-			g_moveEvents->clear(true);
-			g_talkActions->clear(true);
+			g_moveEvents().clear(true);
+			g_talkActions().clear(true);
 			g_globalEvents().clear(true);
-			g_spells->clear(true);
+			g_spells().clear(true);
 			reloadCreatureScripts(true); //Keep it as the last because it'll call loadScripts
 			return true;
 		}

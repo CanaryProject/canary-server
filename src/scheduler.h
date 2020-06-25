@@ -60,6 +60,16 @@ class Scheduler : public ThreadHolder<Scheduler>
 		Scheduler() : work(std::make_shared<boost::asio::io_service::work>(io_service)) {}
 		#endif
 
+		// Singleton - ensures we don't accidentally copy it
+		Scheduler(Scheduler const&) = delete;
+		void operator=(Scheduler const&) = delete;
+
+		static Scheduler& getInstance() {
+			static Scheduler instance; // Guaranteed to be destroyed.
+														// Instantiated on first use.
+			return instance;
+		}
+
 		uint64_t addEvent(SchedulerTask* task);
 		void stopEvent(uint64_t eventId);
 
@@ -79,6 +89,6 @@ class Scheduler : public ThreadHolder<Scheduler>
 		#endif
 };
 
-extern Scheduler g_scheduler;
+constexpr auto g_scheduler = &Scheduler::getInstance;
 
 #endif

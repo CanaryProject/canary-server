@@ -727,7 +727,7 @@ class LuaScriptInterface
 
 		static int luaItemMoveTo(lua_State* L);
 		static int luaItemTransform(lua_State* L);
-		static int luaItemDecay(lua_State* L);
+		static int luaItemLuaEnvironment(lua_State* L);
 
 		static int luaItemGetDescription(lua_State* L);
 
@@ -1189,7 +1189,7 @@ class LuaScriptInterface
 		static int luaItemTypeGetTransformEquipId(lua_State* L);
 		static int luaItemTypeGetTransformDeEquipId(lua_State* L);
 		static int luaItemTypeGetDestroyId(lua_State* L);
-		static int luaItemTypeGetDecayId(lua_State* L);
+		static int luaItemTypeGetLuaEnvironmentId(lua_State* L);
 		static int luaItemTypeGetRequiredLevel(lua_State* L);
 		static int luaItemTypeGetAmmoType(lua_State* L);
 		static int luaItemTypeGetCorpseType(lua_State* L);
@@ -1466,7 +1466,7 @@ class LuaScriptInterface
 		static int luaWeaponRange(lua_State* L);
 		static int luaWeaponCharges(lua_State* L);
 		static int luaWeaponDuration(lua_State* L);
-		static int luaWeaponDecayTo(lua_State* L);
+		static int luaWeaponLuaEnvironmentTo(lua_State* L);
 		static int luaWeaponTransformEquipTo(lua_State* L);
 		static int luaWeaponTransformDeEquipTo(lua_State* L);
 		static int luaWeaponSlotType(lua_State* L);
@@ -1504,6 +1504,12 @@ class LuaEnvironment : public LuaScriptInterface
 		LuaEnvironment(const LuaEnvironment&) = delete;
 		LuaEnvironment& operator=(const LuaEnvironment&) = delete;
 
+		static LuaEnvironment& getInstance() {
+			static LuaEnvironment instance; // Guaranteed to be destroyed.
+														// Instantiated on first use.
+			return instance;
+		}
+
 		bool initState() override;
 		bool reInitState();
 		bool closeState() override;
@@ -1537,5 +1543,7 @@ class LuaEnvironment : public LuaScriptInterface
 		friend class LuaScriptInterface;
 		friend class CombatSpell;
 };
+
+constexpr auto g_luaEnvironment = &LuaEnvironment::getInstance;
 
 #endif
