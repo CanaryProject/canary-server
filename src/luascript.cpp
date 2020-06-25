@@ -40,6 +40,9 @@
 #include "scripts.h"
 #include "weapons.h"
 
+extern Game g_game;
+extern ConfigManager g_config;
+
 ScriptEnvironment::DBResultMap ScriptEnvironment::tempResults;
 uint32_t ScriptEnvironment::lastResultId = 0;
 
