@@ -44,13 +44,11 @@
 #include "script.h"
 
 extern ConfigManager g_config;
-extern Modules g_modules;
 extern Actions* g_actions;
 extern Chat* g_chat;
 extern TalkActions* g_talkActions;
 extern Spells* g_spells;
 extern Vocations g_vocations;
-extern GlobalEvents* g_globalEvents;
 extern CreatureEvents* g_creatureEvents;
 extern Events* g_events;
 extern Monsters g_monsters;
@@ -134,12 +132,12 @@ void Game::setGameState(GameState_t newState)
 			loadMotdNum();
 			loadPlayersRecord();
 
-			g_globalEvents->startup();
+			g_globalEvents().startup();
 			break;
 		}
 
 		case GAME_STATE_SHUTDOWN: {
-			g_globalEvents->execute(GLOBALEVENT_SHUTDOWN);
+			g_globalEvents().execute(GLOBALEVENT_SHUTDOWN);
 
 			//kick all players that are still online
 			auto it = players.begin();
@@ -4674,7 +4672,7 @@ void Game::checkPlayersRecord()
 		uint32_t previousRecord = playersRecord;
 		playersRecord = playersOnline;
 
-		for (auto& it : g_globalEvents->getEventMap(GLOBALEVENT_RECORD)) {
+		for (auto& it : g_globalEvents().getEventMap(GLOBALEVENT_RECORD)) {
 			it.second.executeRecord(playersRecord, previousRecord);
 		}
 		updatePlayersRecord();
@@ -5646,10 +5644,10 @@ bool Game::reload(ReloadTypes_t reloadType)
 		case RELOAD_TYPE_CONFIG: return g_config.reload();
 		case RELOAD_TYPE_CREATURESCRIPTS: return reloadCreatureScripts();
 		case RELOAD_TYPE_EVENTS: return g_events->load();
-		case RELOAD_TYPE_GLOBALEVENTS: return g_globalEvents->reload();
+		case RELOAD_TYPE_GLOBALEVENTS: return g_globalEvents().reload();
 		case RELOAD_TYPE_ITEMS: return Item::items.reload();
 		case RELOAD_TYPE_MONSTERS: return g_monsters.reload();
-		case RELOAD_TYPE_MODULES: return g_modules.load();
+		case RELOAD_TYPE_MODULES: return g_modules().load();
 		case RELOAD_TYPE_MOUNTS:
 		#if GAME_FEATURE_MOUNTS > 0
 			return mounts.reload();
@@ -5689,7 +5687,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			g_actions->clear(true);
 			g_moveEvents->clear(true);
 			g_talkActions->clear(true);
-			g_globalEvents->clear(true);
+			g_globalEvents().clear(true);
 			g_weapons->clear(true);
 			g_weapons->loadDefaults();
 			g_spells->clear(true);
@@ -5731,13 +5729,13 @@ bool Game::reload(ReloadTypes_t reloadType)
 			#if GAME_FEATURE_MOUNTS > 0
 			mounts.reload();
 			#endif
-			g_globalEvents->reload();
+			g_globalEvents().reload();
 			g_events->load();
 			g_chat->load();
 			g_actions->clear(true);
 			g_moveEvents->clear(true);
 			g_talkActions->clear(true);
-			g_globalEvents->clear(true);
+			g_globalEvents().clear(true);
 			g_spells->clear(true);
 			reloadCreatureScripts(true); //Keep it as the last because it'll call loadScripts
 			return true;

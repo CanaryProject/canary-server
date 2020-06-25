@@ -51,7 +51,6 @@ extern Spells* g_spells;
 extern Weapons* g_weapons;
 extern Game g_game;
 extern CreatureEvents* g_creatureEvents;
-extern GlobalEvents* g_globalEvents;
 extern Events* g_events;
 extern Chat* g_chat;
 extern LuaEnvironment g_luaEnvironment;
@@ -188,7 +187,7 @@ void Signals::sighupHandler()
 	g_game.mounts.reload();
 	std::cout << "Reloaded mounts." << std::endl;
 
-	g_globalEvents->reload();
+	g_globalEvents().reload();
 	std::cout << "Reloaded globalevents." << std::endl;
 
 	g_events->load();

@@ -35,7 +35,6 @@ Actions* g_actions = nullptr;
 CreatureEvents* g_creatureEvents = nullptr;
 Chat* g_chat = nullptr;
 Events* g_events = nullptr;
-GlobalEvents* g_globalEvents = nullptr;
 Spells* g_spells = nullptr;
 TalkActions* g_talkActions = nullptr;
 MoveEvents* g_moveEvents = nullptr;
@@ -54,7 +53,6 @@ ScriptingManager::~ScriptingManager()
 	delete g_moveEvents;
 	delete g_chat;
 	delete g_creatureEvents;
-	delete g_globalEvents;
 	delete g_scripts;
 }
 
@@ -90,8 +88,7 @@ bool ScriptingManager::loadScriptSystems()
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_creatureEvents!" << std::endl;
 		return false;
 	}
-	g_globalEvents = new GlobalEvents();
-	if (!g_globalEvents) {
+	if (!g_globalEvents()) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_globalEvents!" << std::endl;
 		return false;
 	}

@@ -44,7 +44,6 @@ extern CreatureEvents* g_creatureEvents;
 extern Chat* g_chat;
 extern Spells* g_spells;
 extern Monsters g_monsters;
-extern Modules g_modules;
 
 NetworkMessage ProtocolGame::playermsg;
 
@@ -487,7 +486,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 	}
 
 	//modules system
-	if (g_modules.eventOnRecvByte(player, recvbyte, msg)) {
+	if (g_modules().eventOnRecvByte(player, recvbyte, msg)) {
 		if (msg.isOverrun()) {
 			disconnect();
 		}

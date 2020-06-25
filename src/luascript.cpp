@@ -50,7 +50,6 @@ extern Actions* g_actions;
 extern TalkActions* g_talkActions;
 extern CreatureEvents* g_creatureEvents;
 extern MoveEvents* g_moveEvents;
-extern GlobalEvents* g_globalEvents;
 extern Scripts* g_scripts;
 extern Weapons* g_weapons;
 
@@ -15819,7 +15818,7 @@ int LuaScriptInterface::luaGlobalEventRegister(lua_State* L)
 			pushBoolean(L, false);
 			delete globalevent;
 		} else {
-			pushBoolean(L, g_globalEvents->registerLuaEvent(globalevent));
+			pushBoolean(L, g_globalEvents().registerLuaEvent(globalevent));
 		}
 		*globaleventPtr = nullptr; // Remove luascript reference
 	} else {
