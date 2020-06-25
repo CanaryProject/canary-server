@@ -4023,7 +4023,7 @@ void ProtocolGame::sendVIPEntries()
 			}
 		}
 	};
-	g_databaseTasks.addTask(query.str(), callback, true);
+	g_databaseTasks().addTask(query.str(), callback, true);
 }
 
 void ProtocolGame::sendSpellCooldown(uint8_t spellId, uint32_t time)

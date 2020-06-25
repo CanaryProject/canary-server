@@ -3,7 +3,7 @@
 extern Actions* g_actions; // 26 - 17
 extern Chat* g_chat; // 33 - 26
 extern ConfigManager g_config; // 193
-extern CreatureEvents* g_creatureEvents; // 28
+extern CreatureEvents* g_creatureEvents; // 28 - 18
 extern Database g_database; // 144
 extern DatabaseTasks g_databaseTasks; // 22
 extern Decay g_decay; // 5 - 3

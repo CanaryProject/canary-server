@@ -4219,7 +4219,7 @@ int LuaScriptInterface::luaDatabaseAsyncExecute(lua_State* L)
 			}
 		};
 	}
-	g_databaseTasks.addTask(getString(L, -1), callback);
+	g_databaseTasks().addTask(getString(L, -1), callback);
 	return 0;
 }
 
@@ -4282,7 +4282,7 @@ int LuaScriptInterface::luaDatabaseAsyncStoreQuery(lua_State* L)
 			}
 		};
 	}
-	g_databaseTasks.addTask(getString(L, -1), callback, true);
+	g_databaseTasks().addTask(getString(L, -1), callback, true);
 	return 0;
 }
 

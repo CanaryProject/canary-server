@@ -39,7 +39,6 @@
 #include "databasetasks.h"
 
 extern Scheduler g_scheduler;
-extern DatabaseTasks g_databaseTasks;
 extern Dispatcher g_dispatcher;
 
 extern ConfigManager g_config;
@@ -108,7 +107,7 @@ void Signals::dispatchSignalHandler(int signal)
 			g_dispatcher.addTask(sigbreakHandler);
 			// hold the thread until other threads end
 			g_scheduler.join();
-			g_databaseTasks.join();
+			g_databaseTasks().join();
 			g_dispatcher.join();
 			break;
 #endif

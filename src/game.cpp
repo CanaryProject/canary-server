@@ -148,7 +148,7 @@ void Game::setGameState(GameState_t newState)
 			g_dispatcher.addTask(std::bind(&Game::shutdown, this));
 
 			g_scheduler.stop();
-			g_databaseTasks.stop();
+			g_databaseTasks().stop();
 			g_dispatcher.stop();
 			break;
 		}
@@ -189,7 +189,7 @@ void Game::saveGameState()
 
 	Map::save();
 
-	g_databaseTasks.flush();
+	g_databaseTasks().flush();
 
 	if (gameState == GAME_STATE_MAINTAIN) {
 		setGameState(GAME_STATE_NORMAL);
@@ -4487,7 +4487,7 @@ void Game::shutdown()
 	std::cout << "Shutting down..." << std::flush;
 
 	g_scheduler.shutdown();
-	g_databaseTasks.shutdown();
+	g_databaseTasks().shutdown();
 	g_dispatcher.shutdown();
 	map.spawns.clear();
 	raids.clear();

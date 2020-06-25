@@ -38,7 +38,6 @@
 #include <fstream>
 
 Database g_database;
-DatabaseTasks g_databaseTasks;
 Dispatcher g_dispatcher;
 Scheduler g_scheduler;
 
@@ -91,12 +90,12 @@ int main(int argc, char* argv[])
 	} else {
 		std::cout << ">> No services running. The server is NOT online." << std::endl;
 		g_scheduler.shutdown();
-		g_databaseTasks.shutdown();
+		g_databaseTasks().shutdown();
 		g_dispatcher.shutdown();
 	}
 
 	g_scheduler.join();
-	g_databaseTasks.join();
+	g_databaseTasks().join();
 	g_dispatcher.join();
 	g_database.end();
 	return 0;
@@ -187,7 +186,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 		startupErrorMessage("The database you have specified in config.lua is empty, please import the schema.sql to your database.");
 		return;
 	}
-	g_databaseTasks.start();
+	g_databaseTasks().start();
 
 	DatabaseManager::updateDatabase();
 	if (g_config.getBoolean(ConfigManager::OPTIMIZE_DATABASE) && !DatabaseManager::optimizeTables()) {
