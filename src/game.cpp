@@ -20,7 +20,6 @@
 #include "otpch.h"
 
 #include "pugicast.h"
-#include "decay.h"
 
 #include "modules.h"
 #include "actions.h"
@@ -4394,7 +4393,7 @@ void Game::startDecay(Item* item)
 
 	int32_t duration = item->getIntAttr(ITEM_ATTRIBUTE_DURATION);
 	if (duration > 0) {
-		g_decay.startDecay(item, duration);
+		g_decay().startDecay(item, duration);
 	} else {
 		internalDecayItem(item);
 	}
@@ -4404,7 +4403,7 @@ void Game::stopDecay(Item* item)
 {
 	if (item->hasAttribute(ITEM_ATTRIBUTE_DECAYSTATE)) {
 		if (item->hasAttribute(ITEM_ATTRIBUTE_DURATION_TIMESTAMP)) {
-			g_decay.stopDecay(item, item->getIntAttr(ITEM_ATTRIBUTE_DURATION_TIMESTAMP));
+			g_decay().stopDecay(item, item->getIntAttr(ITEM_ATTRIBUTE_DURATION_TIMESTAMP));
 			item->removeAttribute(ITEM_ATTRIBUTE_DURATION_TIMESTAMP);
 		} else {
 			item->removeAttribute(ITEM_ATTRIBUTE_DECAYSTATE);

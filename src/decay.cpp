@@ -24,7 +24,6 @@
 #include "scheduler.h"
 
 extern Game g_game;
-Decay g_decay;
 
 void Decay::startDecay(Item* item, int32_t duration)
 {

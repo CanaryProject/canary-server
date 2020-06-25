@@ -22,6 +22,7 @@
 
 #include "account.h"
 #include "combat.h"
+#include "decay.h"
 #include "groups.h"
 #include "map.h"
 #include "position.h"
