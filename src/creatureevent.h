@@ -135,6 +135,6 @@ class CreatureEvents final : public BaseEvents
 		LuaScriptInterface scriptInterface;
 };
 
-constexpr auto g_creatureEvents = &CreatureEvent::getInstance;
+constexpr auto g_creatureEvents = &CreatureEvents::getInstance;
 
 #endif
