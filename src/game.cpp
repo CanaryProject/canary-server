@@ -47,7 +47,6 @@ extern ConfigManager g_config;
 extern TalkActions* g_talkActions;
 extern Spells* g_spells;
 extern Vocations g_vocations;
-extern Events* g_events;
 extern Monsters g_monsters;
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
@@ -757,7 +756,7 @@ void Game::playerMoveCreature(Player* player, Creature* movingCreature, const Po
 		}
 	}
 
-	if (!g_events->eventPlayerOnMoveCreature(player, movingCreature, movingCreaturePos, toPos)) {
+	if (!g_events().eventPlayerOnMoveCreature(player, movingCreature, movingCreaturePos, toPos)) {
 		return;
 	}
 
@@ -1022,7 +1021,7 @@ void Game::playerMoveItem(Player* player, const Position& fromPos,
 		return;
 	}
 
-	if (!g_events->eventPlayerOnMoveItem(player, item, count, fromPos, toPos, fromCylinder, toCylinder)) {
+	if (!g_events().eventPlayerOnMoveItem(player, item, count, fromPos, toPos, fromCylinder, toCylinder)) {
 		return;
 	}
 
@@ -1039,7 +1038,7 @@ void Game::playerMoveItem(Player* player, const Position& fromPos,
 	if (ret != RETURNVALUE_NOERROR) {
 		player->sendCancelMessage(ret);
 	} else {
-		g_events->eventPlayerOnItemMoved(player, item, count, fromPos, toPos, fromCylinder, toCylinder);
+		g_events().eventPlayerOnItemMoved(player, item, count, fromPos, toPos, fromCylinder, toCylinder);
 	}
 }
 
@@ -2446,7 +2445,7 @@ void Game::playerBrowseField(uint32_t playerId, const Position& pos)
 		return;
 	}
 
-	if (!g_events->eventPlayerOnBrowseField(player, pos)) {
+	if (!g_events().eventPlayerOnBrowseField(player, pos)) {
 		return;
 	}
 
@@ -2627,7 +2626,7 @@ void Game::playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t st
 		return;
 	}
 
-	if (!g_events->eventPlayerOnTradeRequest(player, tradePartner, tradeItem)) {
+	if (!g_events().eventPlayerOnTradeRequest(player, tradePartner, tradeItem)) {
 		return;
 	}
 
@@ -2689,7 +2688,7 @@ void Game::playerAcceptTrade(Player* player)
 		Item* playerTradeItem = player->tradeItem;
 		Item* partnerTradeItem = tradePartner->tradeItem;
 
-		if (!g_events->eventPlayerOnTradeAccept(player, tradePartner, playerTradeItem, partnerTradeItem)) {
+		if (!g_events().eventPlayerOnTradeAccept(player, tradePartner, playerTradeItem, partnerTradeItem)) {
 			internalCloseTrade(player);
 			return;
 		}
@@ -2810,7 +2809,7 @@ void Game::playerLookInTrade(Player* player, bool lookAtCounterOffer, uint8_t in
 	int32_t lookDistance = std::max<int32_t>(Position::getDistanceX(playerPosition, tradeItemPosition),
 	                                         Position::getDistanceY(playerPosition, tradeItemPosition));
 	if (index == 0) {
-		g_events->eventPlayerOnLookInTrade(player, tradePartner, tradeItem, lookDistance);
+		g_events().eventPlayerOnLookInTrade(player, tradePartner, tradeItem, lookDistance);
 		return;
 	}
 
@@ -2830,7 +2829,7 @@ void Game::playerLookInTrade(Player* player, bool lookAtCounterOffer, uint8_t in
 			}
 
 			if (--index == 0) {
-				g_events->eventPlayerOnLookInTrade(player, tradePartner, item, lookDistance);
+				g_events().eventPlayerOnLookInTrade(player, tradePartner, item, lookDistance);
 				return;
 			}
 		}
@@ -2969,7 +2968,7 @@ void Game::playerLookInShop(Player* player, uint16_t spriteId, uint8_t count)
 		return;
 	}
 
-	if (!g_events->eventPlayerOnLookInShop(player, &it, subType)) {
+	if (!g_events().eventPlayerOnLookInShop(player, &it, subType)) {
 		return;
 	}
 
@@ -3006,7 +3005,7 @@ void Game::playerLookAt(Player* player, const Position& pos, uint8_t stackPos)
 		lookDistance = -1;
 	}
 
-	g_events->eventPlayerOnLook(player, pos, thing, stackPos, lookDistance);
+	g_events().eventPlayerOnLook(player, pos, thing, stackPos, lookDistance);
 }
 
 void Game::playerLookInBattleList(Player* player, uint32_t creatureId)
@@ -3036,7 +3035,7 @@ void Game::playerLookInBattleList(Player* player, uint32_t creatureId)
 		lookDistance = -1;
 	}
 
-	g_events->eventPlayerOnLookInBattleList(player, creature, lookDistance);
+	g_events().eventPlayerOnLookInBattleList(player, creature, lookDistance);
 }
 
 void Game::playerCancelAttackAndFollow(uint32_t playerId)
@@ -3144,7 +3143,7 @@ void Game::playerRequestEditVip(Player* player, uint32_t guid, const std::string
 
 void Game::playerTurn(Player* player, Direction dir)
 {
-	if (!g_events->eventPlayerOnTurn(player, dir)) {
+	if (!g_events().eventPlayerOnTurn(player, dir)) {
 		return;
 	}
 
@@ -3567,7 +3566,7 @@ void Game::changeSpeed(Creature* creature, int32_t varSpeedDelta)
 
 void Game::internalCreatureChangeOutfit(Creature* creature, const Outfit_t& outfit)
 {
-	if (!g_events->eventCreatureOnChangeOutfit(creature, outfit)) {
+	if (!g_events().eventCreatureOnChangeOutfit(creature, outfit)) {
 		return;
 	}
 
@@ -4878,7 +4877,7 @@ void Game::kickPlayer(uint32_t playerId, bool displayEffect)
 
 void Game::playerReportRuleViolation(Player* player, const std::string& targetName, uint8_t reportType, uint8_t reportReason, const std::string& comment, const std::string& translation)
 {
-	g_events->eventPlayerOnReportRuleViolation(player, targetName, reportType, reportReason, comment, translation);
+	g_events().eventPlayerOnReportRuleViolation(player, targetName, reportType, reportReason, comment, translation);
 }
 
 void Game::playerMonsterCyclopedia(Player* player)
@@ -4926,7 +4925,7 @@ void Game::playerTournamentLeaderboard(Player* player, uint8_t leaderboardType)
 
 void Game::playerReportBug(Player* player, const std::string& message, const Position& position, uint8_t category)
 {
-	g_events->eventPlayerOnReportBug(player, message, position, category);
+	g_events().eventPlayerOnReportBug(player, message, position, category);
 }
 
 void Game::playerDebugAssert(Player* player, const std::string& assertLine, const std::string& date, const std::string& description, const std::string& comment)
@@ -5639,7 +5638,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 		case RELOAD_TYPE_CHAT: return g_chat().load();
 		case RELOAD_TYPE_CONFIG: return g_config.reload();
 		case RELOAD_TYPE_CREATURESCRIPTS: return reloadCreatureScripts();
-		case RELOAD_TYPE_EVENTS: return g_events->load();
+		case RELOAD_TYPE_EVENTS: return g_events().load();
 		case RELOAD_TYPE_GLOBALEVENTS: return g_globalEvents().reload();
 		case RELOAD_TYPE_ITEMS: return Item::items.reload();
 		case RELOAD_TYPE_MONSTERS: return g_monsters.reload();
@@ -5695,7 +5694,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			quests.reload();
 			mounts.reload();
 			g_config.reload();
-			g_events->load();
+			g_events().load();
 			g_chat().load();
 			*/
 			return true;
@@ -5726,7 +5725,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			mounts.reload();
 			#endif
 			g_globalEvents().reload();
-			g_events->load();
+			g_events().load();
 			g_chat().load();
 			g_actions().clear(true);
 			g_moveEvents->clear(true);

@@ -31,7 +31,6 @@
 #include "events.h"
 #include "scripts.h"
 
-Events* g_events = nullptr;
 Spells* g_spells = nullptr;
 TalkActions* g_talkActions = nullptr;
 MoveEvents* g_moveEvents = nullptr;
@@ -41,7 +40,6 @@ extern LuaEnvironment g_luaEnvironment;
 
 ScriptingManager::~ScriptingManager()
 {
-	delete g_events;
 	delete g_weapons;
 	delete g_spells;
 	delete g_talkActions;
@@ -73,12 +71,6 @@ bool ScriptingManager::loadScriptSystems()
 	g_spells = new Spells();
 	if (!g_spells) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_spells!" << std::endl;
-		return false;
-	}
-
-	g_events = new Events();
-	if (!g_events->load()) {
-		std::cout << "> ERROR: Unable to load events!" << std::endl;
 		return false;
 	}
 

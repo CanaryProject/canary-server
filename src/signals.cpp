@@ -47,7 +47,6 @@ extern MoveEvents* g_moveEvents;
 extern Spells* g_spells;
 extern Weapons* g_weapons;
 extern Game g_game;
-extern Events* g_events;
 extern LuaEnvironment g_luaEnvironment;
 
 using ErrorCode = boost::system::error_code;
@@ -185,7 +184,7 @@ void Signals::sighupHandler()
 	g_globalEvents().reload();
 	std::cout << "Reloaded globalevents." << std::endl;
 
-	g_events->load();
+	g_events().load();
 	std::cout << "Reloaded events." << std::endl;
 
 	g_chat().load();

@@ -29,7 +29,6 @@
 extern Game g_game;
 extern Weapons* g_weapons;
 extern ConfigManager g_config;
-extern Events* g_events;
 
 CombatDamage Combat::getCombatDamage(Creature* creature, Creature* target) const
 {
@@ -257,7 +256,7 @@ ReturnValue Combat::canDoTileCombat(Creature* caster, Tile* tile, bool aggressiv
 		return RETURNVALUE_ACTIONNOTPERMITTEDINPROTECTIONZONE;
 	}
 
-	return g_events->eventCreatureOnAreaCombat(caster, tile, aggressive);
+	return g_events().eventCreatureOnAreaCombat(caster, tile, aggressive);
 }
 
 bool Combat::isInPvpZone(const Creature* attacker, const Creature* target)
@@ -319,7 +318,7 @@ bool Combat::isTargetValid(Creature* target, const CombatParams& params) {
 ReturnValue Combat::canDoTargetCombat(Creature* attacker, Creature* target, const CombatParams& params)
 {
 	if (!attacker) {
-		return g_events->eventCreatureOnTargetCombat(attacker, target);
+		return g_events().eventCreatureOnTargetCombat(attacker, target);
 	}
 
 	if (!isTargetValid(target, params)) {
@@ -401,7 +400,7 @@ ReturnValue Combat::canDoTargetCombat(Creature* attacker, Creature* target, cons
 			}
 		}
 	}
-	return g_events->eventCreatureOnTargetCombat(attacker, target);
+	return g_events().eventCreatureOnTargetCombat(attacker, target);
 }
 
 void Combat::setPlayerCombatValues(formulaType_t formulaType, double mina, double minb, double maxa, double maxb)
