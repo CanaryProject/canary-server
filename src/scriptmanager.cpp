@@ -88,10 +88,6 @@ bool ScriptingManager::loadScriptSystems()
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_creatureEvents!" << std::endl;
 		return false;
 	}
-	if (!g_globalEvents()) {
-		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_globalEvents!" << std::endl;
-		return false;
-	}
 	g_spells = new Spells();
 	if (!g_spells) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_spells!" << std::endl;
