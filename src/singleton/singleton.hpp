@@ -7,8 +7,8 @@ extern CreatureEvents* g_creatureEvents; // 28 - 18
 extern Database g_database; // 144
 extern DatabaseTasks g_databaseTasks; // 22 - 20
 extern Decay g_decay; // 5 - 3
-extern Dispatcher g_dispatcher; // 47
-extern Events* g_events; // 45
+extern Dispatcher g_dispatcher; // 47 - 44
+extern Events* g_events; // 45 - 36
 extern Game g_game; // 670
 extern GlobalEvents* g_globalEvents; // 18 - 10
 extern LuaEnvironment g_luaEnvironment; // 43

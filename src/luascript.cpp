@@ -41,7 +41,6 @@
 #include "weapons.h"
 
 extern Game g_game;
-extern Monsters g_monsters;
 extern ConfigManager g_config;
 extern Vocations g_vocations;
 extern Spells* g_spells;
@@ -4827,11 +4826,11 @@ int LuaScriptInterface::luaGameCreateMonsterType(lua_State* L)
 		return 1;
 	}
 
-	MonsterType* monsterType = g_monsters.getMonsterType(name);
+	MonsterType* monsterType = g_monsters().getMonsterType(name);
 	if (monsterType) {
 		monsterType->info = {};
 	} else if (isString(L, 1)) {
-		monsterType = g_monsters.addMonsterType(name);
+		monsterType = g_monsters().addMonsterType(name);
 	}
 
 	monsterType->name = name;
@@ -12730,7 +12729,7 @@ int LuaScriptInterface::luaConditionAddDamage(lua_State* L)
 int LuaScriptInterface::luaMonsterTypeCreate(lua_State* L)
 {
 	// MonsterType(name)
-	MonsterType* monsterType = g_monsters.getMonsterType(getString(L, 2));
+	MonsterType* monsterType = g_monsters().getMonsterType(getString(L, 2));
 	if (monsterType) {
 		pushUserdata<MonsterType>(L, monsterType);
 		setMetatable(L, -1, "MonsterType");
@@ -13142,7 +13141,7 @@ int LuaScriptInterface::luaMonsterTypeAddAttack(lua_State* L)
 		MonsterSpell* spell = getUserdata<MonsterSpell>(L, 2);
 		if (spell) {
 			spellBlock_t sb;
-			if (g_monsters.deserializeSpell(spell, sb, monsterType->name)) {
+			if (g_monsters().deserializeSpell(spell, sb, monsterType->name)) {
 				monsterType->info.attackSpells.push_back(std::move(sb));
 			} else {
 				std::cout << monsterType->name << std::endl;
@@ -13196,7 +13195,7 @@ int LuaScriptInterface::luaMonsterTypeAddDefense(lua_State* L)
 		MonsterSpell* spell = getUserdata<MonsterSpell>(L, 2);
 		if (spell) {
 			spellBlock_t sb;
-			if (g_monsters.deserializeSpell(spell, sb, monsterType->name)) {
+			if (g_monsters().deserializeSpell(spell, sb, monsterType->name)) {
 				monsterType->info.defenseSpells.push_back(std::move(sb));
 			} else {
 				std::cout << monsterType->name << std::endl;
@@ -13347,7 +13346,7 @@ int LuaScriptInterface::luaMonsterTypeEventOnCallback(lua_State* L)
 	// monstertype:onThink / onAppear / etc. (callback)
 	MonsterType* mType = getUserdata<MonsterType>(L, 1);
 	if (mType) {
-		if (g_monsters.loadCallback(getScriptEnv()->getScriptInterface(), mType)) {
+		if (g_monsters().loadCallback(getScriptEnv()->getScriptInterface(), mType)) {
 			pushBoolean(L, true);
 			return 1;
 		}

@@ -42,7 +42,6 @@ Scheduler g_scheduler;
 
 Game g_game;
 ConfigManager g_config;
-Monsters g_monsters;
 Vocations g_vocations;
 
 std::mutex g_loaderLock;
@@ -230,7 +229,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 	}
 
 	std::cout << ">> Loading monsters" << std::endl;
-	if (!g_monsters.loadFromXml()) {
+	if (!g_monsters().loadFromXml()) {
 		startupErrorMessage("Unable to load monsters!");
 		return;
 	}

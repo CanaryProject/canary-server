@@ -28,7 +28,6 @@
 #include "pugicast.h"
 
 extern ConfigManager g_config;
-extern Monsters g_monsters;
 extern Game g_game;
 
 static constexpr int32_t MINSPAWN_INTERVAL = 1000;
@@ -298,7 +297,7 @@ void Spawn::scheduleSpawn(uint32_t spawnId, int32_t interval)
 
 bool Spawn::addMonster(const std::string& name, const Position& pos, Direction dir, uint32_t interval)
 {
-	MonsterType* mType = g_monsters.getMonsterType(name);
+	MonsterType* mType = g_monsters().getMonsterType(name);
 	if (!mType) {
 		std::cout << "[Spawn::addMonster] Can not find " << name << std::endl;
 		return false;

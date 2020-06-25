@@ -47,7 +47,6 @@ extern ConfigManager g_config;
 extern TalkActions* g_talkActions;
 extern Spells* g_spells;
 extern Vocations g_vocations;
-extern Monsters g_monsters;
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
 
@@ -5641,7 +5640,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 		case RELOAD_TYPE_EVENTS: return g_events().load();
 		case RELOAD_TYPE_GLOBALEVENTS: return g_globalEvents().reload();
 		case RELOAD_TYPE_ITEMS: return Item::items.reload();
-		case RELOAD_TYPE_MONSTERS: return g_monsters.reload();
+		case RELOAD_TYPE_MONSTERS: return g_monsters().reload();
 		case RELOAD_TYPE_MODULES: return g_modules().load();
 		case RELOAD_TYPE_MOUNTS:
 		#if GAME_FEATURE_MOUNTS > 0
@@ -5662,7 +5661,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			if (!g_spells->reload()) {
 				std::cout << "[Error - Game::reload] Failed to reload spells." << std::endl;
 				std::terminate();
-			} else if (!g_monsters.reload()) {
+			} else if (!g_monsters().reload()) {
 				std::cout << "[Error - Game::reload] Failed to reload monsters." << std::endl;
 				std::terminate();
 			}
@@ -5704,14 +5703,14 @@ bool Game::reload(ReloadTypes_t reloadType)
 			if (!g_spells->reload()) {
 				std::cout << "[Error - Game::reload] Failed to reload spells." << std::endl;
 				std::terminate();
-			} else if (!g_monsters.reload()) {
+			} else if (!g_monsters().reload()) {
 				std::cout << "[Error - Game::reload] Failed to reload monsters." << std::endl;
 				std::terminate();
 			}
 
 			g_actions().reload();
 			g_config.reload();
-			g_monsters.reload();
+			g_monsters().reload();
 			g_moveEvents->reload();
 			Npcs::reload();
 			raids.reload() && raids.startup();

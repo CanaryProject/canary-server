@@ -41,7 +41,6 @@
 extern Scheduler g_scheduler;
 
 extern ConfigManager g_config;
-extern Monsters g_monsters;
 extern TalkActions* g_talkActions;
 extern MoveEvents* g_moveEvents;
 extern Spells* g_spells;
@@ -162,7 +161,7 @@ void Signals::sighupHandler()
 	g_spells->reload();
 	std::cout << "Reloaded monsters." << std::endl;
 
-	g_monsters.reload();
+	g_monsters().reload();
 	std::cout << "Reloaded spells." << std::endl;
 
 	g_talkActions->reload();

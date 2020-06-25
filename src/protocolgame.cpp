@@ -41,7 +41,6 @@
 extern ConfigManager g_config;
 extern Actions actions;
 extern Spells* g_spells;
-extern Monsters g_monsters;
 
 NetworkMessage ProtocolGame::playermsg;
 
@@ -1711,8 +1710,8 @@ void ProtocolGame::sendMonsterCyclopedia()
 	playermsg.reset();
 	playermsg.addByte(0xD5);
 
-	auto races = g_monsters.getRaces();
-	auto monsterRaces = g_monsters.getMonsterRaces();
+	auto races = g_monsters().getRaces();
+	auto monsterRaces = g_monsters().getMonsterRaces();
 
 	playermsg.add<uint16_t>(races.size());
 	for (const auto& race : races) {
@@ -1735,8 +1734,8 @@ void ProtocolGame::sendCyclopediaMonsters(const std::string& race)
 	playermsg.reset();
 	playermsg.addByte(0xD6);
 
-	auto races = g_monsters.getRaces();
-	auto monsterRaces = g_monsters.getMonsterRaces();
+	auto races = g_monsters().getRaces();
+	auto monsterRaces = g_monsters().getMonsterRaces();
 	playermsg.addString(race);
 
 	auto it = races.find(race);
@@ -1767,16 +1766,16 @@ void ProtocolGame::sendCyclopediaRace(uint16_t monsterId)
 	playermsg.reset();
 	playermsg.addByte(0xD7);
 
-	auto monsterRaces = g_monsters.getMonsterRaces();
+	auto monsterRaces = g_monsters().getMonsterRaces();
 	for (const auto& race : monsterRaces) {
 		auto it = race.second.find(monsterId);
 		if (it != race.second.end()) {
-			MonsterType* monsterType = g_monsters.getMonsterType(it->second);
+			MonsterType* monsterType = g_monsters().getMonsterType(it->second);
 			if (monsterType) {
 				uint8_t monsterProgress = BESTIARY_PROGRESS_COMPLETED;
 
 				playermsg.add<uint16_t>(monsterId);
-				playermsg.addString(g_monsters.getRaceName(race.first));
+				playermsg.addString(g_monsters().getRaceName(race.first));
 				playermsg.addByte(monsterProgress);
 				playermsg.add<uint32_t>(0); // total kills
 				playermsg.add<uint16_t>(0); // kills to progress 1
