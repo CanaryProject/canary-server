@@ -31,7 +31,6 @@
 #include "events.h"
 #include "scripts.h"
 
-Actions* g_actions = nullptr;
 CreatureEvents* g_creatureEvents = nullptr;
 Chat* g_chat = nullptr;
 Events* g_events = nullptr;
@@ -47,7 +46,6 @@ ScriptingManager::~ScriptingManager()
 	delete g_events;
 	delete g_weapons;
 	delete g_spells;
-	delete g_actions;
 	delete g_talkActions;
 	delete g_moveEvents;
 	delete g_chat;
@@ -66,11 +64,6 @@ bool ScriptingManager::loadScriptSystems()
 		return false;
 	}
 	g_weapons->loadDefaults();
-	g_actions = new Actions();
-	if (!g_actions) {
-		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_actions!" << std::endl;
-		return false;
-	}
 	g_talkActions = new TalkActions();
 	if (!g_talkActions) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_talkActions!" << std::endl;

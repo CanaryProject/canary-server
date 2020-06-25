@@ -46,7 +46,6 @@ extern Monsters g_monsters;
 extern ConfigManager g_config;
 extern Vocations g_vocations;
 extern Spells* g_spells;
-extern Actions* g_actions;
 extern TalkActions* g_talkActions;
 extern CreatureEvents* g_creatureEvents;
 extern MoveEvents* g_moveEvents;
@@ -15198,7 +15197,7 @@ int LuaScriptInterface::luaActionRegister(lua_State* L)
 		if (!action->isScripted()) {
 			pushBoolean(L, false);
 		} else {
-			pushBoolean(L, g_actions->registerLuaEvent(action));
+			pushBoolean(L, g_actions().registerLuaEvent(action));
 		}
 		action->getActionIdRange().clear();
 		action->getActionIdRange().shrink_to_fit();

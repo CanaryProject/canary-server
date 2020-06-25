@@ -29,7 +29,6 @@
 
 extern Game g_game;
 extern Spells* g_spells;
-extern Actions* g_actions;
 extern ConfigManager g_config;
 
 Actions::Actions() :
@@ -517,9 +516,9 @@ std::string Action::getScriptEventName() const
 ReturnValue Action::canExecuteAction(const Player* player, const Position& toPos)
 {
 	if (!allowFarUse) {
-		return g_actions->canUse(player, toPos);
+		return g_actions().canUse(player, toPos);
 	} else {
-		return g_actions->canUseFar(player, toPos, checkLineOfSight, checkFloor);
+		return g_actions().canUseFar(player, toPos, checkLineOfSight, checkFloor);
 	}
 }
 

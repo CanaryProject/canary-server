@@ -43,7 +43,6 @@ extern DatabaseTasks g_databaseTasks;
 extern Dispatcher g_dispatcher;
 
 extern ConfigManager g_config;
-extern Actions* g_actions;
 extern Monsters g_monsters;
 extern TalkActions* g_talkActions;
 extern MoveEvents* g_moveEvents;
@@ -146,7 +145,7 @@ void Signals::sighupHandler()
 	//Dispatcher thread
 	std::cout << "SIGHUP received, reloading config files..." << std::endl;
 
-	g_actions->reload();
+	g_actions().reload();
 	std::cout << "Reloaded actions." << std::endl;
 
 	g_config.reload();
