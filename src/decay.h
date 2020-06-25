@@ -26,8 +26,8 @@ class Decay
 {
 	public:
 		// Singleton, ensure we don't accidentally copy it
-		Decay(Decay const&)               = delete;
-		void operator=(Decay const&)  = delete;
+		Decay(Decay const&) = delete;
+		void operator=(Decay const&) = delete;
 
 		static Decay& getInstance() {
 			static Decay instance; // Guaranteed to be destroyed.
