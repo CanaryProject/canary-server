@@ -34,7 +34,7 @@
 #include "databasemanager.h"
 #include "scheduler.h"
 #include "databasetasks.h"
-#include "script.h"
+#include "scripts.h"
 #include <fstream>
 
 Database g_database;
@@ -46,7 +46,6 @@ Game g_game;
 ConfigManager g_config;
 Monsters g_monsters;
 Vocations g_vocations;
-extern Scripts* g_scripts;
 
 std::mutex g_loaderLock;
 std::condition_variable g_loaderSignal;
@@ -227,7 +226,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 	}
 
 	std::cout << ">> Loading lua scripts" << std::endl;
-	if (!g_scripts->loadScripts("scripts", false, false)) {
+	if (!g_scripts().loadScripts("scripts", false, false)) {
 		startupErrorMessage("Failed to load lua scripts");
 		return;
 	}
@@ -239,7 +238,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 	}
 
 	std::cout << ">> Loading lua monsters" << std::endl;
-	if (!g_scripts->loadScripts("monster", false, false)) {
+	if (!g_scripts().loadScripts("monster", false, false)) {
 		startupErrorMessage("Failed to load lua monsters");
 		return;
 	}

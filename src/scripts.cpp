@@ -19,7 +19,7 @@
 
 #include "otpch.h"
 
-#include "script.h"
+#include "scripts.h"
 #include "configmanager.h"
 
 #ifdef __cpp_lib_filesystem
@@ -37,6 +37,7 @@ Scripts::Scripts() :
 	scriptInterface("Scripts Interface")
 {
 	scriptInterface.initState();
+	std::cout << ">> Loading lua libs" << std::endl;
 }
 
 Scripts::~Scripts()

@@ -41,7 +41,7 @@
 #include "spells.h"
 #include "talkaction.h"
 #include "weapons.h"
-#include "script.h"
+#include "scripts.h"
 
 extern ConfigManager g_config;
 extern Actions* g_actions;
@@ -54,7 +54,6 @@ extern Events* g_events;
 extern Monsters g_monsters;
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
-extern Scripts* g_scripts;
 
 Game::Game()
 {
@@ -5620,7 +5619,7 @@ bool Game::reloadCreatureScripts(bool fromLua, bool reload)
 			result = g_creatureEvents->reload();
 		}
 		g_creatureEvents->clear(true);
-		g_scripts->loadScripts("scripts", false, true);
+		g_scripts().loadScripts("scripts", false, true);
 	} else {
 		result = g_creatureEvents->reload();
 	}

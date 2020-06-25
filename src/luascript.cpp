@@ -37,7 +37,7 @@
 #include "databasetasks.h"
 #include "movement.h"
 #include "globalevent.h"
-#include "script.h"
+#include "scripts.h"
 #include "weapons.h"
 
 extern Chat* g_chat;
@@ -50,7 +50,6 @@ extern Actions* g_actions;
 extern TalkActions* g_talkActions;
 extern CreatureEvents* g_creatureEvents;
 extern MoveEvents* g_moveEvents;
-extern Scripts* g_scripts;
 extern Weapons* g_weapons;
 
 ScriptEnvironment::DBResultMap ScriptEnvironment::tempResults;
@@ -4883,7 +4882,7 @@ int LuaScriptInterface::luaGameReload(lua_State* L)
 	ReloadTypes_t reloadType = getNumber<ReloadTypes_t>(L, 1);
 	if (reloadType == RELOAD_TYPE_GLOBAL) {
 		pushBoolean(L, g_luaEnvironment.loadFile("data/global.lua") == 0);
-		pushBoolean(L, g_scripts->loadScripts("scripts/lib", true, true));
+		pushBoolean(L, g_scripts().loadScripts("scripts/lib", true, true));
 	} else {
 		pushBoolean(L, g_game.reload(reloadType));
 	}

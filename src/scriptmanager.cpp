@@ -29,7 +29,7 @@
 #include "weapons.h"
 #include "globalevent.h"
 #include "events.h"
-#include "script.h"
+#include "scripts.h"
 
 Actions* g_actions = nullptr;
 CreatureEvents* g_creatureEvents = nullptr;
@@ -39,7 +39,6 @@ Spells* g_spells = nullptr;
 TalkActions* g_talkActions = nullptr;
 MoveEvents* g_moveEvents = nullptr;
 Weapons* g_weapons = nullptr;
-Scripts* g_scripts = nullptr;
 
 extern LuaEnvironment g_luaEnvironment;
 
@@ -53,7 +52,6 @@ ScriptingManager::~ScriptingManager()
 	delete g_moveEvents;
 	delete g_chat;
 	delete g_creatureEvents;
-	delete g_scripts;
 }
 
 bool ScriptingManager::loadScriptSystems()
@@ -91,13 +89,6 @@ bool ScriptingManager::loadScriptSystems()
 	g_spells = new Spells();
 	if (!g_spells) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_spells!" << std::endl;
-		return false;
-	}
-
-	g_scripts = new Scripts();
-	std::cout << ">> Loading lua libs" << std::endl;
-	if (!g_scripts->loadScripts("scripts/lib", true, false)) {
-		std::cout << "> ERROR: Unable to load lua libs!" << std::endl;
 		return false;
 	}
 
