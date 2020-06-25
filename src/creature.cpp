@@ -31,7 +31,6 @@ double Creature::speedC = -4795.01;
 
 extern Game g_game;
 extern ConfigManager g_config;
-extern CreatureEvents* g_creatureEvents;
 
 Creature::Creature()
 {
@@ -1415,7 +1414,7 @@ void Creature::setNormalCreatureLight()
 
 bool Creature::registerCreatureEvent(const std::string& name)
 {
-	CreatureEvent* event = g_creatureEvents->getEventByName(name);
+	CreatureEvent* event = g_creatureEvents().getEventByName(name);
 	if (!event) {
 		return false;
 	}
@@ -1435,7 +1434,7 @@ bool Creature::registerCreatureEvent(const std::string& name)
 
 bool Creature::unregisterCreatureEvent(const std::string& name)
 {
-	CreatureEvent* event = g_creatureEvents->getEventByName(name);
+	CreatureEvent* event = g_creatureEvents().getEventByName(name);
 	if (!event) {
 		return false;
 	}

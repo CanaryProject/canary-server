@@ -36,11 +36,9 @@
 
 extern ConfigManager g_config;
 extern Game g_game;
-extern Chat* g_chat;
 extern Vocations g_vocations;
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
-extern CreatureEvents* g_creatureEvents;
 extern Events* g_events;
 
 MuteCountMap Player::muteCountMap;
@@ -483,7 +481,7 @@ void Player::addSkillAdvance(skills_t skill, uint64_t count)
 		ss << "You advanced to " << getSkillName(skill) << " level " << skills[skill].level << '.';
 		sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 
-		g_creatureEvents->playerAdvance(this, skill, (skills[skill].level - 1), skills[skill].level);
+		g_creatureEvents().playerAdvance(this, skill, (skills[skill].level - 1), skills[skill].level);
 
 		sendUpdateSkills = true;
 		currReqTries = nextReqTries;
@@ -927,7 +925,7 @@ void Player::sendPing()
 	}
 
 	if (noPongTime >= 60000 && canLogout()) {
-		if (g_creatureEvents->playerLogout(this)) {
+		if (g_creatureEvents().playerLogout(this)) {
 			if (client) {
 				client->logout(true, true);
 			} else {
@@ -1284,7 +1282,7 @@ void Player::onRemoveCreature(Creature* creature, bool isLogout)
 			party->leaveParty(this);
 		}
 
-		g_chat->removeUserFromAllChannels(*this);
+		g_chat().removeUserFromAllChannels(*this);
 
 		std::cout << getName() << " has logged out." << std::endl;
 
@@ -1682,7 +1680,7 @@ void Player::addManaSpent(uint64_t amount)
 		ss << "You advanced to magic level " << magLevel << '.';
 		sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 
-		g_creatureEvents->playerAdvance(this, SKILL_MAGLEVEL, magLevel - 1, magLevel);
+		g_creatureEvents().playerAdvance(this, SKILL_MAGLEVEL, magLevel - 1, magLevel);
 
 		sendUpdateStats = true;
 		currReqMana = nextReqMana;
@@ -1789,7 +1787,7 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText/* = fal
 			party->updateSharedExperience();
 		}
 
-		g_creatureEvents->playerAdvance(this, SKILL_LEVEL, prevLevel, level);
+		g_creatureEvents().playerAdvance(this, SKILL_LEVEL, prevLevel, level);
 
 		std::ostringstream ss;
 		ss << "You advanced from Level " << prevLevel << " to Level " << level << '.';
@@ -2268,7 +2266,7 @@ void Player::addList()
 
 void Player::kickPlayer(bool displayEffect)
 {
-	g_creatureEvents->playerLogout(this);
+	g_creatureEvents().playerLogout(this);
 	if (client) {
 		client->logout(displayEffect, true);
 	} else {
@@ -3650,7 +3648,7 @@ void Player::onIdleStatus()
 void Player::onPlacedCreature()
 {
 	//scripting event - onLogin
-	if (!g_creatureEvents->playerLogin(this)) {
+	if (!g_creatureEvents().playerLogin(this)) {
 		kickPlayer(true);
 	}
 }
@@ -4483,7 +4481,7 @@ bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries)
 			magLevel++;
 			manaSpent = 0;
 
-			g_creatureEvents->playerAdvance(this, SKILL_MAGLEVEL, magLevel - 1, magLevel);
+			g_creatureEvents().playerAdvance(this, SKILL_MAGLEVEL, magLevel - 1, magLevel);
 
 			sendUpdate = true;
 			currReqMana = nextReqMana;
@@ -4538,7 +4536,7 @@ bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries)
 			skills[skill].tries = 0;
 			skills[skill].percent = 0;
 
-			g_creatureEvents->playerAdvance(this, skill, (skills[skill].level - 1), skills[skill].level);
+			g_creatureEvents().playerAdvance(this, skill, (skills[skill].level - 1), skills[skill].level);
 
 			sendUpdate = true;
 			currReqTries = nextReqTries;
@@ -4651,7 +4649,7 @@ uint16_t Player::getHelpers() const
 void Player::sendClosePrivate(uint16_t channelId)
 {
 	if (channelId == CHANNEL_GUILD || channelId == CHANNEL_PARTY) {
-		g_chat->removeUserFromChannel(*this, channelId);
+		g_chat().removeUserFromChannel(*this, channelId);
 	}
 
 	if (client) {

@@ -49,9 +49,7 @@ extern MoveEvents* g_moveEvents;
 extern Spells* g_spells;
 extern Weapons* g_weapons;
 extern Game g_game;
-extern CreatureEvents* g_creatureEvents;
 extern Events* g_events;
-extern Chat* g_chat;
 extern LuaEnvironment g_luaEnvironment;
 
 using ErrorCode = boost::system::error_code;
@@ -151,7 +149,7 @@ void Signals::sighupHandler()
 	g_config.reload();
 	std::cout << "Reloaded config." << std::endl;
 
-	g_creatureEvents->reload();
+	g_creatureEvents().reload();
 	std::cout << "Reloaded creature scripts." << std::endl;
 
 	g_moveEvents->reload();
@@ -192,7 +190,7 @@ void Signals::sighupHandler()
 	g_events->load();
 	std::cout << "Reloaded events." << std::endl;
 
-	g_chat->load();
+	g_chat().load();
 	std::cout << "Reloaded chatchannels." << std::endl;
 
 	g_luaEnvironment.loadFile("data/global.lua");

@@ -40,14 +40,12 @@
 #include "scripts.h"
 #include "weapons.h"
 
-extern Chat* g_chat;
 extern Game g_game;
 extern Monsters g_monsters;
 extern ConfigManager g_config;
 extern Vocations g_vocations;
 extern Spells* g_spells;
 extern TalkActions* g_talkActions;
-extern CreatureEvents* g_creatureEvents;
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
 
@@ -4043,7 +4041,7 @@ int LuaScriptInterface::luaSendChannelMessage(lua_State* L)
 {
 	//sendChannelMessage(channelId, type, message)
 	uint32_t channelId = getNumber<uint32_t>(L, 1);
-	ChatChannel* channel = g_chat->getChannelById(channelId);
+	ChatChannel* channel = g_chat().getChannelById(channelId);
 	if (!channel) {
 		pushBoolean(L, false);
 		return 1;
@@ -4060,7 +4058,7 @@ int LuaScriptInterface::luaSendGuildChannelMessage(lua_State* L)
 {
 	//sendGuildChannelMessage(guildId, type, message)
 	uint32_t guildId = getNumber<uint32_t>(L, 1);
-	ChatChannel* channel = g_chat->getGuildChannelById(guildId);
+	ChatChannel* channel = g_chat().getGuildChannelById(guildId);
 	if (!channel) {
 		pushBoolean(L, false);
 		return 1;
@@ -9606,7 +9604,7 @@ int LuaScriptInterface::luaPlayerSendTextMessage(lua_State* L)
 	TextMessage message(getNumber<MessageClasses>(L, 2), getString(L, 3));
 	if (parameters == 4) {
 		uint16_t channelId = getNumber<uint16_t>(L, 4);
-		ChatChannel* channel = g_chat->getChannel(*player, channelId);
+		ChatChannel* channel = g_chat().getChannel(*player, channelId);
 		if (!channel || !channel->hasUser(*player)) {
 			pushBoolean(L, false);
 			return 1;
@@ -15443,7 +15441,7 @@ int LuaScriptInterface::luaCreatureEventRegister(lua_State* L)
 			pushBoolean(L, false);
 			delete creature;
 		} else {
-			pushBoolean(L, g_creatureEvents->registerLuaEvent(creature));
+			pushBoolean(L, g_creatureEvents().registerLuaEvent(creature));
 		}
 		*creaturePtr = nullptr; // Remove luascript reference
 	} else {

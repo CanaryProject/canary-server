@@ -40,8 +40,6 @@
 
 extern ConfigManager g_config;
 extern Actions actions;
-extern CreatureEvents* g_creatureEvents;
-extern Chat* g_chat;
 extern Spells* g_spells;
 extern Monsters g_monsters;
 
@@ -225,7 +223,7 @@ void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem,
 	player = foundPlayer;
 	player->incrementReferenceCounter();
 
-	g_chat->removeUserFromAllChannels(*player);
+	g_chat().removeUserFromAllChannels(*player);
 	player->clearModalWindows();
 	player->setOperatingSystem(operatingSystem);
 	player->setTfcOperatingSystem(tfcOperatingSystem);
@@ -233,7 +231,7 @@ void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem,
 
 	player->client = getThis();
 	sendAddCreature(player, player->getPosition(), 0, false);
-	g_chat->openChannelsByServer(player);
+	g_chat().openChannelsByServer(player);
 	player->lastIP = player->getIP();
 	player->lastLoginSaved = std::max<time_t>(time(nullptr), player->lastLoginSaved + 1);
 	acceptPackets = true;
@@ -261,7 +259,7 @@ void ProtocolGame::logout(bool displayEffect, bool forced)
 			}
 
 			//scripting event - onLogout
-			if (!g_creatureEvents->playerLogout(player)) {
+			if (!g_creatureEvents().playerLogout(player)) {
 				//Let the script handle the error message
 				return;
 			}
@@ -2367,7 +2365,7 @@ void ProtocolGame::sendChannelsDialog()
 	playermsg.reset();
 	playermsg.addByte(0xAB);
 
-	const ChannelList& list = g_chat->getChannelList(*player);
+	const ChannelList& list = g_chat().getChannelList(*player);
 	playermsg.addByte(list.size());
 	for (ChatChannel* channel : list) {
 		playermsg.add<uint16_t>(channel->getId());

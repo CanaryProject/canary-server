@@ -44,11 +44,9 @@
 #include "scripts.h"
 
 extern ConfigManager g_config;
-extern Chat* g_chat;
 extern TalkActions* g_talkActions;
 extern Spells* g_spells;
 extern Vocations g_vocations;
-extern CreatureEvents* g_creatureEvents;
 extern Events* g_events;
 extern Monsters g_monsters;
 extern MoveEvents* g_moveEvents;
@@ -109,7 +107,7 @@ void Game::setGameState(GameState_t newState)
 			loadExperienceStages();
 
 			groups.load();
-			g_chat->load();
+			g_chat().load();
 
 			map.spawns.startup();
 
@@ -1821,7 +1819,7 @@ bool Game::playerBroadcastMessage(Player* player, const std::string& text) const
 
 void Game::playerCreatePrivateChannel(Player* player)
 {
-	ChatChannel* channel = g_chat->createChannel(*player, CHANNEL_PRIVATE);
+	ChatChannel* channel = g_chat().createChannel(*player, CHANNEL_PRIVATE);
 	if (!channel || !channel->addUser(*player)) {
 		return;
 	}
@@ -1831,7 +1829,7 @@ void Game::playerCreatePrivateChannel(Player* player)
 
 void Game::playerChannelInvite(Player* player, const std::string& name)
 {
-	PrivateChatChannel* channel = g_chat->getPrivateChannel(*player);
+	PrivateChatChannel* channel = g_chat().getPrivateChannel(*player);
 	if (!channel) {
 		return;
 	}
@@ -1850,7 +1848,7 @@ void Game::playerChannelInvite(Player* player, const std::string& name)
 
 void Game::playerChannelExclude(Player* player, const std::string& name)
 {
-	PrivateChatChannel* channel = g_chat->getPrivateChannel(*player);
+	PrivateChatChannel* channel = g_chat().getPrivateChannel(*player);
 	if (!channel) {
 		return;
 	}
@@ -1874,7 +1872,7 @@ void Game::playerRequestChannels(Player* player)
 
 void Game::playerOpenChannel(Player* player, uint16_t channelId)
 {
-	ChatChannel* channel = g_chat->addUserToChannel(*player, channelId);
+	ChatChannel* channel = g_chat().addUserToChannel(*player, channelId);
 	if (!channel) {
 		return;
 	}
@@ -1892,7 +1890,7 @@ void Game::playerOpenChannel(Player* player, uint16_t channelId)
 
 void Game::playerCloseChannel(Player* player, uint16_t channelId)
 {
-	g_chat->removeUserFromChannel(*player, channelId);
+	g_chat().removeUserFromChannel(*player, channelId);
 }
 
 void Game::playerOpenPrivateChannel(Player* player, std::string& receiver)
@@ -3279,7 +3277,7 @@ void Game::playerSay(Player* player, uint16_t channelId, SpeakClasses type,
 		case TALKTYPE_CHANNEL_O:
 		case TALKTYPE_CHANNEL_Y:
 		case TALKTYPE_CHANNEL_R1:
-			g_chat->talkToChannel(*player, type, text, channelId);
+			g_chat().talkToChannel(*player, type, text, channelId);
 			break;
 
 		case TALKTYPE_PRIVATE_PN:
@@ -5615,12 +5613,12 @@ bool Game::reloadCreatureScripts(bool fromLua, bool reload)
 	bool result = true;
 	if (fromLua) {
 		if (reload) {
-			result = g_creatureEvents->reload();
+			result = g_creatureEvents().reload();
 		}
-		g_creatureEvents->clear(true);
+		g_creatureEvents().clear(true);
 		g_scripts().loadScripts("scripts", false, true);
 	} else {
-		result = g_creatureEvents->reload();
+		result = g_creatureEvents().reload();
 	}
 
 	for (const auto& it : cacheCreaturesEvents) {
@@ -5638,7 +5636,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 {
 	switch (reloadType) {
 		case RELOAD_TYPE_ACTIONS: return g_actions().reload();
-		case RELOAD_TYPE_CHAT: return g_chat->load();
+		case RELOAD_TYPE_CHAT: return g_chat().load();
 		case RELOAD_TYPE_CONFIG: return g_config.reload();
 		case RELOAD_TYPE_CREATURESCRIPTS: return reloadCreatureScripts();
 		case RELOAD_TYPE_EVENTS: return g_events->load();
@@ -5698,7 +5696,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			mounts.reload();
 			g_config.reload();
 			g_events->load();
-			g_chat->load();
+			g_chat().load();
 			*/
 			return true;
 		}
@@ -5729,7 +5727,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			#endif
 			g_globalEvents().reload();
 			g_events->load();
-			g_chat->load();
+			g_chat().load();
 			g_actions().clear(true);
 			g_moveEvents->clear(true);
 			g_talkActions->clear(true);

@@ -31,8 +31,6 @@
 #include "events.h"
 #include "scripts.h"
 
-CreatureEvents* g_creatureEvents = nullptr;
-Chat* g_chat = nullptr;
 Events* g_events = nullptr;
 Spells* g_spells = nullptr;
 TalkActions* g_talkActions = nullptr;
@@ -48,8 +46,6 @@ ScriptingManager::~ScriptingManager()
 	delete g_spells;
 	delete g_talkActions;
 	delete g_moveEvents;
-	delete g_chat;
-	delete g_creatureEvents;
 }
 
 bool ScriptingManager::loadScriptSystems()
@@ -74,18 +70,11 @@ bool ScriptingManager::loadScriptSystems()
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_moveEvents!" << std::endl;
 		return false;
 	}
-	g_creatureEvents = new CreatureEvents();
-	if (!g_creatureEvents) {
-		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_creatureEvents!" << std::endl;
-		return false;
-	}
 	g_spells = new Spells();
 	if (!g_spells) {
 		std::cout << "[ScriptingManager::loadScriptSystems] Error while loading g_spells!" << std::endl;
 		return false;
 	}
-
-	g_chat = new Chat();
 
 	g_events = new Events();
 	if (!g_events->load()) {
