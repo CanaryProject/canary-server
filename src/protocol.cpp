@@ -113,7 +113,7 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 			}
 		}
 	};
-	g_dispatcher.addTask(callback);
+	g_dispatcher().addTask(callback);
 	return true;
 }
 

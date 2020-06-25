@@ -52,6 +52,16 @@ class Dispatcher : public ThreadHolder<Dispatcher> {
 		Dispatcher() : work(std::make_shared<boost::asio::io_service::work>(io_service)) {}
 		#endif
 
+		// Singleton - ensures we don't accidentally copy it
+		Dispatcher(Dispatcher const&) = delete;
+		void operator=(Dispatcher const&) = delete;
+
+		static Dispatcher& getInstance() {
+			static Dispatcher instance; // Guaranteed to be destroyed.
+														// Instantiated on first use.
+			return instance;
+		}
+
 		void addTask(std::function<void (void)> functor);
 		void addTask(Task* task);
 
@@ -74,6 +84,6 @@ class Dispatcher : public ThreadHolder<Dispatcher> {
 		#endif
 };
 
-extern Dispatcher g_dispatcher;
+constexpr auto g_dispatcher = &Dispatcher::getInstance;
 
 #endif

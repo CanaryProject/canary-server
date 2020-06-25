@@ -688,7 +688,7 @@ void Player::addStorageValue(const uint32_t key, const int32_t value, const bool
 		storageMap[key] = value;
 
 		if (!isLogin) {
-			auto currentFrameTime = g_dispatcher.getDispatcherCycle();
+			auto currentFrameTime = g_dispatcher().getDispatcherCycle();
 			if (lastQuestlogUpdate != currentFrameTime && g_game.quests.isQuestStorage(key, value, oldValue)) {
 				lastQuestlogUpdate = currentFrameTime;
 				sendTextMessage(MESSAGE_EVENT_ADVANCE, "Your questlog has been updated.");
@@ -3324,7 +3324,7 @@ bool Player::setAttackedCreature(Creature* creature)
 	}
 
 	if (creature) {
-		g_dispatcher.addTask(std::bind(&Game::checkCreatureAttack, &g_game, getID()));
+		g_dispatcher().addTask(std::bind(&Game::checkCreatureAttack, &g_game, getID()));
 	}
 	return true;
 }

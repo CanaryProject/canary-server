@@ -75,7 +75,7 @@ void Connection::close(bool force)
 	connectionState = CONNECTION_STATE_CLOSED;
 
 	if (protocol) {
-		g_dispatcher.addTask(std::bind(&Protocol::release, protocol));
+		g_dispatcher().addTask(std::bind(&Protocol::release, protocol));
 	}
 
 	if (messageQueue.empty() || force) {
@@ -109,7 +109,7 @@ void Connection::accept(Protocol_ptr protocol)
 {
 	this->connectionState = CONNECTION_STATE_IDENTIFYING;
 	this->protocol = protocol;
-	g_dispatcher.addTask(std::bind(&Protocol::onConnect, protocol));
+	g_dispatcher().addTask(std::bind(&Protocol::onConnect, protocol));
 
 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
 	try {

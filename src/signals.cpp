@@ -39,7 +39,6 @@
 #include "databasetasks.h"
 
 extern Scheduler g_scheduler;
-extern Dispatcher g_dispatcher;
 
 extern ConfigManager g_config;
 extern Monsters g_monsters;
@@ -90,25 +89,25 @@ void Signals::dispatchSignalHandler(int signal)
 {
 	switch(signal) {
 		case SIGINT: //Shuts the server down
-			g_dispatcher.addTask(sigintHandler);
+			g_dispatcher().addTask(sigintHandler);
 			break;
 		case SIGTERM: //Shuts the server down
-			g_dispatcher.addTask(sigtermHandler);
+			g_dispatcher().addTask(sigtermHandler);
 			break;
 #ifndef _WIN32
 		case SIGHUP: //Reload config/data
-			g_dispatcher.addTask(sighupHandler);
+			g_dispatcher().addTask(sighupHandler);
 			break;
 		case SIGUSR1: //Saves game state
-			g_dispatcher.addTask(sigusr1Handler);
+			g_dispatcher().addTask(sigusr1Handler);
 			break;
 #else
 		case SIGBREAK: //Shuts the server down
-			g_dispatcher.addTask(sigbreakHandler);
+			g_dispatcher().addTask(sigbreakHandler);
 			// hold the thread until other threads end
 			g_scheduler.join();
 			g_databaseTasks().join();
-			g_dispatcher.join();
+			g_dispatcher().join();
 			break;
 #endif
 		default:

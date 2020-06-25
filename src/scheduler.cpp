@@ -50,7 +50,7 @@ uint64_t Scheduler::addEvent(SchedulerTask* task)
 				return;
 			}
 
-			g_dispatcher.addTask(task);
+			g_dispatcher().addTask(task);
 		});
 	});
 

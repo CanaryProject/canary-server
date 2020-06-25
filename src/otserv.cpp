@@ -38,7 +38,6 @@
 #include <fstream>
 
 Database g_database;
-Dispatcher g_dispatcher;
 Scheduler g_scheduler;
 
 Game g_game;
@@ -77,10 +76,10 @@ int main(int argc, char* argv[])
 
 	ServiceManager serviceManager;
 
-	g_dispatcher.start();
+	g_dispatcher().start();
 	g_scheduler.start();
 
-	g_dispatcher.addTask(std::bind(mainLoader, argc, argv, &serviceManager));
+	g_dispatcher().addTask(std::bind(mainLoader, argc, argv, &serviceManager));
 
 	g_loaderSignal.wait(g_loaderUniqueLock);
 
@@ -91,12 +90,12 @@ int main(int argc, char* argv[])
 		std::cout << ">> No services running. The server is NOT online." << std::endl;
 		g_scheduler.shutdown();
 		g_databaseTasks().shutdown();
-		g_dispatcher.shutdown();
+		g_dispatcher().shutdown();
 	}
 
 	g_scheduler.join();
 	g_databaseTasks().join();
-	g_dispatcher.join();
+	g_dispatcher().join();
 	g_database.end();
 	return 0;
 }

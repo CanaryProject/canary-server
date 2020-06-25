@@ -4524,7 +4524,7 @@ int LuaScriptInterface::luaGameLoadMap(lua_State* L)
 {
 	// Game.loadMap(path)
 	const std::string& path = getString(L, 1);
-	g_dispatcher.addTask([path]() {
+	g_dispatcher().addTask([path]() {
 		try {
 			g_game.loadMap(path);
 		} catch (const std::exception& e) {

@@ -61,7 +61,7 @@ void ProtocolStatus::onRecvFirstMessage(NetworkMessage& msg)
 		//XML info protocol
 		case 0xFF: {
 			if (!tfs_strcmp(msg.getString(4).c_str(), "info")) {
-				g_dispatcher.addTask(std::bind(&ProtocolStatus::sendStatusString, std::static_pointer_cast<ProtocolStatus>(shared_from_this())));
+				g_dispatcher().addTask(std::bind(&ProtocolStatus::sendStatusString, std::static_pointer_cast<ProtocolStatus>(shared_from_this())));
 				return;
 			}
 			break;
@@ -74,7 +74,7 @@ void ProtocolStatus::onRecvFirstMessage(NetworkMessage& msg)
 			if (requestedInfo & REQUEST_PLAYER_STATUS_INFO) {
 				characterName = msg.getString();
 			}
-			g_dispatcher.addTask(std::bind(&ProtocolStatus::sendInfo, std::static_pointer_cast<ProtocolStatus>(shared_from_this()), requestedInfo, std::move(characterName)));
+			g_dispatcher().addTask(std::bind(&ProtocolStatus::sendInfo, std::static_pointer_cast<ProtocolStatus>(shared_from_this()), requestedInfo, std::move(characterName)));
 			return;
 		}
 
