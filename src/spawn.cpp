@@ -27,8 +27,6 @@
 
 #include "pugicast.h"
 
-extern Game g_game;
-
 static constexpr int32_t MINSPAWN_INTERVAL = 1000;
 
 bool Spawns::loadFromXml(const std::string& filename)
@@ -130,7 +128,7 @@ void Spawns::startup()
 	}
 
 	for (Npc* npc : npcList) {
-		g_game.placeCreature(npc, npc->getMasterPos(), false, true);
+		g_game().placeCreature(npc, npc->getMasterPos(), false, true);
 	}
 	npcList.clear();
 	npcList.shrink_to_fit();
@@ -185,7 +183,7 @@ Spawn::~Spawn()
 bool Spawn::findPlayer(const Position& pos)
 {
 	SpectatorVector spectators;
-	g_game.map.getSpectators(spectators, pos, false, true);
+	g_game().map.getSpectators(spectators, pos, false, true);
 	for (Creature* spectator : spectators) {
 		if (!spectator->getPlayer()->hasFlag(PlayerFlag_IgnoredByMonsters)) {
 			return true;
@@ -199,11 +197,11 @@ bool Spawn::spawnMonster(spawnBlock_t& sb, bool startup /*= false*/)
 	std::unique_ptr<Monster> monster_ptr(new Monster(sb.mType));
 	if (startup) {
 		//No need to send out events to the surrounding since there is no one out there to listen!
-		if (!g_game.internalPlaceCreature(monster_ptr.get(), sb.pos, true)) {
+		if (!g_game().internalPlaceCreature(monster_ptr.get(), sb.pos, true)) {
 			return false;
 		}
 	} else {
-		if (!g_game.placeCreature(monster_ptr.get(), sb.pos, false, true)) {
+		if (!g_game().placeCreature(monster_ptr.get(), sb.pos, false, true)) {
 			return false;
 		}
 	}
@@ -289,7 +287,7 @@ void Spawn::scheduleSpawn(uint32_t spawnId, int32_t interval)
 			startSpawnCheck();
 		}
 	} else {
-		g_game.addMagicEffect(sb.pos, CONST_ME_TELEPORT);
+		g_game().addMagicEffect(sb.pos, CONST_ME_TELEPORT);
 		g_scheduler().addEvent(createSchedulerTask(1500, std::bind(&Spawn::scheduleSpawn, this, spawnId, interval - 1500)));
 	}
 }

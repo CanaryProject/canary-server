@@ -24,8 +24,6 @@
 #include "configmanager.h"
 #include "events.h"
 
-extern Game g_game;
-
 Party::Party(Player* leader) : leader(leader)
 {
 	leader->setParty(this);
@@ -457,7 +455,7 @@ void Party::clearPlayerPoints(Player* player)
 
 bool Party::canOpenCorpse(uint32_t ownerId) const
 {
-	if (Player* player = g_game.getPlayerByID(ownerId)) {
+	if (Player* player = g_game().getPlayerByID(ownerId)) {
 		return leader->getID() == ownerId || player->getParty() == this;
 	}
 	return false;

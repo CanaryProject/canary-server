@@ -30,8 +30,6 @@
 #include "teleport.h"
 #include "trashholder.h"
 
-extern Game g_game;
-
 StaticTile real_nullptr_tile(0xFFFF, 0xFFFF, 0xFF);
 Tile& Tile::nullptr_tile = real_nullptr_tile;
 
@@ -371,8 +369,8 @@ void Tile::onAddTileItem(Item* item)
 {
 	#if GAME_FEATURE_BROWSEFIELD > 0
 	if (item->hasProperty(CONST_PROP_MOVEABLE) || item->getContainer()) {
-		auto it = g_game.browseFields.find(this);
-		if (it != g_game.browseFields.end()) {
+		auto it = g_game().browseFields.find(this);
+		if (it != g_game().browseFields.end()) {
 			it->second->addItemBack(item);
 			item->setParent(this);
 		}
@@ -384,7 +382,7 @@ void Tile::onAddTileItem(Item* item)
 	const Position& cylinderMapPos = getPosition();
 
 	SpectatorVector spectators;
-	g_game.map.getSpectators(spectators, cylinderMapPos, true);
+	g_game().map.getSpectators(spectators, cylinderMapPos, true);
 
 	//send to client
 	for (Creature* spectator : spectators) {
@@ -403,8 +401,8 @@ void Tile::onUpdateTileItem(Item* oldItem, const ItemType& oldType, Item* newIte
 {
 	#if GAME_FEATURE_BROWSEFIELD > 0
 	if (newItem->hasProperty(CONST_PROP_MOVEABLE) || newItem->getContainer()) {
-		auto it = g_game.browseFields.find(this);
-		if (it != g_game.browseFields.end()) {
+		auto it = g_game().browseFields.find(this);
+		if (it != g_game().browseFields.end()) {
 			int32_t index = it->second->getThingIndex(oldItem);
 			if (index != -1) {
 				it->second->replaceThing(index, newItem);
@@ -412,8 +410,8 @@ void Tile::onUpdateTileItem(Item* oldItem, const ItemType& oldType, Item* newIte
 			}
 		}
 	} else if (oldItem->hasProperty(CONST_PROP_MOVEABLE) || oldItem->getContainer()) {
-		auto it = g_game.browseFields.find(this);
-		if (it != g_game.browseFields.end()) {
+		auto it = g_game().browseFields.find(this);
+		if (it != g_game().browseFields.end()) {
 			Cylinder* oldParent = oldItem->getParent();
 			it->second->removeThing(oldItem, oldItem->getItemCount());
 			oldItem->setParent(oldParent);
@@ -424,7 +422,7 @@ void Tile::onUpdateTileItem(Item* oldItem, const ItemType& oldType, Item* newIte
 	const Position& cylinderMapPos = getPosition();
 
 	SpectatorVector spectators;
-	g_game.map.getSpectators(spectators, cylinderMapPos, true);
+	g_game().map.getSpectators(spectators, cylinderMapPos, true);
 
 	//send to client
 	for (Creature* spectator : spectators) {
@@ -443,8 +441,8 @@ void Tile::onRemoveTileItem(const SpectatorVector& spectators, const std::vector
 {
 	#if GAME_FEATURE_BROWSEFIELD > 0
 	if (item->hasProperty(CONST_PROP_MOVEABLE) || item->getContainer()) {
-		auto it = g_game.browseFields.find(this);
-		if (it != g_game.browseFields.end()) {
+		auto it = g_game().browseFields.find(this);
+		if (it != g_game().browseFields.end()) {
 			it->second->removeThing(item, item->getItemCount());
 		}
 	}
@@ -733,17 +731,17 @@ Tile* Tile::queryDestination(int32_t&, const Thing&, Item** destItem, uint32_t& 
 		uint16_t dy = tilePos.y;
 		uint8_t dz = tilePos.z + 1;
 
-		Tile* southDownTile = g_game.map.getTile(dx, dy - 1, dz);
+		Tile* southDownTile = g_game().map.getTile(dx, dy - 1, dz);
 		if (southDownTile && southDownTile->hasFlag(TILESTATE_FLOORCHANGE_SOUTH_ALT)) {
 			dy -= 2;
-			destTile = g_game.map.getTile(dx, dy, dz);
+			destTile = g_game().map.getTile(dx, dy, dz);
 		} else {
-			Tile* eastDownTile = g_game.map.getTile(dx - 1, dy, dz);
+			Tile* eastDownTile = g_game().map.getTile(dx - 1, dy, dz);
 			if (eastDownTile && eastDownTile->hasFlag(TILESTATE_FLOORCHANGE_EAST_ALT)) {
 				dx -= 2;
-				destTile = g_game.map.getTile(dx, dy, dz);
+				destTile = g_game().map.getTile(dx, dy, dz);
 			} else {
-				Tile* downTile = g_game.map.getTile(dx, dy, dz);
+				Tile* downTile = g_game().map.getTile(dx, dy, dz);
 				if (downTile) {
 					if (downTile->hasFlag(TILESTATE_FLOORCHANGE_NORTH)) {
 						++dy;
@@ -769,7 +767,7 @@ Tile* Tile::queryDestination(int32_t&, const Thing&, Item** destItem, uint32_t& 
 						++dx;
 					}
 
-					destTile = g_game.map.getTile(dx, dy, dz);
+					destTile = g_game().map.getTile(dx, dy, dz);
 				}
 			}
 		}
@@ -802,7 +800,7 @@ Tile* Tile::queryDestination(int32_t&, const Thing&, Item** destItem, uint32_t& 
 			dx += 2;
 		}
 
-		destTile = g_game.map.getTile(dx, dy, dz);
+		destTile = g_game().map.getTile(dx, dy, dz);
 	}
 
 	if (destTile == nullptr) {
@@ -829,7 +827,7 @@ void Tile::addThing(int32_t, Thing* thing)
 {
 	Creature* creature = thing->getCreature();
 	if (creature) {
-		g_game.map.clearSpectatorCache(creature->getPlayer());
+		g_game().map.clearSpectatorCache(creature->getPlayer());
 		creature->setParent(this);
 		CreatureVector* creatures = makeCreatures();
 		creatures->insert(creatures->begin(), creature);
@@ -856,7 +854,7 @@ void Tile::addThing(int32_t, Thing* thing)
 
 				Item* oldGround = ground;
 				ground->setParent(nullptr);
-				g_game.ReleaseItem(ground);
+				g_game().ReleaseItem(ground);
 				ground = item;
 				resetTileFlags(oldGround);
 				setTileFlags(item);
@@ -874,7 +872,7 @@ void Tile::addThing(int32_t, Thing* thing)
 
 					removeThing(oldSplash, 1);
 					oldSplash->setParent(nullptr);
-					g_game.ReleaseItem(oldSplash);
+					g_game().ReleaseItem(oldSplash);
 					postRemoveNotification(oldSplash, nullptr, 0);
 					break;
 				}
@@ -911,13 +909,13 @@ void Tile::addThing(int32_t, Thing* thing)
 								removeThing(oldField, 1);
 
 								oldField->setParent(nullptr);
-								g_game.ReleaseItem(oldField);
+								g_game().ReleaseItem(oldField);
 								postRemoveNotification(oldField, nullptr, 0);
 								break;
 							} else {
 								//This magic field cannot be replaced.
 								item->setParent(nullptr);
-								g_game.ReleaseItem(item);
+								g_game().ReleaseItem(item);
 								return;
 							}
 						}
@@ -1031,7 +1029,7 @@ void Tile::removeThing(Thing* thing, uint32_t count)
 		if (creatures) {
 			auto it = std::find(creatures->begin(), creatures->end(), thing);
 			if (it != creatures->end()) {
-				g_game.map.clearSpectatorCache(creature->getPlayer());
+				g_game().map.clearSpectatorCache(creature->getPlayer());
 				creatures->erase(it);
 			}
 		}
@@ -1053,7 +1051,7 @@ void Tile::removeThing(Thing* thing, uint32_t count)
 		ground = nullptr;
 
 		SpectatorVector spectators;
-		g_game.map.getSpectators(spectators, getPosition(), true);
+		g_game().map.getSpectators(spectators, getPosition(), true);
 		onRemoveTileItem(spectators, std::vector<int32_t>(spectators.size(), 0), item);
 		return;
 	}
@@ -1071,7 +1069,7 @@ void Tile::removeThing(Thing* thing, uint32_t count)
 		}
 
 		SpectatorVector spectators;
-		g_game.map.getSpectators(spectators, getPosition(), true);
+		g_game().map.getSpectators(spectators, getPosition(), true);
 
 		std::vector<int32_t> oldStackPosVector(spectators.size());
 		size_t i = static_cast<size_t>(-1); //Start index at -1 to avoid copying it
@@ -1097,7 +1095,7 @@ void Tile::removeThing(Thing* thing, uint32_t count)
 			onUpdateTileItem(item, itemType, item, itemType);
 		} else {
 			SpectatorVector spectators;
-			g_game.map.getSpectators(spectators, getPosition(), true);
+			g_game().map.getSpectators(spectators, getPosition(), true);
 
 			std::vector<int32_t> oldStackPosVector(spectators.size());
 			size_t i = static_cast<size_t>(-1); //Start index at -1 to avoid copying it
@@ -1116,7 +1114,7 @@ void Tile::removeThing(Thing* thing, uint32_t count)
 
 void Tile::removeCreature(Creature* creature)
 {
-	g_game.map.getMapSector(tilePos.x, tilePos.y)->removeCreature(creature);
+	g_game().map.getMapSector(tilePos.x, tilePos.y)->removeCreature(creature);
 	removeThing(creature, 0);
 }
 
@@ -1346,7 +1344,7 @@ Thing* Tile::getThing(size_t index) const
 void Tile::postAddNotification(Thing* thing, const Cylinder* oldParent, int32_t index, cylinderlink_t link /*= LINK_OWNER*/)
 {
 	SpectatorVector spectators;
-	g_game.map.getSpectators(spectators, getPosition(), true, true);
+	g_game().map.getSpectators(spectators, getPosition(), true, true);
 	for (Creature* spectator : spectators) {
 		spectator->getPlayer()->postAddNotification(thing, oldParent, index, LINK_NEAR);
 	}
@@ -1392,16 +1390,16 @@ void Tile::postAddNotification(Thing* thing, const Cylinder* oldParent, int32_t 
 
 	//release the reference to this item onces we are finished
 	if (creature) {
-		g_game.ReleaseCreature(creature);
+		g_game().ReleaseCreature(creature);
 	} else if (item) {
-		g_game.ReleaseItem(item);
+		g_game().ReleaseItem(item);
 	}
 }
 
 void Tile::postRemoveNotification(Thing* thing, const Cylinder* newParent, int32_t index, cylinderlink_t)
 {
 	SpectatorVector spectators;
-	g_game.map.getSpectators(spectators, getPosition(), true, true);
+	g_game().map.getSpectators(spectators, getPosition(), true, true);
 
 	if (getThingCount() > 8) {
 		onUpdateTile(spectators);
@@ -1434,7 +1432,7 @@ void Tile::internalAddThing(uint32_t, Thing* thing)
 
 	Creature* creature = thing->getCreature();
 	if (creature) {
-		g_game.map.clearSpectatorCache(creature->getPlayer());
+		g_game().map.clearSpectatorCache(creature->getPlayer());
 		CreatureVector* creatures = makeCreatures();
 		creatures->insert(creatures->begin(), creature);
 	} else {

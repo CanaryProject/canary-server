@@ -31,8 +31,6 @@
 #include "actions.h"
 #include "spells.h"
 
-extern Game g_game;
-
 Items Item::items;
 
 Item* Item::CreateItem(const uint16_t type, uint16_t count /*= 0*/)
@@ -244,7 +242,7 @@ void Item::onRemoved()
 	ScriptEnvironment::removeTempItem(this);
 
 	if (hasAttribute(ITEM_ATTRIBUTE_UNIQUEID)) {
-		g_game.removeUniqueItem(getUniqueId());
+		g_game().removeUniqueItem(getUniqueId());
 	}
 }
 
@@ -2019,7 +2017,7 @@ void Item::setUniqueId(uint16_t n)
 		return;
 	}
 
-	if (g_game.addUniqueItem(n, this)) {
+	if (g_game().addUniqueItem(n, this)) {
 		getAttributes()->setUniqueId(n);
 	}
 }
@@ -2174,12 +2172,12 @@ ItemAttributes::Attribute& ItemAttributes::getAttr(itemAttrTypes type)
 
 void Item::startDecaying()
 {
-	g_game.startDecay(this);
+	g_game().startDecay(this);
 }
 
 void Item::stopDecaying()
 {
-	g_game.stopDecay(this);
+	g_game().stopDecay(this);
 }
 
 bool Item::hasMarketAttributes() const

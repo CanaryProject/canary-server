@@ -24,8 +24,6 @@
 #include "game.h"
 #include "outputmessage.h"
 
-extern Game g_game;
-
 std::map<uint32_t, int64_t> ProtocolStatus::ipConnectMap;
 const uint64_t ProtocolStatus::start = OTSYS_TIME();
 
@@ -114,15 +112,15 @@ void ProtocolStatus::sendStatusString()
 	owner.append_attribute("email") = g_config().getString(ConfigManager::OWNER_EMAIL).c_str();
 
 	pugi::xml_node players = tsqp.append_child("players");
-	players.append_attribute("online") = std::to_string(g_game.getPlayersOnline()).c_str();
+	players.append_attribute("online") = std::to_string(g_game().getPlayersOnline()).c_str();
 	players.append_attribute("max") = std::to_string(g_config().getNumber(ConfigManager::MAX_PLAYERS)).c_str();
-	players.append_attribute("peak") = std::to_string(g_game.getPlayersRecord()).c_str();
+	players.append_attribute("peak") = std::to_string(g_game().getPlayersRecord()).c_str();
 
 	pugi::xml_node monsters = tsqp.append_child("monsters");
-	monsters.append_attribute("total") = std::to_string(g_game.getMonstersOnline()).c_str();
+	monsters.append_attribute("total") = std::to_string(g_game().getMonstersOnline()).c_str();
 
 	pugi::xml_node npcs = tsqp.append_child("npcs");
-	npcs.append_attribute("total") = std::to_string(g_game.getNpcsOnline()).c_str();
+	npcs.append_attribute("total") = std::to_string(g_game().getNpcsOnline()).c_str();
 
 	pugi::xml_node rates = tsqp.append_child("rates");
 	rates.append_attribute("experience") = std::to_string(g_config().getNumber(ConfigManager::RATE_EXPERIENCE)).c_str();
@@ -136,7 +134,7 @@ void ProtocolStatus::sendStatusString()
 	map.append_attribute("author") = g_config().getString(ConfigManager::MAP_AUTHOR).c_str();
 
 	uint32_t mapWidth, mapHeight;
-	g_game.getMapDimensions(mapWidth, mapHeight);
+	g_game().getMapDimensions(mapWidth, mapHeight);
 	map.append_attribute("width") = std::to_string(mapWidth).c_str();
 	map.append_attribute("height") = std::to_string(mapHeight).c_str();
 
@@ -179,9 +177,9 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string characte
 
 	if (requestedInfo & REQUEST_PLAYERS_INFO) {
 		output->addByte(0x20);
-		output->add<uint32_t>(g_game.getPlayersOnline());
+		output->add<uint32_t>(g_game().getPlayersOnline());
 		output->add<uint32_t>(g_config().getNumber(ConfigManager::MAX_PLAYERS));
-		output->add<uint32_t>(g_game.getPlayersRecord());
+		output->add<uint32_t>(g_game().getPlayersRecord());
 	}
 
 	if (requestedInfo & REQUEST_MAP_INFO) {
@@ -189,7 +187,7 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string characte
 		output->addString(g_config().getString(ConfigManager::MAP_NAME));
 		output->addString(g_config().getString(ConfigManager::MAP_AUTHOR));
 		uint32_t mapWidth, mapHeight;
-		g_game.getMapDimensions(mapWidth, mapHeight);
+		g_game().getMapDimensions(mapWidth, mapHeight);
 		output->add<uint16_t>(mapWidth);
 		output->add<uint16_t>(mapHeight);
 	}
@@ -197,7 +195,7 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string characte
 	if (requestedInfo & REQUEST_EXT_PLAYERS_INFO) {
 		output->addByte(0x21); // players info - online players list
 
-		const auto& players = g_game.getPlayers();
+		const auto& players = g_game().getPlayers();
 		output->add<uint32_t>(players.size());
 		for (const auto& it : players) {
 			output->addString(it.second->getName());
@@ -207,7 +205,7 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string characte
 
 	if (requestedInfo & REQUEST_PLAYER_STATUS_INFO) {
 		output->addByte(0x22); // players info - online status info of a player
-		if (g_game.getPlayerByName(characterName) != nullptr) {
+		if (g_game().getPlayerByName(characterName) != nullptr) {
 			output->addByte(0x01);
 		} else {
 			output->addByte(0x00);

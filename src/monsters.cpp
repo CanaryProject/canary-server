@@ -29,8 +29,6 @@
 
 #include "pugicast.h"
 
-extern Game g_game;
-
 spellBlock_t::~spellBlock_t()
 {
 	if (combatSpell) {

@@ -38,7 +38,6 @@
 #include "scheduler.h"
 #include "databasetasks.h"
 
-extern Game g_game;
 extern LuaEnvironment g_luaEnvironment;
 
 using ErrorCode = boost::system::error_code;
@@ -110,21 +109,21 @@ void Signals::sigbreakHandler()
 {
 	//Dispatcher thread
 	std::cout << "SIGBREAK received, shutting game server down..." << std::endl;
-	g_game.setGameState(GAME_STATE_SHUTDOWN);
+	g_game().setGameState(GAME_STATE_SHUTDOWN);
 }
 
 void Signals::sigtermHandler()
 {
 	//Dispatcher thread
 	std::cout << "SIGTERM received, shutting game server down..." << std::endl;
-	g_game.setGameState(GAME_STATE_SHUTDOWN);
+	g_game().setGameState(GAME_STATE_SHUTDOWN);
 }
 
 void Signals::sigusr1Handler()
 {
 	//Dispatcher thread
 	std::cout << "SIGUSR1 received, saving the game state..." << std::endl;
-	g_game.saveGameState();
+	g_game().saveGameState();
 }
 
 void Signals::sighupHandler()
@@ -147,8 +146,8 @@ void Signals::sighupHandler()
 	Npcs::reload();
 	std::cout << "Reloaded npcs." << std::endl;
 
-	g_game.raids.reload();
-	g_game.raids.startup();
+	g_game().raids.reload();
+	g_game().raids.startup();
 	std::cout << "Reloaded raids." << std::endl;
 
 	g_spells().reload();
@@ -167,10 +166,10 @@ void Signals::sighupHandler()
 	g_weapons().loadDefaults();
 	std::cout << "Reloaded weapons." << std::endl;
 
-	g_game.quests.reload();
+	g_game().quests.reload();
 	std::cout << "Reloaded quests." << std::endl;
 
-	g_game.mounts.reload();
+	g_game().mounts.reload();
 	std::cout << "Reloaded mounts." << std::endl;
 
 	g_globalEvents().reload();
@@ -192,5 +191,5 @@ void Signals::sigintHandler()
 {
 	//Dispatcher thread
 	std::cout << "SIGINT received, shutting game server down..." << std::endl;
-	g_game.setGameState(GAME_STATE_SHUTDOWN);
+	g_game().setGameState(GAME_STATE_SHUTDOWN);
 }

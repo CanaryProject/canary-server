@@ -27,8 +27,6 @@
 #include "configmanager.h"
 #include "bed.h"
 
-extern Game g_game;
-
 House::House(uint32_t houseId) : id(houseId) {}
 
 void House::addTile(HouseTile* tile)
@@ -173,9 +171,9 @@ bool House::kickPlayer(Player* player, Player* target)
 	}
 
 	Position oldPosition = target->getPosition();
-	if (g_game.internalTeleport(target, getEntryPosition()) == RETURNVALUE_NOERROR) {
-		g_game.addMagicEffect(oldPosition, CONST_ME_POFF);
-		g_game.addMagicEffect(getEntryPosition(), CONST_ME_TELEPORT);
+	if (g_game().internalTeleport(target, getEntryPosition()) == RETURNVALUE_NOERROR) {
+		g_game().addMagicEffect(oldPosition, CONST_ME_POFF);
+		g_game().addMagicEffect(getEntryPosition(), CONST_ME_TELEPORT);
 	}
 	return true;
 }
@@ -215,7 +213,7 @@ bool House::transferToDepot() const
 		return false;
 	}
 
-	Player* player = g_game.getPlayerByGUID(owner);
+	Player* player = g_game().getPlayerByGUID(owner);
 	if (player) {
 		transferToDepot(player);
 	} else {
@@ -261,22 +259,22 @@ bool House::transferToDepot(Player* player) const
 			Container* parcel = newItem->getContainer();
 			if (parcel) {
 				for (Item* item : moveItemList) {
-					g_game.internalMoveItem(item->getParent(), parcel, INDEX_WHEREEVER, item, item->getItemCount(), nullptr, FLAG_NOLIMIT);
+					g_game().internalMoveItem(item->getParent(), parcel, INDEX_WHEREEVER, item, item->getItemCount(), nullptr, FLAG_NOLIMIT);
 				}
 
 				Item* label = Item::CreateItem(ITEM_LABEL);
 				if (label) {
 					label->setText("You have forgot your items.");
-					if (g_game.internalAddItem(parcel, label, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
+					if (g_game().internalAddItem(parcel, label, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
 						delete label;
 					}
 				}
 
 				#if GAME_FEATURE_MARKET > 0
-				g_game.internalAddItem(player->getInbox(), parcel, INDEX_WHEREEVER, FLAG_NOLIMIT);
+				g_game().internalAddItem(player->getInbox(), parcel, INDEX_WHEREEVER, FLAG_NOLIMIT);
 				#else
 				player->setLastDepotId(static_cast<int16_t>(townId));
-				g_game.internalAddItem(player->getDepotLocker(townId), parcel, INDEX_WHEREEVER, FLAG_NOLIMIT);
+				g_game().internalAddItem(player->getDepotLocker(townId), parcel, INDEX_WHEREEVER, FLAG_NOLIMIT);
 				#endif
 				return true;
 			} else {
@@ -286,13 +284,13 @@ bool House::transferToDepot(Player* player) const
 
 		#if GAME_FEATURE_MARKET > 0
 		for (Item* item : moveItemList) {
-			g_game.internalMoveItem(item->getParent(), player->getInbox(), INDEX_WHEREEVER, item, item->getItemCount(), nullptr, FLAG_NOLIMIT);
+			g_game().internalMoveItem(item->getParent(), player->getInbox(), INDEX_WHEREEVER, item, item->getItemCount(), nullptr, FLAG_NOLIMIT);
 		}
 		#else
 		DepotLocker* depot = player->getDepotLocker(townId);
 		player->setLastDepotId(static_cast<int16_t>(townId));
 		for (Item* item : moveItemList) {
-			g_game.internalMoveItem(item->getParent(), depot, INDEX_WHEREEVER, item, item->getItemCount(), nullptr, FLAG_NOLIMIT);
+			g_game().internalMoveItem(item->getParent(), depot, INDEX_WHEREEVER, item, item->getItemCount(), nullptr, FLAG_NOLIMIT);
 		}
 		#endif
 	}
@@ -399,7 +397,7 @@ void House::resetTransferItem()
 		transfer_container.setParent(nullptr);
 
 		transfer_container.removeThing(tmpItem, tmpItem->getItemCount());
-		g_game.ReleaseItem(tmpItem);
+		g_game().ReleaseItem(tmpItem);
 	}
 }
 
@@ -422,7 +420,7 @@ void HouseTransferItem::onTradeEvent(TradeEvents_t event, Player* owner)
 			house->executeTransfer(this, owner);
 		}
 
-		g_game.internalRemoveItem(this, 1);
+		g_game().internalRemoveItem(this, 1);
 	} else if (event == ON_TRADE_CANCEL) {
 		if (house) {
 			house->resetTransferItem();
@@ -481,7 +479,7 @@ void AccessList::parseList(const std::string& list)
 
 void AccessList::addPlayer(const std::string& name)
 {
-	Player* player = g_game.getPlayerByName(name);
+	Player* player = g_game().getPlayerByName(name);
 	if (player) {
 		playerList.insert(player->getGUID());
 	} else {
@@ -501,7 +499,7 @@ const Guild* getGuildByName(const std::string& name)
 		return nullptr;
 	}
 
-	const Guild* guild = g_game.getGuild(guildId);
+	const Guild* guild = g_game().getGuild(guildId);
 	if (guild) {
 		return guild;
 	}
@@ -692,7 +690,7 @@ void Houses::payHouses(RentPeriod_t rentPeriod) const
 		}
 
 		const uint32_t ownerId = house->getOwner();
-		Town* town = g_game.map.towns.getTown(house->getTownId());
+		Town* town = g_game().map.towns.getTown(house->getTownId());
 		if (!town) {
 			continue;
 		}
@@ -758,14 +756,14 @@ void Houses::payHouses(RentPeriod_t rentPeriod) const
 					ss << "Warning! \nThe " << period << " rent of " << house->getRent() << " gold for your house \"" << house->getName() << "\" is payable. Have it within " << daysLeft << " days or you will lose this house.";
 					letter->setText(ss.str());
 					#if GAME_FEATURE_MARKET > 0
-					if (g_game.internalAddItem(player.getInbox(), letter, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
+					if (g_game().internalAddItem(player.getInbox(), letter, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
 						delete letter;
 					}
 					#else
 					DepotLocker* depot = player.getDepotLocker(town->getID());
 					player.setLastDepotId(static_cast<int16_t>(town->getID()));
 					if (depot) {
-						if (g_game.internalAddItem(depot, letter, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
+						if (g_game().internalAddItem(depot, letter, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
 							delete letter;
 						}
 					}

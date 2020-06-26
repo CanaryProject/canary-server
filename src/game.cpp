@@ -1779,7 +1779,7 @@ void Game::playerTeleport(Player* player, const Position& position)
 		return;
 	}
 
-	ReturnValue ret = g_game.internalTeleport(player, position, false, FLAG_NOLIMIT);
+	ReturnValue ret = g_game().internalTeleport(player, position, false, FLAG_NOLIMIT);
 	if (ret != RETURNVALUE_NOERROR) {
 		player->sendCancelMessage(ret);
 	}
@@ -3886,20 +3886,20 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 			if (chance != 0 && uniform_random(1, 100) <= chance) {
 				CombatDamage lifeLeech;
 				lifeLeech.primary.value = std::round(healthChange * (attackerPlayer->getSpecialSkill(SPECIALSKILL_LIFELEECHAMOUNT) / 100.));
-				g_game.combatChangeHealth(nullptr, attackerPlayer, lifeLeech);
+				g_game().combatChangeHealth(nullptr, attackerPlayer, lifeLeech);
 			}
 
 			chance = attackerPlayer->getSpecialSkill(SPECIALSKILL_MANALEECHCHANCE);
 			if (chance != 0 && uniform_random(1, 100) <= chance) {
 				CombatDamage manaLeech;
 				manaLeech.primary.value = std::round(healthChange * (attackerPlayer->getSpecialSkill(SPECIALSKILL_MANALEECHAMOUNT) / 100.));
-				g_game.combatChangeMana(nullptr, attackerPlayer, manaLeech);
+				g_game().combatChangeMana(nullptr, attackerPlayer, manaLeech);
 			}
 
 			chance = attackerPlayer->getSpecialSkill(SPECIALSKILL_CRITICALHITCHANCE);
 			if (chance != 0 && uniform_random(1, 100) <= chance) {
 				healthChange += std::round(healthChange * (attackerPlayer->getSpecialSkill(SPECIALSKILL_CRITICALHITAMOUNT) / 100.));
-				g_game.addMagicEffect(target->getPosition(), CONST_ME_CRITICAL_DAMAGE);
+				g_game().addMagicEffect(target->getPosition(), CONST_ME_CRITICAL_DAMAGE);
 			}
 		}
 

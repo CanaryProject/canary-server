@@ -25,8 +25,6 @@
 
 #include "movement.h"
 
-extern Game g_game;
-
 MoveEvents::MoveEvents() :
 	scriptInterface("MoveEvents Interface")
 {
@@ -624,7 +622,7 @@ uint32_t MoveEvent::EquipItem(MoveEvent* moveEvent, Player* player, Item* item, 
 
 	const ItemType& it = Item::items[item->getID()];
 	if (it.transformEquipTo != 0) {
-		g_game.transformItem(item, it.transformEquipTo);
+		g_game().transformItem(item, it.transformEquipTo);
 	} else {
 		player->setItemAbility(slot, true);
 	}
@@ -644,7 +642,7 @@ uint32_t MoveEvent::EquipItem(MoveEvent* moveEvent, Player* player, Item* item, 
 	}
 
 	if (it.abilities->speed != 0) {
-		g_game.changeSpeed(player, it.abilities->speed);
+		g_game().changeSpeed(player, it.abilities->speed);
 	}
 
 	if (it.abilities->conditionSuppressions != 0) {
@@ -727,7 +725,7 @@ uint32_t MoveEvent::DeEquipItem(MoveEvent*, Player* player, Item* item, slots_t 
 
 	const ItemType& it = Item::items[item->getID()];
 	if (it.transformDeEquipTo != 0) {
-		g_game.transformItem(item, it.transformDeEquipTo);
+		g_game().transformItem(item, it.transformDeEquipTo);
 	}
 
 	if (!it.abilities) {
@@ -743,7 +741,7 @@ uint32_t MoveEvent::DeEquipItem(MoveEvent*, Player* player, Item* item, slots_t 
 	}
 
 	if (it.abilities->speed != 0) {
-		g_game.changeSpeed(player, -it.abilities->speed);
+		g_game().changeSpeed(player, -it.abilities->speed);
 	}
 
 	if (it.abilities->conditionSuppressions != 0) {

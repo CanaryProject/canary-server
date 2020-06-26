@@ -23,8 +23,6 @@
 #include "game.h"
 #include "scheduler.h"
 
-extern Game g_game;
-
 void Decay::startDecay(Item* item, int32_t duration)
 {
 	if (item->hasAttribute(ITEM_ATTRIBUTE_DURATION_TIMESTAMP)) {
@@ -61,7 +59,7 @@ void Decay::stopDecay(Item* item, int64_t timestamp)
 					item->setDuration(item->getDuration());
 				}
 				item->removeAttribute(ITEM_ATTRIBUTE_DECAYSTATE);
-				g_game.ReleaseItem(item);
+				g_game().ReleaseItem(item);
 
 				decayMap.erase(it);
 			}
@@ -74,7 +72,7 @@ void Decay::stopDecay(Item* item, int64_t timestamp)
 					item->setDuration(item->getDuration());
 				}
 				item->removeAttribute(ITEM_ATTRIBUTE_DECAYSTATE);
-				g_game.ReleaseItem(item);
+				g_game().ReleaseItem(item);
 
 				std::swap(decayItems[i], decayItems.back());
 				decayItems.pop_back();
@@ -110,10 +108,10 @@ void Decay::checkDecay()
 			item->setDecaying(DECAYING_FALSE);
 		} else {
 			item->setDecaying(DECAYING_FALSE);
-			g_game.internalDecayItem(item);
+			g_game().internalDecayItem(item);
 		}
 
-		g_game.ReleaseItem(item);
+		g_game().ReleaseItem(item);
 	}
 
 	if (it != end) {

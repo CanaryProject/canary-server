@@ -27,8 +27,6 @@
 #include "pugicast.h"
 #include "spells.h"
 
-extern Game g_game;
-
 Actions::Actions() :
 	scriptInterface("Action Interface")
 {
@@ -270,7 +268,7 @@ ReturnValue Actions::canUseFar(const Creature* creature, const Position& toPos, 
 		return RETURNVALUE_TOOFARAWAY;
 	}
 
-	if (checkLineOfSight && !g_game.canThrowObjectTo(creaturePos, toPos)) {
+	if (checkLineOfSight && !g_game().canThrowObjectTo(creaturePos, toPos)) {
 		return RETURNVALUE_CANNOTTHROW;
 	}
 
@@ -334,7 +332,7 @@ ReturnValue Actions::internalUseItem(Player* player, const Position& pos, uint8_
 
 		if (bed->trySleep(player)) {
 			player->setBedItem(bed);
-			g_game.sendOfflineTrainingDialog(player);
+			g_game().sendOfflineTrainingDialog(player);
 		}
 
 		return RETURNVALUE_NOERROR;
@@ -525,7 +523,7 @@ Thing* Action::getTarget(Player* player, Creature* targetCreature, const Positio
 	if (targetCreature) {
 		return targetCreature;
 	}
-	return g_game.internalGetThing(player, toPosition, toStackPos, 0, STACKPOS_USETARGET);
+	return g_game().internalGetThing(player, toPosition, toStackPos, 0, STACKPOS_USETARGET);
 }
 
 bool Action::executeUse(Player* player, Item* item, const Position& fromPosition, Thing* target, const Position& toPosition, bool isHotkey)

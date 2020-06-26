@@ -88,6 +88,12 @@ class Game
 		Game(const Game&) = delete;
 		Game& operator=(const Game&) = delete;
 
+		static Game& getInstance() {
+			static Game instance; // Guaranteed to be destroyed.
+														// Instantiated on first use.
+			return instance;
+		}
+
 		void start(ServiceManager* manager);
 
 		void forceAddCondition(uint32_t creatureId, Condition* condition);
@@ -594,5 +600,7 @@ class Game
 		bool stagesEnabled = false;
 		bool useLastStageLevel = false;
 };
+
+constexpr auto g_game = &Game::getInstance;
 
 #endif

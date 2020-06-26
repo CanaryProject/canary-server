@@ -24,8 +24,6 @@
 #include "configmanager.h"
 #include "game.h"
 
-extern Game g_game;
-
 Account IOLoginData::loadAccount(uint32_t accno)
 {
 	Account account;
@@ -227,7 +225,7 @@ bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 	}
 
 	player->setGUID(result->getNumber<uint32_t>("id"));
-	Group* group = g_game.groups.getGroup(result->getNumber<uint16_t>("group_id"));
+	Group* group = g_game().groups.getGroup(result->getNumber<uint16_t>("group_id"));
 	if (!group) {
 		std::cout << "[Error - IOLoginData::preloadPlayer] " << player->name << " has Group ID " << result->getNumber<uint16_t>("group_id") << " which doesn't exist." << std::endl;
 		return false;
@@ -248,13 +246,13 @@ bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 		uint32_t playerRankId = result->getNumber<uint32_t>("rank_id");
 		player->guildNick = result->getString("nick");
 
-		Guild* guild = g_game.getGuild(guildId);
+		Guild* guild = g_game().getGuild(guildId);
 		if (!guild) {
 			guild = IOGuild::loadGuild(guildId);
 		}
 
 		if (guild) {
-			g_game.addGuild(guild);
+			g_game().addGuild(guild);
 
 			player->guild = guild;
 			const GuildRank* rank = guild->getRankById(playerRankId);
@@ -389,7 +387,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 		player->premiumDays = acc.premiumDays;
 	}
 
-	Group* group = g_game.groups.getGroup(result->getNumber<uint16_t>("group_id"));
+	Group* group = g_game().groups.getGroup(result->getNumber<uint16_t>("group_id"));
 	if (!group) {
 		std::cout << "[Error - IOLoginData::loadPlayer] " << player->name << " has Group ID " << result->getNumber<uint16_t>("group_id") << " which doesn't exist" << std::endl;
 		return false;
@@ -489,7 +487,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 	player->defaultOutfit.lookAddons = result->getNumber<uint16_t>("lookaddons");
 	player->currentOutfit = player->defaultOutfit;
 	player->direction = static_cast<Direction> (result->getNumber<uint16_t>("direction"));
-	if (g_game.getWorldType() != WORLD_TYPE_PVP_ENFORCED) {
+	if (g_game().getWorldType() != WORLD_TYPE_PVP_ENFORCED) {
 		const time_t skullSeconds = result->getNumber<time_t>("skulltime") - time(nullptr);
 		if (skullSeconds > 0) {
 			//ensure that we round up the number of ticks
@@ -514,7 +512,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 	player->offlineTrainingTime = result->getNumber<int32_t>("offlinetraining_time") * 1000;
 	player->offlineTrainingSkill = result->getNumber<int32_t>("offlinetraining_skill");
 
-	Town* town = g_game.map.towns.getTown(result->getNumber<uint32_t>("town_id"));
+	Town* town = g_game().map.towns.getTown(result->getNumber<uint32_t>("town_id"));
 	if (!town) {
 		std::cout << "[Error - IOLoginData::loadPlayer] " << player->name << " has Town ID " << result->getNumber<uint32_t>("town_id") << " which doesn't exist" << std::endl;
 		return false;
@@ -837,7 +835,7 @@ bool IOLoginData::savePlayer(Player* player)
 		query.append(",`storages` = NULL");
 	}
 
-	if (g_game.getWorldType() != WORLD_TYPE_PVP_ENFORCED) {
+	if (g_game().getWorldType() != WORLD_TYPE_PVP_ENFORCED) {
 		int64_t skullTime = 0;
 		if (player->skullTicks > 0) {
 			skullTime = time(nullptr) + player->skullTicks;
@@ -999,7 +997,7 @@ bool IOLoginData::getGuidByNameEx(uint32_t& guid, bool& specialVip, std::string&
 
 	name = result->getString("name");
 	guid = result->getNumber<uint32_t>("id");
-	Group* group = g_game.groups.getGroup(result->getNumber<uint16_t>("group_id"));
+	Group* group = g_game().groups.getGroup(result->getNumber<uint16_t>("group_id"));
 
 	uint64_t flags;
 	if (group) {

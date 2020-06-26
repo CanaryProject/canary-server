@@ -41,8 +41,6 @@
 #define lua_strlen lua_rawlen
 #endif
 
-extern Game g_game;
-
 namespace {
 
 std::string getGlobalString(lua_State* L, const char* identifier, const char* defaultValue)
@@ -207,8 +205,8 @@ bool ConfigManager::load()
 bool ConfigManager::reload()
 {
 	bool result = load();
-	if (transformToSHA1(getString(ConfigManager::MOTD)) != g_game.getMotdHash()) {
-		g_game.incrementMotdNum();
+	if (transformToSHA1(getString(ConfigManager::MOTD)) != g_game().getMotdHash()) {
+		g_game().incrementMotdNum();
 	}
 	return result;
 }

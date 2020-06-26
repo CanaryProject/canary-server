@@ -29,8 +29,6 @@
 #include "ban.h"
 #include "game.h"
 
-extern Game g_game;
-
 void ProtocolLogin::disconnectClient(const std::string& message)
 {
 	auto output = OutputMessagePool::getOutputMessage();
@@ -113,7 +111,7 @@ void ProtocolLogin::getCharacterList(const std::string accountName, const std::s
 		output->addByte(0x14);
 
 		std::ostringstream ss;
-		ss << g_game.getMotdNum() << "\n" << motd;
+		ss << g_game().getMotdNum() << "\n" << motd;
 		output->addString(ss.str());
 	}
 
@@ -182,7 +180,7 @@ void ProtocolLogin::getCharacterList(const std::string accountName, const std::s
 
 void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 {
-	if (g_game.getGameState() == GAME_STATE_SHUTDOWN) {
+	if (g_game().getGameState() == GAME_STATE_SHUTDOWN) {
 		disconnect();
 		return;
 	}
@@ -209,12 +207,12 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 
 	setChecksumMethod(CHECKSUM_METHOD_ADLER32);
 
-	if (g_game.getGameState() == GAME_STATE_STARTUP) {
+	if (g_game().getGameState() == GAME_STATE_STARTUP) {
 		disconnectClient("Gameworld is starting up. Please wait.");
 		return;
 	}
 
-	if (g_game.getGameState() == GAME_STATE_MAINTAIN) {
+	if (g_game().getGameState() == GAME_STATE_MAINTAIN) {
 		disconnectClient("Gameworld is under maintenance.\nPlease re-connect in a while.");
 		return;
 	}
