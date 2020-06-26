@@ -4162,7 +4162,7 @@ const luaL_Reg LuaScriptInterface::luaDatabaseTable[] = {
 
 int LuaScriptInterface::luaDatabaseExecute(lua_State* L)
 {
-	pushBoolean(L, g_database.executeQuery(getString(L, -1)));
+	pushBoolean(L, g_database().executeQuery(getString(L, -1)));
 	return 1;
 }
 
@@ -4217,7 +4217,7 @@ int LuaScriptInterface::luaDatabaseAsyncExecute(lua_State* L)
 
 int LuaScriptInterface::luaDatabaseStoreQuery(lua_State* L)
 {
-	if (DBResult_ptr res = g_database.storeQuery(getString(L, -1))) {
+	if (DBResult_ptr res = g_database().storeQuery(getString(L, -1))) {
 		lua_pushnumber(L, ScriptEnvironment::addResult(res));
 	} else {
 		pushBoolean(L, false);
@@ -4280,20 +4280,20 @@ int LuaScriptInterface::luaDatabaseAsyncStoreQuery(lua_State* L)
 
 int LuaScriptInterface::luaDatabaseEscapeString(lua_State* L)
 {
-	pushString(L, g_database.escapeString(getString(L, -1)));
+	pushString(L, g_database().escapeString(getString(L, -1)));
 	return 1;
 }
 
 int LuaScriptInterface::luaDatabaseEscapeBlob(lua_State* L)
 {
 	uint32_t length = getNumber<uint32_t>(L, 2);
-	pushString(L, g_database.escapeBlob(getString(L, 1).c_str(), length));
+	pushString(L, g_database().escapeBlob(getString(L, 1).c_str(), length));
 	return 1;
 }
 
 int LuaScriptInterface::luaDatabaseLastInsertId(lua_State* L)
 {
-	lua_pushnumber(L, g_database.getLastInsertId());
+	lua_pushnumber(L, g_database().getLastInsertId());
 	return 1;
 }
 

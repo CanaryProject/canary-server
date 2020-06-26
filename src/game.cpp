@@ -4623,21 +4623,21 @@ void Game::updatePremium(Account& account)
 
 void Game::loadMotdNum()
 {
-	DBResult_ptr result = g_database.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_num'");
+	DBResult_ptr result = g_database().storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_num'");
 	if (result) {
 		motdNum = result->getNumber<uint32_t>("value");
 	} else {
-		g_database.executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('motd_num', '0')");
+		g_database().executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('motd_num', '0')");
 	}
 
-	result = g_database.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_hash'");
+	result = g_database().storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_hash'");
 	if (result) {
 		motdHash = result->getString("value");
 		if (motdHash != transformToSHA1(g_config().getString(ConfigManager::MOTD))) {
 			++motdNum;
 		}
 	} else {
-		g_database.executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('motd_hash', '')");
+		g_database().executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('motd_hash', '')");
 	}
 }
 
@@ -4645,11 +4645,11 @@ void Game::saveMotdNum() const
 {
 	std::ostringstream query;
 	query << "UPDATE `server_config` SET `value` = '" << motdNum << "' WHERE `config` = 'motd_num'";
-	g_database.executeQuery(query.str());
+	g_database().executeQuery(query.str());
 
 	query.str(std::string());
 	query << "UPDATE `server_config` SET `value` = '" << transformToSHA1(g_config().getString(ConfigManager::MOTD)) << "' WHERE `config` = 'motd_hash'";
-	g_database.executeQuery(query.str());
+	g_database().executeQuery(query.str());
 }
 
 void Game::checkPlayersRecord()
@@ -4670,16 +4670,16 @@ void Game::updatePlayersRecord() const
 {
 	std::ostringstream query;
 	query << "UPDATE `server_config` SET `value` = '" << playersRecord << "' WHERE `config` = 'players_record'";
-	g_database.executeQuery(query.str());
+	g_database().executeQuery(query.str());
 }
 
 void Game::loadPlayersRecord()
 {
-	DBResult_ptr result = g_database.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'players_record'");
+	DBResult_ptr result = g_database().storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'players_record'");
 	if (result) {
 		playersRecord = result->getNumber<uint32_t>("value");
 	} else {
-		g_database.executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('players_record', '0')");
+		g_database().executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('players_record', '0')");
 	}
 }
 

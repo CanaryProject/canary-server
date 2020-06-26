@@ -42,7 +42,7 @@ void House::setOwner(uint32_t guid, bool updateDatabase/* = true*/, Player* play
 	if (updateDatabase && owner != guid) {
 		std::ostringstream query;
 		query << "UPDATE `houses` SET `owner` = " << guid << ", `bid` = 0, `bid_end` = 0, `last_bid` = 0, `highest_bidder` = 0  WHERE `id` = " << id;
-		g_database.executeQuery(query.str());
+		g_database().executeQuery(query.str());
 	}
 
 	if (isLoaded && owner == guid) {

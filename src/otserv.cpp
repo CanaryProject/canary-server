@@ -36,8 +36,6 @@
 #include "scripts.h"
 #include <fstream>
 
-Database g_database;
-
 Game g_game;
 LuaEnvironment g_luaEnvironment;
 
@@ -66,7 +64,7 @@ int main(int argc, char* argv[])
 	// Setup bad allocation handler
 	std::set_new_handler(badAllocationHandler);
 
-	if (!g_database.init()) {
+	if (!g_database().init()) {
 		return 1;
 	}
 
@@ -92,7 +90,7 @@ int main(int argc, char* argv[])
 	g_scheduler().join();
 	g_databaseTasks().join();
 	g_dispatcher().join();
-	g_database.end();
+	g_database().end();
 	return 0;
 }
 
@@ -162,13 +160,13 @@ void mainLoader(int, char*[], ServiceManager* services)
 	g_RSA().setKey(n, d);
 
 	std::cout << ">> Establishing database connection..." << std::flush;
-	if (!g_database.connect()) {
+	if (!g_database().connect()) {
 		startupErrorMessage("Failed to connect to database.");
 		return;
 	}
 
 	std::cout << " MySQL " << Database::getClientVersion() << std::endl;
-	if (g_database.getMaxPacketSize() < 104857600) {
+	if (g_database().getMaxPacketSize() < 104857600) {
 		std::cout << "> Max MYSQL Query size below 100MB might generate undefined behaviour." << std::endl;
 		std::cout << "> Do you want to continue? Press enter to continue." << std::endl;
 		getchar();

@@ -32,7 +32,7 @@ Account IOLoginData::loadAccount(uint32_t accno)
 
 	std::stringExtended query(128);
 	query.append("SELECT `id`, `name`, `password`, `type`, `premdays`, `lastday` FROM `accounts` WHERE `id` = ").appendInt(accno);
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return account;
 	}
@@ -49,7 +49,7 @@ bool IOLoginData::saveAccount(const Account& acc)
 {
 	std::stringExtended query(128);
 	query.append("UPDATE `accounts` SET `premdays` = ").appendInt(acc.premiumDays).append(", `lastday` = ").appendInt(acc.lastDay).append(" WHERE `id` = ").appendInt(acc.id);
-	return g_database.executeQuery(query);
+	return g_database().executeQuery(query);
 }
 
 std::string decodeSecret(const std::string& secret)
@@ -83,10 +83,10 @@ std::string decodeSecret(const std::string& secret)
 
 bool IOLoginData::loginserverAuthentication(const std::string& name, const std::string& password, Account& account)
 {
-	const std::string& escapedName = g_database.escapeString(name);
+	const std::string& escapedName = g_database().escapeString(name);
 	std::stringExtended query(escapedName.length() + static_cast<size_t>(128));
 	query.append("SELECT `id`, `name`, `password`, `secret`, `type`, `premdays`, `lastday` FROM `accounts` WHERE `name` = ").append(escapedName);
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return false;
 	}
@@ -104,7 +104,7 @@ bool IOLoginData::loginserverAuthentication(const std::string& name, const std::
 
 	query.clear();
 	query.append("SELECT `name`, `deletion` FROM `players` WHERE `account_id` = ").appendInt(account.id);
-	result = g_database.storeQuery(query);
+	result = g_database().storeQuery(query);
 	if (result) {
 		do {
 			if (result->getNumber<uint64_t>("deletion") == 0) {
@@ -122,8 +122,8 @@ uint32_t IOLoginData::gameworldAuthentication(const std::string& accountName, co
 uint32_t IOLoginData::gameworldAuthentication(const std::string& accountName, const std::string& password, std::string& characterName)
 #endif
 {
-	const std::string& escapedAccountName = g_database.escapeString(accountName);
-	const std::string& escapedCharacterName = g_database.escapeString(characterName);
+	const std::string& escapedAccountName = g_database().escapeString(accountName);
+	const std::string& escapedCharacterName = g_database().escapeString(characterName);
 	std::stringExtended query(std::max<size_t>(escapedAccountName.length(), escapedCharacterName.length()) + static_cast<size_t>(128));
 
 	#if GAME_FEATURE_SESSIONKEY > 0
@@ -131,7 +131,7 @@ uint32_t IOLoginData::gameworldAuthentication(const std::string& accountName, co
 	#else
 	query.append("SELECT `id`, `password` FROM `accounts` WHERE `name` = ").append(escapedAccountName);
 	#endif
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return 0;
 	}
@@ -162,7 +162,7 @@ uint32_t IOLoginData::gameworldAuthentication(const std::string& accountName, co
 
 	query.clear();
 	query.append("SELECT `account_id`, `name`, `deletion` FROM `players` WHERE `name` = ").append(escapedCharacterName);
-	result = g_database.storeQuery(query);
+	result = g_database().storeQuery(query);
 	if (!result) {
 		return 0;
 	}
@@ -178,7 +178,7 @@ AccountType_t IOLoginData::getAccountType(uint32_t accountId)
 {
 	std::stringExtended query(64);
 	query.append("SELECT `type` FROM `accounts` WHERE `id` = ").appendInt(accountId);
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return ACCOUNT_TYPE_NORMAL;
 	}
@@ -189,7 +189,7 @@ void IOLoginData::setAccountType(uint32_t accountId, AccountType_t accountType)
 {
 	std::stringExtended query(128);
 	query.append("UPDATE `accounts` SET `type` = ").appendInt(accountType).append(" WHERE `id` = ").appendInt(accountId);
-	g_database.executeQuery(query);
+	g_database().executeQuery(query);
 }
 
 void IOLoginData::updateOnlineStatus(uint32_t guid, bool login)
@@ -204,12 +204,12 @@ void IOLoginData::updateOnlineStatus(uint32_t guid, bool login)
 	} else {
 		query.append("DELETE FROM `players_online` WHERE `player_id` = ").appendInt(guid);
 	}
-	g_database.executeQuery(query);
+	g_database().executeQuery(query);
 }
 
 bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 {
-	const std::string& escapedName = g_database.escapeString(name);
+	const std::string& escapedName = g_database().escapeString(name);
 	std::stringExtended query(escapedName.length() + static_cast<size_t>(280));
 
 	query.append("SELECT `id`, `account_id`, `group_id`, `deletion`, (SELECT `type` FROM `accounts` WHERE `accounts`.`id` = `account_id`) AS `account_type`");
@@ -217,7 +217,7 @@ bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 		query.append(", (SELECT `premdays` FROM `accounts` WHERE `accounts`.`id` = `account_id`) AS `premium_days`");
 	}
 	query.append(" FROM `players` WHERE `name` = ").append(escapedName);
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return false;
 	}
@@ -243,7 +243,7 @@ bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 
 	query.clear();
 	query.append("SELECT `guild_id`, `rank_id`, `nick` FROM `guild_membership` WHERE `player_id` = ").appendInt(player->getGUID());
-	if ((result = g_database.storeQuery(query))) {
+	if ((result = g_database().storeQuery(query))) {
 		uint32_t guildId = result->getNumber<uint32_t>("guild_id");
 		uint32_t playerRankId = result->getNumber<uint32_t>("rank_id");
 		player->guildNick = result->getString("nick");
@@ -261,7 +261,7 @@ bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 			if (!rank) {
 				query.clear();
 				query.append("SELECT `id`, `name`, `level` FROM `guild_ranks` WHERE `id` = ").appendInt(playerRankId);
-				if ((result = g_database.storeQuery(query))) {
+				if ((result = g_database().storeQuery(query))) {
 					guild->addRank(result->getNumber<uint32_t>("id"), result->getString("name"), result->getNumber<uint16_t>("level"));
 				}
 
@@ -277,7 +277,7 @@ bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 
 			query.clear();
 			query.append("SELECT COUNT(*) AS `members` FROM `guild_membership` WHERE `guild_id` = ").appendInt(guildId);
-			if ((result = g_database.storeQuery(query))) {
+			if ((result = g_database().storeQuery(query))) {
 				guild->setMemberCount(result->getNumber<uint32_t>("members"));
 			}
 		}
@@ -289,15 +289,15 @@ bool IOLoginData::loadPlayerById(Player* player, uint32_t id)
 {
 	std::stringExtended query(1024);
 	query.append("SELECT `id`, `name`, `account_id`, `group_id`, `sex`, `vocation`, `experience`, `level`, `maglevel`, `health`, `healthmax`, `blessings`, `mana`, `manamax`, `manaspent`, `soul`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons`, `posx`, `posy`, `posz`, `cap`, `lastlogin`, `lastlogout`, `lastip`, `conditions`, `spells`, `storages`, `skulltime`, `skull`, `town_id`, `balance`, `offlinetraining_time`, `offlinetraining_skill`, `stamina`, `skill_fist`, `skill_fist_tries`, `skill_club`, `skill_club_tries`, `skill_sword`, `skill_sword_tries`, `skill_axe`, `skill_axe_tries`, `skill_dist`, `skill_dist_tries`, `skill_shielding`, `skill_shielding_tries`, `skill_fishing`, `skill_fishing_tries`, `direction` FROM `players` WHERE `id` = ").appendInt(id);
-	return loadPlayer(player, g_database.storeQuery(query));
+	return loadPlayer(player, g_database().storeQuery(query));
 }
 
 bool IOLoginData::loadPlayerByName(Player* player, const std::string& name)
 {
-	const std::string& escapedName = g_database.escapeString(name);
+	const std::string& escapedName = g_database().escapeString(name);
 	std::stringExtended query(escapedName.length() + static_cast<size_t>(1024));
 	query.append("SELECT `id`, `name`, `account_id`, `group_id`, `sex`, `vocation`, `experience`, `level`, `maglevel`, `health`, `healthmax`, `blessings`, `mana`, `manamax`, `manaspent`, `soul`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons`, `posx`, `posy`, `posz`, `cap`, `lastlogin`, `lastlogout`, `lastip`, `conditions`, `spells`, `storages`, `skulltime`, `skull`, `town_id`, `balance`, `offlinetraining_time`, `offlinetraining_skill`, `stamina`, `skill_fist`, `skill_fist_tries`, `skill_club`, `skill_club_tries`, `skill_sword`, `skill_sword_tries`, `skill_axe`, `skill_axe_tries`, `skill_dist`, `skill_dist_tries`, `skill_shielding`, `skill_shielding_tries`, `skill_fishing`, `skill_fishing_tries`, `direction` FROM `players` WHERE `name` = ").append(escapedName);
-	return loadPlayer(player, g_database.storeQuery(query));
+	return loadPlayer(player, g_database().storeQuery(query));
 }
 
 bool IOLoginData::loadContainer(PropStream& propStream, Container* mainContainer)
@@ -550,7 +550,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 
 	std::stringExtended query(128);
 	query.append("SELECT `items` FROM `players` WHERE `id` = ").appendInt(player->getGUID());
-	if ((result = g_database.storeQuery(query))) {
+	if ((result = g_database().storeQuery(query))) {
 		attr = result->getStream("items", attrSize);
 		propStream.init(attr, attrSize);
 		loadItems(itemMap, result, propStream);
@@ -583,7 +583,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 
 	query.clear();
 	query.append("SELECT `depotlockeritems` FROM `players` WHERE `id` = ").appendInt(player->getGUID());
-	if ((result = g_database.storeQuery(query))) {
+	if ((result = g_database().storeQuery(query))) {
 		attr = result->getStream("depotlockeritems", attrSize);
 		propStream.init(attr, attrSize);
 		loadItems(itemMap, result, propStream);
@@ -607,7 +607,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 
 	query.clear();
 	query.append("SELECT `depotitems` FROM `players` WHERE `id` = ").appendInt(player->getGUID());
-	if ((result = g_database.storeQuery(query))) {
+	if ((result = g_database().storeQuery(query))) {
 		attr = result->getStream("depotitems", attrSize);
 		propStream.init(attr, attrSize);
 		loadItems(itemMap, result, propStream);
@@ -632,7 +632,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 
 	query.clear();
 	query.append("SELECT `inboxitems` FROM `players` WHERE `id` = ").appendInt(player->getGUID());
-	if ((result = g_database.storeQuery(query))) {
+	if ((result = g_database().storeQuery(query))) {
 		attr = result->getStream("inboxitems", attrSize);
 		propStream.init(attr, attrSize);
 		loadItems(itemMap, result, propStream);
@@ -647,7 +647,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 	//load vip
 	query.clear();
 	query.append("SELECT `player_id` FROM `account_viplist` WHERE `account_id` = ").appendInt(player->getAccount());
-	if ((result = g_database.storeQuery(query))) {
+	if ((result = g_database().storeQuery(query))) {
 		do {
 			player->addVIPInternal(result->getNumber<uint32_t>("player_id"));
 		} while (result->next());
@@ -725,13 +725,13 @@ bool IOLoginData::saveItems(const Player* player, const ItemBlockList& itemList,
 	size_t attributesSize;
 	const char* attributes = propWriteStream.getStream(attributesSize);
 	if (attributesSize > 0) {
-		query.append("UPDATE `players` SET `").append(table).append("` = ").append(g_database.escapeBlob(attributes, attributesSize)).append(" WHERE `id` = ").appendInt(player->getGUID());
-		if (!g_database.executeQuery(query)) {
+		query.append("UPDATE `players` SET `").append(table).append("` = ").append(g_database().escapeBlob(attributes, attributesSize)).append(" WHERE `id` = ").appendInt(player->getGUID());
+		if (!g_database().executeQuery(query)) {
 			return false;
 		}
 	} else {
 		query.append("UPDATE `players` SET `").append(table).append("` = NULL WHERE `id` = ").appendInt(player->getGUID());
-		if (!g_database.executeQuery(query)) {
+		if (!g_database().executeQuery(query)) {
 			return false;
 		}
 	}
@@ -746,7 +746,7 @@ bool IOLoginData::savePlayer(Player* player)
 
 	std::stringExtended query(2048);
 	query.append("SELECT `save` FROM `players` WHERE `id` = ").appendInt(player->getGUID());
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return false;
 	}
@@ -754,7 +754,7 @@ bool IOLoginData::savePlayer(Player* player)
 	if (result->getNumber<uint16_t>("save") == 0) {
 		query.clear();
 		query.append("UPDATE `players` SET `lastlogin` = ").appendInt(player->lastLoginSaved).append(", `lastip` = ").appendInt(player->lastIP).append(" WHERE `id` = ").appendInt(player->getGUID());
-		return g_database.executeQuery(query);
+		return g_database().executeQuery(query);
 	}
 
 	//First, an UPDATE query to write the player itself
@@ -806,7 +806,7 @@ bool IOLoginData::savePlayer(Player* player)
 	size_t attributesSize;
 	const char* attributes = propWriteStream.getStream(attributesSize);
 
-	query.append(",`conditions` = ").append(g_database.escapeBlob(attributes, attributesSize));
+	query.append(",`conditions` = ").append(g_database().escapeBlob(attributes, attributesSize));
 
 	// learned spells
 	propWriteStream.clear();
@@ -816,7 +816,7 @@ bool IOLoginData::savePlayer(Player* player)
 
 	propWriteStream.getStream(attributesSize);
 	if (attributesSize > 0) {
-		query.append(",`spells` = ").append(g_database.escapeBlob(attributes, attributesSize));
+		query.append(",`spells` = ").append(g_database().escapeBlob(attributes, attributesSize));
 	} else {
 		query.append(",`spells` = NULL");
 	}
@@ -832,7 +832,7 @@ bool IOLoginData::savePlayer(Player* player)
 
 	attributes = propWriteStream.getStream(attributesSize);
 	if (attributesSize > 0) {
-		query.append(",`storages` = ").append(g_database.escapeBlob(attributes, attributesSize));
+		query.append(",`storages` = ").append(g_database().escapeBlob(attributes, attributesSize));
 	} else {
 		query.append(",`storages` = NULL");
 	}
@@ -878,12 +878,12 @@ bool IOLoginData::savePlayer(Player* player)
 	query.append(",`blessings` = ").appendInt(player->blessings);
 	query.append(" WHERE `id` = ").appendInt(player->getGUID());
 
-	DBTransaction transaction(&g_database);
+	DBTransaction transaction(&g_database());
 	if (!transaction.begin()) {
 		return false;
 	}
 
-	if (!g_database.executeQuery(query)) {
+	if (!g_database().executeQuery(query)) {
 		return false;
 	}
 
@@ -968,7 +968,7 @@ std::string IOLoginData::getNameByGuid(uint32_t guid)
 {
 	std::stringExtended query(64);
 	query.append("SELECT `name` FROM `players` WHERE `id` = ").appendInt(guid);
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return std::string();
 	}
@@ -977,10 +977,10 @@ std::string IOLoginData::getNameByGuid(uint32_t guid)
 
 uint32_t IOLoginData::getGuidByName(const std::string& name)
 {
-	const std::string& escapedName = g_database.escapeString(name);
+	const std::string& escapedName = g_database().escapeString(name);
 	std::stringExtended query(escapedName.length() + static_cast<size_t>(64));
 	query.append("SELECT `id` FROM `players` WHERE `name` = ").append(escapedName);
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return 0;
 	}
@@ -989,10 +989,10 @@ uint32_t IOLoginData::getGuidByName(const std::string& name)
 
 bool IOLoginData::getGuidByNameEx(uint32_t& guid, bool& specialVip, std::string& name)
 {
-	const std::string& escapedName = g_database.escapeString(name);
+	const std::string& escapedName = g_database().escapeString(name);
 	std::stringExtended query(escapedName.length() + static_cast<size_t>(128));
 	query.append("SELECT `name`, `id`, `group_id`, `account_id` FROM `players` WHERE `name` = ").append(escapedName);
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return false;
 	}
@@ -1014,11 +1014,11 @@ bool IOLoginData::getGuidByNameEx(uint32_t& guid, bool& specialVip, std::string&
 
 bool IOLoginData::formatPlayerName(std::string& name)
 {
-	const std::string& escapedName = g_database.escapeString(name);
+	const std::string& escapedName = g_database().escapeString(name);
 	std::stringExtended query(escapedName.length() + static_cast<size_t>(64));
 	query.append("SELECT `name` FROM `players` WHERE `name` = ").append(escapedName);
 
-	DBResult_ptr result = g_database.storeQuery(query);
+	DBResult_ptr result = g_database().storeQuery(query);
 	if (!result) {
 		return false;
 	}
@@ -1031,19 +1031,19 @@ void IOLoginData::increaseBankBalance(uint32_t guid, uint64_t bankBalance)
 {
 	std::stringExtended query(128);
 	query.append("UPDATE `players` SET `balance` = `balance` + ").appendInt(bankBalance).append(" WHERE `id` = ").appendInt(guid);
-	g_database.executeQuery(query);
+	g_database().executeQuery(query);
 }
 
 bool IOLoginData::hasBiddedOnHouse(uint32_t guid)
 {
 	std::stringExtended query(128);
 	query.append("SELECT `id` FROM `houses` WHERE `highest_bidder` = ").appendInt(guid).append(" LIMIT 1");
-	return g_database.storeQuery(query).get() != nullptr;
+	return g_database().storeQuery(query).get() != nullptr;
 }
 
 void IOLoginData::addVIPEntry(uint32_t accountId, uint32_t guid, const std::string& description, uint32_t icon, bool notify)
 {
-	const std::string& escapedDescription = g_database.escapeString(description);
+	const std::string& escapedDescription = g_database().escapeString(description);
 	std::stringExtended query(escapedDescription.length() + static_cast<size_t>(256));
 	query.append("INSERT IGNORE INTO `account_viplist` (`account_id`, `player_id`, `description`, `icon`, `notify`) VALUES (").appendInt(accountId).append(1, ',').appendInt(guid).append(1, ',');
 	query.append(escapedDescription).append(1, ',').appendInt(icon).append(1, ',').append(notify ? "1" : "0").append(1, ')');
@@ -1052,7 +1052,7 @@ void IOLoginData::addVIPEntry(uint32_t accountId, uint32_t guid, const std::stri
 
 void IOLoginData::editVIPEntry(uint32_t accountId, uint32_t guid, const std::string& description, uint32_t icon, bool notify)
 {
-	const std::string& escapedDescription = g_database.escapeString(description);
+	const std::string& escapedDescription = g_database().escapeString(description);
 	std::stringExtended query(escapedDescription.length() + static_cast<size_t>(256));
 	query.append("UPDATE `account_viplist` SET `description` = ").append(escapedDescription).append(", `icon` = ").appendInt(icon).append(", `notify` = ").append(notify ? "1" : "0");
 	query.append(" WHERE `account_id` = ").appendInt(accountId).append(" AND `player_id` = ").appendInt(guid);
@@ -1070,12 +1070,12 @@ void IOLoginData::addPremiumDays(uint32_t accountId, int32_t addDays)
 {
 	std::stringExtended query(128);
 	query.append("UPDATE `accounts` SET `premdays` = `premdays` + ").appendInt(addDays).append(" WHERE `id` = ").appendInt(accountId);
-	g_database.executeQuery(query);
+	g_database().executeQuery(query);
 }
 
 void IOLoginData::removePremiumDays(uint32_t accountId, int32_t removeDays)
 {
 	std::stringExtended query(128);
 	query.append("UPDATE `accounts` SET `premdays` = `premdays` - ").appendInt(removeDays).append(" WHERE `id` = ").appendInt(accountId);
-	g_database.executeQuery(query);
+	g_database().executeQuery(query);
 }
