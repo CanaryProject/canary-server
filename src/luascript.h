@@ -1544,6 +1544,6 @@ class LuaEnvironment : public LuaScriptInterface
 		friend class CombatSpell;
 };
 
-constexpr auto g_luaEnvironment = &LuaEnvironment::getInstance;
+constexpr auto g_luaEnvironment2 = &LuaEnvironment::getInstance;
 
 #endif

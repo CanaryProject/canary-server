@@ -42,6 +42,7 @@
 
 extern Game g_game;
 extern ConfigManager g_config;
+extern LuaEnvironment g_luaEnvironment;
 
 ScriptEnvironment::DBResultMap ScriptEnvironment::tempResults;
 uint32_t ScriptEnvironment::lastResultId = 0;
@@ -257,8 +258,8 @@ int32_t LuaScriptInterface::scriptEnvIndex = -1;
 
 LuaScriptInterface::LuaScriptInterface(std::string interfaceName) : interfaceName(std::move(interfaceName))
 {
-	if (!g_luaEnvironment().getLuaState()) {
-		g_luaEnvironment().initState();
+	if (!g_luaEnvironment.getLuaState()) {
+		g_luaEnvironment.initState();
 	}
 }
 
@@ -269,8 +270,8 @@ LuaScriptInterface::~LuaScriptInterface()
 
 bool LuaScriptInterface::reInitState()
 {
-	g_luaEnvironment().clearCombatObjects(this);
-	g_luaEnvironment().clearAreaObjects(this);
+	g_luaEnvironment.clearCombatObjects(this);
+	g_luaEnvironment.clearAreaObjects(this);
 
 	closeState();
 	return initState();
@@ -490,7 +491,7 @@ bool LuaScriptInterface::pushFunction(int32_t functionId)
 
 bool LuaScriptInterface::initState()
 {
-	luaState = g_luaEnvironment().getLuaState();
+	luaState = g_luaEnvironment.getLuaState();
 	if (!luaState) {
 		return false;
 	}
@@ -503,7 +504,7 @@ bool LuaScriptInterface::initState()
 
 bool LuaScriptInterface::closeState()
 {
-	if (!g_luaEnvironment().getLuaState() || !luaState) {
+	if (!g_luaEnvironment.getLuaState() || !luaState) {
 		return false;
 	}
 
@@ -3408,8 +3409,8 @@ int LuaScriptInterface::luaCreateCombatArea(lua_State* L)
 		return 1;
 	}
 
-	uint32_t areaId = g_luaEnvironment().createAreaObject(env->getScriptInterface());
-	AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
+	uint32_t areaId = g_luaEnvironment.createAreaObject(env->getScriptInterface());
+	AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
 
 	int parameters = lua_gettop(L);
 	if (parameters >= 2) {
@@ -3447,7 +3448,7 @@ int LuaScriptInterface::luaDoAreaCombatHealth(lua_State* L)
 	}
 
 	uint32_t areaId = getNumber<uint32_t>(L, 4);
-	const AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
+	const AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatType_t combatType = getNumber<CombatType_t>(L, 2);
 
@@ -3513,7 +3514,7 @@ int LuaScriptInterface::luaDoAreaCombatMana(lua_State* L)
 	}
 
 	uint32_t areaId = getNumber<uint32_t>(L, 3);
-	const AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
+	const AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatParams params;
 		params.impactEffect = getNumber<uint8_t>(L, 6);
@@ -3581,7 +3582,7 @@ int LuaScriptInterface::luaDoAreaCombatCondition(lua_State* L)
 	}
 
 	uint32_t areaId = getNumber<uint32_t>(L, 3);
-	const AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
+	const AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatParams params;
 		params.impactEffect = getNumber<uint8_t>(L, 5);
@@ -3638,7 +3639,7 @@ int LuaScriptInterface::luaDoAreaCombatDispel(lua_State* L)
 	}
 
 	uint32_t areaId = getNumber<uint32_t>(L, 3);
-	const AreaCombat* area = g_luaEnvironment().getAreaObject(areaId);
+	const AreaCombat* area = g_luaEnvironment.getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatParams params;
 		params.impactEffect = getNumber<uint8_t>(L, 5);
@@ -3834,7 +3835,7 @@ int LuaScriptInterface::luaDoSetCreatureLight(lua_State* L)
 int LuaScriptInterface::luaAddEvent(lua_State* L)
 {
 	//addEvent(callback, delay, ...)
-	lua_State* globalState = g_luaEnvironment().getLuaState();
+	lua_State* globalState = g_luaEnvironment.getLuaState();
 	if (!globalState) {
 		reportErrorFunc("No valid script interface!");
 		pushBoolean(L, false);
@@ -3938,12 +3939,12 @@ int LuaScriptInterface::luaAddEvent(lua_State* L)
 	eventDesc.function = luaL_ref(globalState, LUA_REGISTRYINDEX);
 	eventDesc.scriptId = getScriptEnv()->getScriptId();
 
-	auto& lastTimerEventId = g_luaEnvironment().lastEventTimerId;
+	auto& lastTimerEventId = g_luaEnvironment.lastEventTimerId;
 	eventDesc.eventId = g_scheduler().addEvent(createSchedulerTask(
-		delay, std::bind(&LuaEnvironment::executeTimerEvent, &g_luaEnvironment(), lastTimerEventId)
+		delay, std::bind(&LuaEnvironment::executeTimerEvent, &g_luaEnvironment, lastTimerEventId)
 	));
 
-	g_luaEnvironment().timerEvents.emplace(lastTimerEventId, std::move(eventDesc));
+	g_luaEnvironment.timerEvents.emplace(lastTimerEventId, std::move(eventDesc));
 	lua_pushnumber(L, lastTimerEventId++);
 	return 1;
 }
@@ -3951,7 +3952,7 @@ int LuaScriptInterface::luaAddEvent(lua_State* L)
 int LuaScriptInterface::luaStopEvent(lua_State* L)
 {
 	//stopEvent(eventid)
-	lua_State* globalState = g_luaEnvironment().getLuaState();
+	lua_State* globalState = g_luaEnvironment.getLuaState();
 	if (!globalState) {
 		reportErrorFunc("No valid script interface!");
 		pushBoolean(L, false);
@@ -3960,7 +3961,7 @@ int LuaScriptInterface::luaStopEvent(lua_State* L)
 
 	uint32_t eventId = getNumber<uint32_t>(L, 1);
 
-	auto& timerEvents = g_luaEnvironment().timerEvents;
+	auto& timerEvents = g_luaEnvironment.timerEvents;
 	auto it = timerEvents.find(eventId);
 	if (it == timerEvents.end()) {
 		pushBoolean(L, false);
@@ -4179,7 +4180,7 @@ int LuaScriptInterface::luaDatabaseAsyncExecute(lua_State* L)
 		int32_t ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		auto scriptId = getScriptEnv()->getScriptId();
 		callback = [ref, scriptId, params](DBResult_ptr, bool success) {
-			lua_State* luaState = g_luaEnvironment().getLuaState();
+			lua_State* luaState = g_luaEnvironment.getLuaState();
 			if (!luaState) {
 				return;
 			}
@@ -4202,8 +4203,8 @@ int LuaScriptInterface::luaDatabaseAsyncExecute(lua_State* L)
 			}
 
 			auto env = getScriptEnv();
-			env->setScriptId(scriptId, &g_luaEnvironment());
-			g_luaEnvironment().callFunction(1 + static_cast<int>(params.size()));
+			env->setScriptId(scriptId, &g_luaEnvironment);
+			g_luaEnvironment.callFunction(1 + static_cast<int>(params.size()));
 
 			luaL_unref(luaState, LUA_REGISTRYINDEX, ref);
 			for (auto parameter : params) {
@@ -4238,7 +4239,7 @@ int LuaScriptInterface::luaDatabaseAsyncStoreQuery(lua_State* L)
 		int32_t ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		auto scriptId = getScriptEnv()->getScriptId();
 		callback = [ref, scriptId, params](DBResult_ptr result, bool) {
-			lua_State* luaState = g_luaEnvironment().getLuaState();
+			lua_State* luaState = g_luaEnvironment.getLuaState();
 			if (!luaState) {
 				return;
 			}
@@ -4265,8 +4266,8 @@ int LuaScriptInterface::luaDatabaseAsyncStoreQuery(lua_State* L)
 			}
 
 			auto env = getScriptEnv();
-			env->setScriptId(scriptId, &g_luaEnvironment());
-			g_luaEnvironment().callFunction(1 + static_cast<int>(params.size()));
+			env->setScriptId(scriptId, &g_luaEnvironment);
+			g_luaEnvironment.callFunction(1 + static_cast<int>(params.size()));
 
 			luaL_unref(luaState, LUA_REGISTRYINDEX, ref);
 			for (auto parameter : params) {
@@ -4870,12 +4871,12 @@ int LuaScriptInterface::luaGameReload(lua_State* L)
 	// Game.reload(reloadType)
 	ReloadTypes_t reloadType = getNumber<ReloadTypes_t>(L, 1);
 	if (reloadType == RELOAD_TYPE_GLOBAL) {
-		pushBoolean(L, g_luaEnvironment().loadFile("data/global.lua") == 0);
+		pushBoolean(L, g_luaEnvironment.loadFile("data/global.lua") == 0);
 		pushBoolean(L, g_scripts().loadScripts("scripts/lib", true, true));
 	} else {
 		pushBoolean(L, g_game.reload(reloadType));
 	}
-	lua_gc(g_luaEnvironment().getLuaState(), LUA_GCCOLLECT, 0);
+	lua_gc(g_luaEnvironment.getLuaState(), LUA_GCCOLLECT, 0);
 	return 1;
 }
 
@@ -12290,7 +12291,7 @@ int LuaScriptInterface::luaItemTypeHasSubType(lua_State* L)
 int LuaScriptInterface::luaCombatCreate(lua_State* L)
 {
 	// Combat()
-	Combat* combat = g_luaEnvironment().createCombatObject(getScriptEnv()->getScriptInterface());
+	Combat* combat = g_luaEnvironment.createCombatObject(getScriptEnv()->getScriptInterface());
 	combat->incrementReferenceCounter();
 
 	pushUserdata<Combat>(L, combat);
@@ -12357,7 +12358,7 @@ int LuaScriptInterface::luaCombatSetArea(lua_State* L)
 		return 1;
 	}
 
-	const AreaCombat* area = g_luaEnvironment().getAreaObject(getNumber<uint32_t>(L, 2));
+	const AreaCombat* area = g_luaEnvironment.getAreaObject(getNumber<uint32_t>(L, 2));
 	if (!area) {
 		reportErrorFunc(getErrorDesc(LUA_ERROR_AREA_NOT_FOUND));
 		lua_pushnil(L);

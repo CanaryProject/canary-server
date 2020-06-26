@@ -40,6 +40,7 @@ Database g_database;
 
 Game g_game;
 ConfigManager g_config;
+LuaEnvironment g_luaEnvironment;
 
 std::mutex g_loaderLock;
 std::condition_variable g_loaderSignal;
@@ -208,8 +209,14 @@ void mainLoader(int, char*[], ServiceManager* services)
 	}
 
 	std::cout << ">> Loading global.lua" << std::endl;
-	if (g_luaEnvironment().loadFile("data/global.lua") == -1) {
+	if (g_luaEnvironment.loadFile("data/global.lua") == -1) {
 		std::cout << "[Warning - Can not load data/global.lua" << std::endl;
+	}
+
+	std::cout << ">> Loading lua libs" << std::endl;
+	if (!g_scripts().loadScripts("scripts/lib", true, false)) {
+		std::cout << "> ERROR: Unable to load lua libs!" << std::endl;
+		return;
 	}
 
 	std::cout << ">> Loading modules" << std::endl;

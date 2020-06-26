@@ -24,6 +24,7 @@
 #include "pugicast.h"
 
 extern Game g_game;
+extern LuaEnvironment g_luaEnvironment;
 
 uint32_t Npc::npcAutoID = 0x80000000;
 NpcScriptInterface* Npc::scriptInterface = nullptr;
@@ -566,7 +567,7 @@ NpcScriptInterface::NpcScriptInterface() :
 
 bool NpcScriptInterface::initState()
 {
-	luaState = g_luaEnvironment().getLuaState();
+	luaState = g_luaEnvironment.getLuaState();
 	if (!luaState) {
 		return false;
 	}

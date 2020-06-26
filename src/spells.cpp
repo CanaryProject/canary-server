@@ -28,6 +28,7 @@
 
 extern Game g_game;
 extern ConfigManager g_config;
+extern LuaEnvironment g_luaEnvironment;
 
 Spells::Spells()
 {
@@ -271,7 +272,7 @@ CombatSpell::~CombatSpell()
 
 bool CombatSpell::loadScriptCombat()
 {
-	combat = g_luaEnvironment().getCombatObject(g_luaEnvironment().lastCombatId);
+	combat = g_luaEnvironment.getCombatObject(g_luaEnvironment.lastCombatId);
 	if (combat) {
 		combat->incrementReferenceCounter();
 	}

@@ -31,12 +31,12 @@ namespace fs = boost::filesystem;
 #endif
 
 extern ConfigManager g_config;
+extern LuaEnvironment g_luaEnvironment;
 
 Scripts::Scripts() :
 	scriptInterface("Scripts Interface")
 {
 	scriptInterface.initState();
-	std::cout << ">> Loading lua libs" << std::endl;
 }
 
 Scripts::~Scripts()

@@ -40,6 +40,7 @@
 
 extern ConfigManager g_config;
 extern Game g_game;
+extern LuaEnvironment g_luaEnvironment;
 
 using ErrorCode = boost::system::error_code;
 
@@ -182,10 +183,10 @@ void Signals::sighupHandler()
 	g_chat().load();
 	std::cout << "Reloaded chatchannels." << std::endl;
 
-	g_luaEnvironment().loadFile("data/global.lua");
+	g_luaEnvironment.loadFile("data/global.lua");
 	std::cout << "Reloaded global.lua." << std::endl;
 
-	lua_gc(g_luaEnvironment().getLuaState(), LUA_GCCOLLECT, 0);
+	lua_gc(g_luaEnvironment.getLuaState(), LUA_GCCOLLECT, 0);
 }
 
 void Signals::sigintHandler()
