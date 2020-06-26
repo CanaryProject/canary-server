@@ -26,7 +26,6 @@
 #include "weapons.h"
 
 extern Game g_game;
-extern ConfigManager g_config;
 
 Weapons::Weapons()
 {

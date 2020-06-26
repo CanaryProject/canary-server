@@ -41,7 +41,6 @@
 #include "weapons.h"
 
 extern Game g_game;
-extern ConfigManager g_config;
 extern LuaEnvironment g_luaEnvironment;
 
 ScriptEnvironment::DBResultMap ScriptEnvironment::tempResults;
@@ -3851,7 +3850,7 @@ int LuaScriptInterface::luaAddEvent(lua_State* L)
 		return 1;
 	}
 
-	if (g_config.getBoolean(ConfigManager::WARN_UNSAFE_SCRIPTS) || g_config.getBoolean(ConfigManager::CONVERT_UNSAFE_SCRIPTS)) {
+	if (g_config().getBoolean(ConfigManager::WARN_UNSAFE_SCRIPTS) || g_config().getBoolean(ConfigManager::CONVERT_UNSAFE_SCRIPTS)) {
 		std::vector<std::pair<int32_t, LuaDataType>> indexes;
 		for (int i = 3; i <= parameters; ++i) {
 			if (lua_getmetatable(globalState, i) == 0) {
@@ -3867,7 +3866,7 @@ int LuaScriptInterface::luaAddEvent(lua_State* L)
 		}
 
 		if (!indexes.empty()) {
-			if (g_config.getBoolean(ConfigManager::WARN_UNSAFE_SCRIPTS)) {
+			if (g_config().getBoolean(ConfigManager::WARN_UNSAFE_SCRIPTS)) {
 				bool plural = indexes.size() > 1;
 
 				std::string warningString = "Argument";
@@ -3896,7 +3895,7 @@ int LuaScriptInterface::luaAddEvent(lua_State* L)
 				reportErrorFunc(warningString);
 			}
 
-			if (g_config.getBoolean(ConfigManager::CONVERT_UNSAFE_SCRIPTS)) {
+			if (g_config().getBoolean(ConfigManager::CONVERT_UNSAFE_SCRIPTS)) {
 				for (const auto& entry : indexes) {
 					switch (entry.second) {
 						case LuaData_Item:
@@ -4133,19 +4132,19 @@ const luaL_Reg LuaScriptInterface::luaConfigManagerTable[] = {
 
 int LuaScriptInterface::luaConfigManagerGetString(lua_State* L)
 {
-	pushString(L, g_config.getString(getNumber<ConfigManager::string_config_t>(L, -1)));
+	pushString(L, g_config().getString(getNumber<ConfigManager::string_config_t>(L, -1)));
 	return 1;
 }
 
 int LuaScriptInterface::luaConfigManagerGetNumber(lua_State* L)
 {
-	lua_pushnumber(L, g_config.getNumber(getNumber<ConfigManager::integer_config_t>(L, -1)));
+	lua_pushnumber(L, g_config().getNumber(getNumber<ConfigManager::integer_config_t>(L, -1)));
 	return 1;
 }
 
 int LuaScriptInterface::luaConfigManagerGetBoolean(lua_State* L)
 {
-	pushBoolean(L, g_config.getBoolean(getNumber<ConfigManager::boolean_config_t>(L, -1)));
+	pushBoolean(L, g_config().getBoolean(getNumber<ConfigManager::boolean_config_t>(L, -1)));
 	return 1;
 }
 

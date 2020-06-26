@@ -29,7 +29,6 @@
 #include "ban.h"
 #include "game.h"
 
-extern ConfigManager g_config;
 extern Game g_game;
 
 void ProtocolLogin::disconnectClient(const std::string& message)
@@ -51,7 +50,7 @@ void ProtocolLogin::getCharacterList(const std::string accountName, const std::s
 	#if !(GAME_FEATURE_LOGIN_EXTENDED > 0)
 	static uint32_t serverIp = INADDR_NONE;
 	if (serverIp == INADDR_NONE) {
-		std::string cfgIp = g_config.getString(ConfigManager::IP);
+		std::string cfgIp = g_config().getString(ConfigManager::IP);
 		serverIp = inet_addr(cfgIp.c_str());
 		if (serverIp == INADDR_NONE) {
 			struct hostent* he = gethostbyname(cfgIp.c_str());
@@ -108,7 +107,7 @@ void ProtocolLogin::getCharacterList(const std::string accountName, const std::s
 	Game::updatePremium(account);
 
 	//Check for MOTD
-	const std::string& motd = g_config.getString(ConfigManager::MOTD);
+	const std::string& motd = g_config().getString(ConfigManager::MOTD);
 	if (!motd.empty()) {
 		//Add MOTD
 		output->addByte(0x14);
@@ -131,9 +130,9 @@ void ProtocolLogin::getCharacterList(const std::string accountName, const std::s
 	output->addByte(1); // number of worlds
 
 	output->addByte(0); // world id
-	output->addString(g_config.getString(ConfigManager::SERVER_NAME));
-	output->addString(g_config.getString(ConfigManager::IP));
-	output->add<uint16_t>(g_config.getNumber(ConfigManager::GAME_PORT));
+	output->addString(g_config().getString(ConfigManager::SERVER_NAME));
+	output->addString(g_config().getString(ConfigManager::IP));
+	output->add<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
 	output->addByte(0);
 
 	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
@@ -147,9 +146,9 @@ void ProtocolLogin::getCharacterList(const std::string accountName, const std::s
 	output->addByte(size);
 	for (uint8_t i = 0; i < size; i++) {
 		output->addString(account.characters[i]);
-		output->addString(g_config.getString(ConfigManager::SERVER_NAME));
+		output->addString(g_config().getString(ConfigManager::SERVER_NAME));
 		output->add<uint32_t>(serverIp);
-		output->add<uint16_t>(g_config.getNumber(ConfigManager::GAME_PORT));
+		output->add<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
 		#if GAME_FEATURE_PREVIEW_STATE > 0
 		output->addByte(0);
 		#endif
@@ -161,7 +160,7 @@ void ProtocolLogin::getCharacterList(const std::string accountName, const std::s
 	#if GAME_FEATURE_LOGIN_PREMIUM_TYPE > 0
 	output->addByte(0);
 	#endif
-	if (g_config.getBoolean(ConfigManager::FREE_PREMIUM)) {
+	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
 		output->addByte(1);
 		output->add<uint32_t>(0);
 	} else {
@@ -169,7 +168,7 @@ void ProtocolLogin::getCharacterList(const std::string accountName, const std::s
 		output->add<uint32_t>(time(nullptr) + (account.premiumDays * 86400));
 	}
 	#else
-	if (g_config.getBoolean(ConfigManager::FREE_PREMIUM)) {
+	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
 		output->add<uint16_t>(0xFFFF); //client displays free premium
 	} else {
 		output->add<uint16_t>(account.premiumDays);

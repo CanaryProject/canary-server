@@ -24,7 +24,6 @@
 #include "configmanager.h"
 #include "game.h"
 
-extern ConfigManager g_config;
 extern Game g_game;
 
 Account IOLoginData::loadAccount(uint32_t accno)
@@ -195,7 +194,7 @@ void IOLoginData::setAccountType(uint32_t accountId, AccountType_t accountType)
 
 void IOLoginData::updateOnlineStatus(uint32_t guid, bool login)
 {
-	if (g_config.getBoolean(ConfigManager::ALLOW_CLONES)) {
+	if (g_config().getBoolean(ConfigManager::ALLOW_CLONES)) {
 		return;
 	}
 
@@ -214,7 +213,7 @@ bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 	std::stringExtended query(escapedName.length() + static_cast<size_t>(280));
 
 	query.append("SELECT `id`, `account_id`, `group_id`, `deletion`, (SELECT `type` FROM `accounts` WHERE `accounts`.`id` = `account_id`) AS `account_type`");
-	if (!g_config.getBoolean(ConfigManager::FREE_PREMIUM)) {
+	if (!g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
 		query.append(", (SELECT `premdays` FROM `accounts` WHERE `accounts`.`id` = `account_id`) AS `premium_days`");
 	}
 	query.append(" FROM `players` WHERE `name` = ").append(escapedName);
@@ -236,7 +235,7 @@ bool IOLoginData::preloadPlayer(Player* player, const std::string& name)
 	player->setGroup(group);
 	player->accountNumber = result->getNumber<uint32_t>("account_id");
 	player->accountType = static_cast<AccountType_t>(result->getNumber<uint16_t>("account_type"));
-	if (!g_config.getBoolean(ConfigManager::FREE_PREMIUM)) {
+	if (!g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
 		player->premiumDays = result->getNumber<uint16_t>("premium_days");
 	} else {
 		player->premiumDays = std::numeric_limits<uint16_t>::max();
@@ -384,7 +383,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 	player->accountNumber = accno;
 
 	player->accountType = acc.accountType;
-	if (g_config.getBoolean(ConfigManager::FREE_PREMIUM)) {
+	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
 		player->premiumDays = std::numeric_limits<uint16_t>::max();
 	} else {
 		player->premiumDays = acc.premiumDays;

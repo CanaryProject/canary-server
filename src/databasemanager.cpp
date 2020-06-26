@@ -23,13 +23,11 @@
 #include "databasemanager.h"
 #include "luascript.h"
 
-extern ConfigManager g_config;
-
 bool DatabaseManager::optimizeTables()
 {
 	std::ostringstream query;
 
-	query << "SELECT `TABLE_NAME` FROM `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = " << g_database.escapeString(g_config.getString(ConfigManager::MYSQL_DB)) << " AND `DATA_FREE` > 0";
+	query << "SELECT `TABLE_NAME` FROM `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = " << g_database.escapeString(g_config().getString(ConfigManager::MYSQL_DB)) << " AND `DATA_FREE` > 0";
 	DBResult_ptr result = g_database.storeQuery(query.str());
 	if (!result) {
 		return false;
@@ -54,14 +52,14 @@ bool DatabaseManager::optimizeTables()
 bool DatabaseManager::tableExists(const std::string& tableName)
 {
 	std::ostringstream query;
-	query << "SELECT `TABLE_NAME` FROM `information_schema`.`tables` WHERE `TABLE_SCHEMA` = " << g_database.escapeString(g_config.getString(ConfigManager::MYSQL_DB)) << " AND `TABLE_NAME` = " << g_database.escapeString(tableName) << " LIMIT 1";
+	query << "SELECT `TABLE_NAME` FROM `information_schema`.`tables` WHERE `TABLE_SCHEMA` = " << g_database.escapeString(g_config().getString(ConfigManager::MYSQL_DB)) << " AND `TABLE_NAME` = " << g_database.escapeString(tableName) << " LIMIT 1";
 	return g_database.storeQuery(query.str()).get() != nullptr;
 }
 
 bool DatabaseManager::isDatabaseSetup()
 {
 	std::ostringstream query;
-	query << "SELECT `TABLE_NAME` FROM `information_schema`.`tables` WHERE `TABLE_SCHEMA` = " << g_database.escapeString(g_config.getString(ConfigManager::MYSQL_DB));
+	query << "SELECT `TABLE_NAME` FROM `information_schema`.`tables` WHERE `TABLE_SCHEMA` = " << g_database.escapeString(g_config().getString(ConfigManager::MYSQL_DB));
 	return g_database.storeQuery(query.str()).get() != nullptr;
 }
 

@@ -39,7 +39,6 @@
 Database g_database;
 
 Game g_game;
-ConfigManager g_config;
 LuaEnvironment g_luaEnvironment;
 
 std::mutex g_loaderLock;
@@ -81,7 +80,7 @@ int main(int argc, char* argv[])
 	g_loaderSignal.wait(g_loaderUniqueLock);
 
 	if (serviceManager.is_running()) {
-		std::cout << ">> " << g_config.getString(ConfigManager::SERVER_NAME) << " Server Online!" << std::endl << std::endl;
+		std::cout << ">> " << g_config().getString(ConfigManager::SERVER_NAME) << " Server Online!" << std::endl << std::endl;
 		serviceManager.run();
 	} else {
 		std::cout << ">> No services running. The server is NOT online." << std::endl;
@@ -143,13 +142,13 @@ void mainLoader(int, char*[], ServiceManager* services)
 
 	// read global config
 	std::cout << ">> Loading config" << std::endl;
-	if (!g_config.load()) {
+	if (!g_config().load()) {
 		startupErrorMessage("Unable to load config.lua!");
 		return;
 	}
 
 #ifdef _WIN32
-	const std::string& defaultPriority = g_config.getString(ConfigManager::DEFAULT_PRIORITY);
+	const std::string& defaultPriority = g_config().getString(ConfigManager::DEFAULT_PRIORITY);
 	if (strcasecmp(defaultPriority.c_str(), "high") == 0) {
 		SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 	} else if (strcasecmp(defaultPriority.c_str(), "above-normal") == 0) {
@@ -185,7 +184,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 	g_databaseTasks().start();
 
 	DatabaseManager::updateDatabase();
-	if (g_config.getBoolean(ConfigManager::OPTIMIZE_DATABASE) && !DatabaseManager::optimizeTables()) {
+	if (g_config().getBoolean(ConfigManager::OPTIMIZE_DATABASE) && !DatabaseManager::optimizeTables()) {
 		std::cout << "> No tables were optimized." << std::endl;
 	}
 
@@ -250,7 +249,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 	}
 
 	std::cout << ">> Checking world type... " << std::flush;
-	std::string worldType = asLowerCaseString(g_config.getString(ConfigManager::WORLD_TYPE));
+	std::string worldType = asLowerCaseString(g_config().getString(ConfigManager::WORLD_TYPE));
 	if (!tfs_strcmp(worldType.c_str(), "pvp")) {
 		g_game.setWorldType(WORLD_TYPE_PVP);
 	} else if (!tfs_strcmp(worldType.c_str(), "no-pvp")) {
@@ -261,14 +260,14 @@ void mainLoader(int, char*[], ServiceManager* services)
 		std::cout << std::endl;
 
 		std::ostringstream ss;
-		ss << "> ERROR: Unknown world type: " << g_config.getString(ConfigManager::WORLD_TYPE) << ", valid world types are: pvp, no-pvp and pvp-enforced.";
+		ss << "> ERROR: Unknown world type: " << g_config().getString(ConfigManager::WORLD_TYPE) << ", valid world types are: pvp, no-pvp and pvp-enforced.";
 		startupErrorMessage(ss.str());
 		return;
 	}
 	std::cout << asUpperCaseString(worldType) << std::endl;
 
 	std::cout << ">> Loading map" << std::endl;
-	if (!g_game.loadMainMap(g_config.getString(ConfigManager::MAP_NAME))) {
+	if (!g_game.loadMainMap(g_config().getString(ConfigManager::MAP_NAME))) {
 		startupErrorMessage("Failed to load map");
 		return;
 	}
@@ -277,14 +276,14 @@ void mainLoader(int, char*[], ServiceManager* services)
 	g_game.setGameState(GAME_STATE_INIT);
 
 	// Game client protocols
-	services->add<ProtocolGame>(static_cast<uint16_t>(g_config.getNumber(ConfigManager::GAME_PORT)));
-	services->add<ProtocolLogin>(static_cast<uint16_t>(g_config.getNumber(ConfigManager::LOGIN_PORT)));
+	services->add<ProtocolGame>(static_cast<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT)));
+	services->add<ProtocolLogin>(static_cast<uint16_t>(g_config().getNumber(ConfigManager::LOGIN_PORT)));
 
 	// OT protocols
-	services->add<ProtocolStatus>(static_cast<uint16_t>(g_config.getNumber(ConfigManager::STATUS_PORT)));
+	services->add<ProtocolStatus>(static_cast<uint16_t>(g_config().getNumber(ConfigManager::STATUS_PORT)));
 
 	RentPeriod_t rentPeriod;
-	std::string strRentPeriod = asLowerCaseString(g_config.getString(ConfigManager::HOUSE_RENT_PERIOD));
+	std::string strRentPeriod = asLowerCaseString(g_config().getString(ConfigManager::HOUSE_RENT_PERIOD));
 	if (!tfs_strcmp(strRentPeriod.c_str(), "yearly")) {
 		rentPeriod = RENTPERIOD_YEARLY;
 	} else if (!tfs_strcmp(strRentPeriod.c_str(), "weekly")) {

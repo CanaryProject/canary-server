@@ -38,7 +38,6 @@
 #include "scheduler.h"
 #include "databasetasks.h"
 
-extern ConfigManager g_config;
 extern Game g_game;
 extern LuaEnvironment g_luaEnvironment;
 
@@ -136,7 +135,7 @@ void Signals::sighupHandler()
 	g_actions().reload();
 	std::cout << "Reloaded actions." << std::endl;
 
-	g_config.reload();
+	g_config().reload();
 	std::cout << "Reloaded config." << std::endl;
 
 	g_creatureEvents().reload();

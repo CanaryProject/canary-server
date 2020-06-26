@@ -30,7 +30,6 @@
 #include "pugicast.h"
 
 extern Game g_game;
-extern ConfigManager g_config;
 
 spellBlock_t::~spellBlock_t()
 {

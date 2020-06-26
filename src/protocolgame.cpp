@@ -38,7 +38,6 @@
 #include "scheduler.h"
 #include "spells.h"
 
-extern ConfigManager g_config;
 extern Actions actions;
 
 NetworkMessage ProtocolGame::playermsg;
@@ -90,7 +89,7 @@ void ProtocolGame::login(const std::string accountName, const std::string passwo
 	#endif
 
 	Player* foundPlayer = g_game.getPlayerByName(characterName);
-	if (!foundPlayer || g_config.getBoolean(ConfigManager::ALLOW_CLONES)) {
+	if (!foundPlayer || g_config().getBoolean(ConfigManager::ALLOW_CLONES)) {
 		player = new Player(getThis());
 		player->setName(characterName);
 
@@ -117,7 +116,7 @@ void ProtocolGame::login(const std::string accountName, const std::string passwo
 			return;
 		}
 
-		if (g_config.getBoolean(ConfigManager::ONE_PLAYER_ON_ACCOUNT) && player->getAccountType() < ACCOUNT_TYPE_GAMEMASTER && g_game.getPlayerByAccount(player->getAccount())) {
+		if (g_config().getBoolean(ConfigManager::ONE_PLAYER_ON_ACCOUNT) && player->getAccountType() < ACCOUNT_TYPE_GAMEMASTER && g_game.getPlayerByAccount(player->getAccount())) {
 			disconnectClient("You may only login with one character\nof your account at the same time.");
 			return;
 		}
@@ -184,7 +183,7 @@ void ProtocolGame::login(const std::string accountName, const std::string passwo
 		player->lastLoginSaved = std::max<time_t>(time(nullptr), player->lastLoginSaved + 1);
 		acceptPackets = true;
 	} else {
-		if (eventConnect != 0 || !g_config.getBoolean(ConfigManager::REPLACE_KICK_ON_LOGIN)) {
+		if (eventConnect != 0 || !g_config().getBoolean(ConfigManager::REPLACE_KICK_ON_LOGIN)) {
 			//Already trying to connect
 			disconnectClient("You are already logged in.");
 			return;
@@ -3612,8 +3611,8 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 	playermsg.addByte(0x00); // expert mode button enabled
 
 	#if GAME_FEATURE_STORE > 0
-	playermsg.addString(g_config.getString(ConfigManager::STORE_URL)); // URL (string) to ingame store images
-	playermsg.add<uint16_t>(static_cast<uint16_t>(g_config.getNumber(ConfigManager::STORE_COIN_PACKAGES))); // premium coin package size
+	playermsg.addString(g_config().getString(ConfigManager::STORE_URL)); // URL (string) to ingame store images
+	playermsg.add<uint16_t>(static_cast<uint16_t>(g_config().getNumber(ConfigManager::STORE_COIN_PACKAGES))); // premium coin package size
 	#endif
 
 	if (addExivaRestrictions) {

@@ -27,7 +27,6 @@
 #include "game.h"
 #include "scheduler.h"
 
-extern ConfigManager g_config;
 extern Game g_game;
 
 #if GAME_FEATURE_MARKET > 0
@@ -43,7 +42,7 @@ MarketOfferList IOMarket::getActiveOffers(MarketAction_t action, uint16_t itemId
 		return offerList;
 	}
 
-	const int32_t marketOfferDuration = g_config.getNumber(ConfigManager::MARKET_OFFER_DURATION);
+	const int32_t marketOfferDuration = g_config().getNumber(ConfigManager::MARKET_OFFER_DURATION);
 
 	do {
 		MarketOffer offer;
@@ -65,7 +64,7 @@ MarketOfferList IOMarket::getOwnOffers(MarketAction_t action, uint32_t playerId)
 {
 	MarketOfferList offerList;
 
-	const int32_t marketOfferDuration = g_config.getNumber(ConfigManager::MARKET_OFFER_DURATION);
+	const int32_t marketOfferDuration = g_config().getNumber(ConfigManager::MARKET_OFFER_DURATION);
 
 	std::stringExtended query(256);
 	query.append("SELECT `id`, `amount`, `price`, `created`, `itemtype` FROM `market_offers` WHERE `player_id` = ").appendInt(playerId).append(" AND `sale` = ").appendInt(action);
@@ -194,13 +193,13 @@ void IOMarket::processExpiredOffers(DBResult_ptr result, bool)
 
 void IOMarket::checkExpiredOffers()
 {
-	const time_t lastExpireDate = time(nullptr) - g_config.getNumber(ConfigManager::MARKET_OFFER_DURATION);
+	const time_t lastExpireDate = time(nullptr) - g_config().getNumber(ConfigManager::MARKET_OFFER_DURATION);
 
 	std::stringExtended query(128);
 	query.append("SELECT `id`, `amount`, `price`, `itemtype`, `player_id`, `sale` FROM `market_offers` WHERE `created` <= ").appendInt(lastExpireDate);
 	g_databaseTasks().addTask(query, IOMarket::processExpiredOffers, true);
 
-	int32_t checkExpiredMarketOffersEachMinutes = g_config.getNumber(ConfigManager::CHECK_EXPIRED_MARKET_OFFERS_EACH_MINUTES);
+	int32_t checkExpiredMarketOffersEachMinutes = g_config().getNumber(ConfigManager::CHECK_EXPIRED_MARKET_OFFERS_EACH_MINUTES);
 	if (checkExpiredMarketOffersEachMinutes <= 0) {
 		return;
 	}
@@ -224,7 +223,7 @@ MarketOfferEx IOMarket::getOfferByCounter(uint32_t timestamp, uint16_t counter)
 {
 	MarketOfferEx offer;
 
-	const int32_t created = timestamp - g_config.getNumber(ConfigManager::MARKET_OFFER_DURATION);
+	const int32_t created = timestamp - g_config().getNumber(ConfigManager::MARKET_OFFER_DURATION);
 
 	std::stringExtended query(256);
 	query.append("SELECT `id`, `sale`, `itemtype`, `amount`, `created`, `price`, `player_id`, `anonymous`, (SELECT `name` FROM `players` WHERE `id` = `player_id`) AS `player_name` FROM `market_offers` WHERE `created` = ").appendInt(created).append(" AND (`id` & 65535) = ").appendInt(counter).append(" LIMIT 1");
@@ -297,7 +296,7 @@ void IOMarket::appendHistory(uint32_t playerId, MarketAction_t type, uint16_t it
 
 bool IOMarket::moveOfferToHistory(uint32_t offerId, MarketOfferState_t state)
 {
-	const int32_t marketOfferDuration = g_config.getNumber(ConfigManager::MARKET_OFFER_DURATION);
+	const int32_t marketOfferDuration = g_config().getNumber(ConfigManager::MARKET_OFFER_DURATION);
 
 	std::stringExtended query(128);
 	query.append("SELECT `player_id`, `sale`, `itemtype`, `amount`, `price`, `created` FROM `market_offers` WHERE `id` = ").appendInt(offerId);

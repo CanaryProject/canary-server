@@ -27,7 +27,6 @@
 
 #include "pugicast.h"
 
-extern ConfigManager g_config;
 extern Game g_game;
 
 static constexpr int32_t MINSPAWN_INTERVAL = 1000;
@@ -258,14 +257,14 @@ void Spawn::checkSpawn()
 			if (sb.mType->info.isBlockable) {
 				if (spawnMonster(sb)) {
 					++spawnedCount;
-					if (++spawnCount >= g_config.getNumber(ConfigManager::RATE_SPAWN)) {
+					if (++spawnCount >= g_config().getNumber(ConfigManager::RATE_SPAWN)) {
 						break;
 					}
 				}
 			} else {
 				scheduleSpawn(spawnIndex, 3 * 1500);
 				++spawnedCount;
-				if (++spawnCount >= g_config.getNumber(ConfigManager::RATE_SPAWN)) {
+				if (++spawnCount >= g_config().getNumber(ConfigManager::RATE_SPAWN)) {
 					break;
 				}
 			}

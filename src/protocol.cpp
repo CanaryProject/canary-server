@@ -25,8 +25,6 @@
 #include "outputmessage.h"
 #include "rsa.h"
 
-extern ConfigManager g_config;
-
 Protocol::~Protocol()
 {
 	if (compreesionEnabled) {
@@ -513,7 +511,7 @@ void Protocol::enableCompression()
 {
 	if(!compreesionEnabled)
 	{
-		int32_t compressionLevel = g_config.getNumber(ConfigManager::COMPRESSION_LEVEL);
+		int32_t compressionLevel = g_config().getNumber(ConfigManager::COMPRESSION_LEVEL);
 		if (compressionLevel != 0) {
 			defStream = new z_stream;
 			defStream->zalloc = Z_NULL;

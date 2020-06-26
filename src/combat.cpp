@@ -27,7 +27,6 @@
 #include "events.h"
 
 extern Game g_game;
-extern ConfigManager g_config;
 
 CombatDamage Combat::getCombatDamage(Creature* creature, Creature* target) const
 {
@@ -265,7 +264,7 @@ bool Combat::isInPvpZone(const Creature* attacker, const Creature* target)
 
 bool Combat::isProtected(const Player* attacker, const Player* target)
 {
-	uint32_t protectionLevel = g_config.getNumber(ConfigManager::PROTECTION_LEVEL);
+	uint32_t protectionLevel = g_config().getNumber(ConfigManager::PROTECTION_LEVEL);
 	if (target->getLevel() < protectionLevel || attacker->getLevel() < protectionLevel) {
 		return true;
 	}

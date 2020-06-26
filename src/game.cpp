@@ -43,8 +43,6 @@
 #include "weapons.h"
 #include "scripts.h"
 
-extern ConfigManager g_config;
-
 Game::Game()
 {
 	offlineTrainingWindow.choices.emplace_back("Sword Fighting and Shielding", SKILL_SWORD);
@@ -112,7 +110,7 @@ void Game::setGameState(GameState_t newState)
 			mounts.loadFromXml();
 			#endif
 
-			size_t maxPlayers = static_cast<size_t>(g_config.getNumber(ConfigManager::MAX_PLAYERS));
+			size_t maxPlayers = static_cast<size_t>(g_config().getNumber(ConfigManager::MAX_PLAYERS));
 			if (maxPlayers > 0) {
 				players.reserve(maxPlayers);
 				mappedPlayerNames.reserve(maxPlayers);
@@ -191,8 +189,8 @@ void Game::saveGameState()
 
 bool Game::loadMainMap(const std::string& filename)
 {
-	Monster::despawnRange = g_config.getNumber(ConfigManager::DEFAULT_DESPAWNRANGE);
-	Monster::despawnRadius = g_config.getNumber(ConfigManager::DEFAULT_DESPAWNRADIUS);
+	Monster::despawnRange = g_config().getNumber(ConfigManager::DEFAULT_DESPAWNRANGE);
+	Monster::despawnRadius = g_config().getNumber(ConfigManager::DEFAULT_DESPAWNRADIUS);
 	return map.loadMap("data/world/" + filename + ".otbm", true);
 }
 
@@ -1955,7 +1953,7 @@ void Game::playerUseItemEx(uint32_t playerId, const Position& fromPos, uint8_t f
 	}
 
 	bool isHotkey = (fromPos.x == 0xFFFF && fromPos.y == 0 && fromPos.z == 0);
-	if (isHotkey && !g_config.getBoolean(ConfigManager::AIMBOT_HOTKEY_ENABLED)) {
+	if (isHotkey && !g_config().getBoolean(ConfigManager::AIMBOT_HOTKEY_ENABLED)) {
 		return;
 	}
 
@@ -2037,7 +2035,7 @@ void Game::playerUseItem(uint32_t playerId, const Position& pos, uint8_t stackPo
 	}
 
 	bool isHotkey = (pos.x == 0xFFFF && pos.y == 0 && pos.z == 0);
-	if (isHotkey && !g_config.getBoolean(ConfigManager::AIMBOT_HOTKEY_ENABLED)) {
+	if (isHotkey && !g_config().getBoolean(ConfigManager::AIMBOT_HOTKEY_ENABLED)) {
 		return;
 	}
 
@@ -2102,7 +2100,7 @@ void Game::playerUseWithCreature(uint32_t playerId, const Position& fromPos, uin
 	}
 
 	bool isHotkey = (fromPos.x == 0xFFFF && fromPos.y == 0 && fromPos.z == 0);
-	if (!g_config.getBoolean(ConfigManager::AIMBOT_HOTKEY_ENABLED)) {
+	if (!g_config().getBoolean(ConfigManager::AIMBOT_HOTKEY_ENABLED)) {
 		if (creature->getPlayer() || isHotkey) {
 			player->sendCancelMessage(RETURNVALUE_DIRECTPLAYERSHOOT);
 			return;
@@ -3147,7 +3145,7 @@ void Game::playerTurn(Player* player, Direction dir)
 
 void Game::playerRequestOutfit(Player* player)
 {
-	if (!g_config.getBoolean(ConfigManager::ALLOW_CHANGEOUTFIT)) {
+	if (!g_config().getBoolean(ConfigManager::ALLOW_CHANGEOUTFIT)) {
 		return;
 	}
 	
@@ -3163,7 +3161,7 @@ void Game::playerToggleMount(Player* player, bool mount)
 
 void Game::playerChangeOutfit(Player* player, Outfit_t outfit)
 {
-	if (!g_config.getBoolean(ConfigManager::ALLOW_CHANGEOUTFIT)) {
+	if (!g_config().getBoolean(ConfigManager::ALLOW_CHANGEOUTFIT)) {
 		return;
 	}
 	
@@ -3301,7 +3299,7 @@ bool Game::playerSaySpell(Player* player, SpeakClasses type, const std::string& 
 
 	result = g_spells().playerSaySpell(player, words, lowerWords);
 	if (result == TALKACTION_BREAK) {
-		if (!g_config.getBoolean(ConfigManager::EMOTE_SPELLS)) {
+		if (!g_config().getBoolean(ConfigManager::EMOTE_SPELLS)) {
 			return internalCreatureSay(player, TALKTYPE_SPELL, words, false);
 		} else {
 			return internalCreatureSay(player, TALKTYPE_MONSTER_SAY, words, false);
@@ -4635,7 +4633,7 @@ void Game::loadMotdNum()
 	result = g_database.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_hash'");
 	if (result) {
 		motdHash = result->getString("value");
-		if (motdHash != transformToSHA1(g_config.getString(ConfigManager::MOTD))) {
+		if (motdHash != transformToSHA1(g_config().getString(ConfigManager::MOTD))) {
 			++motdNum;
 		}
 	} else {
@@ -4650,7 +4648,7 @@ void Game::saveMotdNum() const
 	g_database.executeQuery(query.str());
 
 	query.str(std::string());
-	query << "UPDATE `server_config` SET `value` = '" << transformToSHA1(g_config.getString(ConfigManager::MOTD)) << "' WHERE `config` = 'motd_hash'";
+	query << "UPDATE `server_config` SET `value` = '" << transformToSHA1(g_config().getString(ConfigManager::MOTD)) << "' WHERE `config` = 'motd_hash'";
 	g_database.executeQuery(query.str());
 }
 
@@ -4688,7 +4686,7 @@ void Game::loadPlayersRecord()
 uint64_t Game::getExperienceStage(uint32_t level)
 {
 	if (!stagesEnabled) {
-		return g_config.getNumber(ConfigManager::RATE_EXPERIENCE);
+		return g_config().getNumber(ConfigManager::RATE_EXPERIENCE);
 	}
 
 	if (useLastStageLevel && level >= lastStageLevel) {
@@ -4988,7 +4986,7 @@ void Game::playerCreateMarketOffer(Player* player, uint8_t type, uint16_t sprite
 		return;
 	}
 
-	if (g_config.getBoolean(ConfigManager::MARKET_PREMIUM) && !player->isPremium()) {
+	if (g_config().getBoolean(ConfigManager::MARKET_PREMIUM) && !player->isPremium()) {
 		player->sendMarketLeave();
 		return;
 	}
@@ -5007,7 +5005,7 @@ void Game::playerCreateMarketOffer(Player* player, uint8_t type, uint16_t sprite
 		return;
 	}
 
-	const uint32_t maxOfferCount = g_config.getNumber(ConfigManager::MAX_MARKET_OFFERS_AT_A_TIME_PER_PLAYER);
+	const uint32_t maxOfferCount = g_config().getNumber(ConfigManager::MAX_MARKET_OFFERS_AT_A_TIME_PER_PLAYER);
 	if (maxOfferCount != 0 && IOMarket::getPlayerOfferCount(player->getGUID()) >= maxOfferCount) {
 		return;
 	}
@@ -5121,7 +5119,7 @@ void Game::playerCancelMarketOffer(Player* player, uint32_t timestamp, uint16_t 
 
 	IOMarket::moveOfferToHistory(offer.id, OFFERSTATE_CANCELLED);
 	offer.amount = 0;
-	offer.timestamp += g_config.getNumber(ConfigManager::MARKET_OFFER_DURATION);
+	offer.timestamp += g_config().getNumber(ConfigManager::MARKET_OFFER_DURATION);
 	player->sendMarketCancelOffer(offer);
 	player->sendMarketEnter(player->getLastDepotId());
 }
@@ -5266,7 +5264,7 @@ void Game::playerAcceptMarketOffer(Player* player, uint32_t timestamp, uint16_t 
 		player->onReceiveMail();
 	}
 
-	const int32_t marketOfferDuration = g_config.getNumber(ConfigManager::MARKET_OFFER_DURATION);
+	const int32_t marketOfferDuration = g_config().getNumber(ConfigManager::MARKET_OFFER_DURATION);
 
 	IOMarket::appendHistory(player->getGUID(), (offer.type == MARKETACTION_BUY ? MARKETACTION_SELL : MARKETACTION_BUY), offer.itemId, amount, offer.price, offer.timestamp + marketOfferDuration, OFFERSTATE_ACCEPTEDEX);
 
@@ -5630,7 +5628,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 	switch (reloadType) {
 		case RELOAD_TYPE_ACTIONS: return g_actions().reload();
 		case RELOAD_TYPE_CHAT: return g_chat().load();
-		case RELOAD_TYPE_CONFIG: return g_config.reload();
+		case RELOAD_TYPE_CONFIG: return g_config().reload();
 		case RELOAD_TYPE_CREATURESCRIPTS: return reloadCreatureScripts();
 		case RELOAD_TYPE_EVENTS: return g_events().load();
 		case RELOAD_TYPE_GLOBALEVENTS: return g_globalEvents().reload();
@@ -5687,7 +5685,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			Item::items.reload();
 			quests.reload();
 			mounts.reload();
-			g_config.reload();
+			g_config().reload();
 			g_events().load();
 			g_chat().load();
 			*/
@@ -5704,7 +5702,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			}
 
 			g_actions().reload();
-			g_config.reload();
+			g_config().reload();
 			g_monsters().reload();
 			g_moveEvents().reload();
 			Npcs::reload();
