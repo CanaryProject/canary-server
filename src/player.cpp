@@ -34,6 +34,9 @@
 #include "scheduler.h"
 #include "weapons.h"
 
+extern ConfigManager g_config;
+extern Game g_game;
+
 MuteCountMap Player::muteCountMap;
 
 uint32_t Player::playerAutoID = 0x10000000;

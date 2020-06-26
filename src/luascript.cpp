@@ -3940,7 +3940,7 @@ int LuaScriptInterface::luaAddEvent(lua_State* L)
 
 	auto& lastTimerEventId = g_luaEnvironment().lastEventTimerId;
 	eventDesc.eventId = g_scheduler().addEvent(createSchedulerTask(
-		delay, std::bind(g_luaEnvironment().executeTimerEvent)
+		delay, std::bind(&LuaEnvironment::executeTimerEvent, &g_luaEnvironment(), lastTimerEventId)
 	));
 
 	g_luaEnvironment().timerEvents.emplace(lastTimerEventId, std::move(eventDesc));
@@ -4202,7 +4202,7 @@ int LuaScriptInterface::luaDatabaseAsyncExecute(lua_State* L)
 			}
 
 			auto env = getScriptEnv();
-			env->setScriptId(scriptId, g_luaEnvironment());
+			env->setScriptId(scriptId, &g_luaEnvironment());
 			g_luaEnvironment().callFunction(1 + static_cast<int>(params.size()));
 
 			luaL_unref(luaState, LUA_REGISTRYINDEX, ref);
@@ -4265,7 +4265,7 @@ int LuaScriptInterface::luaDatabaseAsyncStoreQuery(lua_State* L)
 			}
 
 			auto env = getScriptEnv();
-			env->setScriptId(scriptId, g_luaEnvironment());
+			env->setScriptId(scriptId, &g_luaEnvironment());
 			g_luaEnvironment().callFunction(1 + static_cast<int>(params.size()));
 
 			luaL_unref(luaState, LUA_REGISTRYINDEX, ref);

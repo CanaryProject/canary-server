@@ -38,6 +38,7 @@
 #include "scheduler.h"
 #include "databasetasks.h"
 
+extern ConfigManager g_config;
 extern Game g_game;
 
 using ErrorCode = boost::system::error_code;

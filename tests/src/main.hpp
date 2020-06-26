@@ -63,7 +63,6 @@
 #include "../../src/raids.h"
 #include "../../src/rsa.h"
 #include "../../src/scheduler.h"
-#include "../../src/scriptmanager.h"
 #include "../../src/script.h"
 #include "../../src/server.h"
 #include "../../src/signals.h"

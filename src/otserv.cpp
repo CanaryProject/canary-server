@@ -27,7 +27,6 @@
 #include "iomarket.h"
 
 #include "configmanager.h"
-#include "scriptmanager.h"
 #include "rsa.h"
 #include "protocollogin.h"
 #include "protocolstatus.h"
@@ -208,10 +207,9 @@ void mainLoader(int, char*[], ServiceManager* services)
 		return;
 	}
 
-	std::cout << ">> Loading script systems" << std::endl;
-	if (!ScriptingManager::getInstance().loadScriptSystems()) {
-		startupErrorMessage("Failed to load script systems");
-		return;
+	std::cout << ">> Loading global.lua" << std::endl;
+	if (g_luaEnvironment().loadFile("data/global.lua") == -1) {
+		std::cout << "[Warning - Can not load data/global.lua" << std::endl;
 	}
 
 	std::cout << ">> Loading modules" << std::endl;
