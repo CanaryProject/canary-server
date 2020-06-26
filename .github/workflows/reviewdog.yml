@@ -1,0 +1,51 @@
+name: Review
+on: [pull_request]
+jobs:
+  reviewers:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup Lua
+      uses: leafo/gh-actions-lua@v5
+
+    - name: Setup Luarocks luacheck
+      uses: leafo/gh-actions-luarocks@master
+
+    - name: Setup Luacheck
+      run: luarocks install luacheck
+
+    - name: Setup xmllint
+      run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+    - name: Check out code.
+      uses: actions/checkout@v1
+
+    - name: Setup reviewdog
+      run: |
+        mkdir -p $HOME/bin && curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh| sh -s -- -b $HOME/bin
+        echo ::add-path::$HOME/bin
+
+    - name: misspell
+      uses: reviewdog/action-misspell@master
+      with:
+        github_token: ${{ secrets.teste }}
+        locale: "US"
+
+    - name: cpplint
+      uses: reviewdog/action-cpplint@master
+      with:
+        github_token: ${{ secrets.teste }}
+        reporter: github-pr-review
+
+    - name: luacheck
+      env:
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.teste }}
+      run: |
+        cd ${{ runner.workspace }}/canary-server
+        reviewdog -reporter=github-pr-review -runners=luacheck
+
+    - name: xmllint
+      env:
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.teste }}
+      run: |
+        cd ${{ runner.workspace }}/canary-server
+        reviewdog -reporter=github-pr-review -runners=xmllint
