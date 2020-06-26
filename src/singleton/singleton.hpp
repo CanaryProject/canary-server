@@ -11,7 +11,7 @@ extern Dispatcher g_dispatcher; // 47 - 44
 extern Events* g_events; // 45 - 36
 extern Game g_game; // 670
 extern GlobalEvents* g_globalEvents; // 18 - 10
-extern LuaEnvironment g_luaEnvironment; // 43 - 35
+extern LuaEnvironment g_luaEnvironment; // 43 - 37
 extern Modules g_modules; // 7 - 4
 extern Monsters g_monsters; // 32 - 24
 extern MoveEvents* g_moveEvents; // 28 - 18

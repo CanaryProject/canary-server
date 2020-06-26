@@ -1189,7 +1189,7 @@ class LuaScriptInterface
 		static int luaItemTypeGetTransformEquipId(lua_State* L);
 		static int luaItemTypeGetTransformDeEquipId(lua_State* L);
 		static int luaItemTypeGetDestroyId(lua_State* L);
-		static int luaItemTypeGetLuaDecayId(lua_State* L);
+		static int luaItemTypeGetDecayId(lua_State* L);
 		static int luaItemTypeGetRequiredLevel(lua_State* L);
 		static int luaItemTypeGetAmmoType(lua_State* L);
 		static int luaItemTypeGetCorpseType(lua_State* L);
@@ -1466,7 +1466,7 @@ class LuaScriptInterface
 		static int luaWeaponRange(lua_State* L);
 		static int luaWeaponCharges(lua_State* L);
 		static int luaWeaponDuration(lua_State* L);
-		static int luaWeaponLuaDecayTo(lua_State* L);
+		static int luaWeaponDecayTo(lua_State* L);
 		static int luaWeaponTransformEquipTo(lua_State* L);
 		static int luaWeaponTransformDeEquipTo(lua_State* L);
 		static int luaWeaponSlotType(lua_State* L);
