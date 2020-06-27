@@ -58,6 +58,7 @@ void mainLoader(int argc, char* argv[], ServiceManager* services);
 	exit(-1);
 }
 
+#ifndef UNIT_TESTING
 int main(int argc, char* argv[])
 {
 	// Setup bad allocation handler
@@ -92,6 +93,7 @@ int main(int argc, char* argv[])
 	g_database().end();
 	return 0;
 }
+#endif
 
 void mainLoader(int, char*[], ServiceManager* services)
 {
