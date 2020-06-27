@@ -1,19 +1,19 @@
-#include "../main.hpp"
+#include "../all.h"
 
 extern LuaEnvironment g_luaEnvironment;
 
-TEST_CASE( "CombatTest - canDoTargetCombat" ) {
+TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     CombatParams params;
     MonsterType type;
     Player player(nullptr);
     Monster *monsterA = new Monster(&type);
     Monster *monsterB = new Monster(&type);
 
-	SECTION("Monster cannot attack monster") {
+	TEST_CASE("Monster cannot attack monster") {
     CHECK(Combat::canDoTargetCombat(monsterA, monsterB, params) == RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE);
   }
 
-	SECTION("Player cannot attack monster") {
+	TEST_CASE("Player cannot attack monster") {
     CHECK(Combat::canDoTargetCombat(&player, monsterA, params) == RETURNVALUE_NOERROR);
   }
 
