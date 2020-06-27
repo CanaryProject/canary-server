@@ -201,6 +201,7 @@ class Player final : public Creature, public Cylinder
 			return guid;
 		}
 		bool canSeeInvisibility() const override {
+			if (!group) return false;
 			return hasFlag(PlayerFlag_CanSenseInvisibility) || group->access;
 		}
 
@@ -336,6 +337,7 @@ class Player final : public Creature, public Cylinder
 		}
 
 		bool hasFlag(PlayerFlags value) const {
+			if (!group) return false;
 			return (group->flags & value) != 0;
 		}
 
@@ -449,6 +451,7 @@ class Player final : public Creature, public Cylinder
 			return soul;
 		}
 		bool isAccessPlayer() const {
+			if (!group) return false;
 			return group->access;
 		}
 		bool isPremium() const;

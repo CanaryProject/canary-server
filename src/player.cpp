@@ -121,7 +121,7 @@ std::string Player::getDescription(int32_t lookDistance) const
 	if (lookDistance == -1) {
 		sink.append("yourself.");
 
-		if (group->access) {
+		if (group && group->access) {
 			sink.append(" You are ").append(group->name).append(1, '.');
 		} else if (vocation->getId() != VOCATION_NONE) {
 			sink.append(" You are ").append(vocation->getVocDescription()).append(1, '.');
@@ -130,7 +130,7 @@ std::string Player::getDescription(int32_t lookDistance) const
 		}
 	} else {
 		sink.append(name);
-		if (!group->access) {
+		if (!group || (group && !group->access)) {
 			sink.append(" (Level ").append(std::to_string(level)).append(1, ')');
 		}
 		sink.append(1, '.');
@@ -141,7 +141,7 @@ std::string Player::getDescription(int32_t lookDistance) const
 			sink.append(" He");
 		}
 
-		if (group->access) {
+		if (group && group->access) {
 			sink.append(" is ").append(group->name).append(1, '.');
 		} else if (vocation->getId() != VOCATION_NONE) {
 			sink.append(" is ").append(vocation->getVocDescription()).append(1, '.');
@@ -759,7 +759,7 @@ bool Player::canSeeCreature(const Creature* creature) const
 		return true;
 	}
 
-	if (creature->isInGhostMode() && !group->access) {
+	if (creature->isInGhostMode() && group && !group->access) {
 		return false;
 	}
 
@@ -771,7 +771,7 @@ bool Player::canSeeCreature(const Creature* creature) const
 
 bool Player::canWalkthrough(const Creature* creature) const
 {
-	if (group->access || creature->isInGhostMode()) {
+	if ((group && group->access) || creature->isInGhostMode()) {
 		return true;
 	}
 
@@ -806,8 +806,8 @@ bool Player::canWalkthrough(const Creature* creature) const
 }
 
 bool Player::canWalkthroughEx(const Creature* creature) const
-{
-	if (group->access) {
+{	
+	if (group && group->access) {
 		return true;
 	}
 
@@ -1203,7 +1203,7 @@ void Player::onChangeZone(ZoneType_t zone)
 		}
 
 		#if GAME_FEATURE_MOUNTS > 0
-		if (!group->access && isMounted()) {
+		if (group && !group->access && isMounted()) {
 			dismount();
 			g_game().internalCreatureChangeOutfit(this, defaultOutfit);
 			wasMounted = true;
@@ -3816,7 +3816,7 @@ void Player::changeSoul(int32_t soulChange)
 
 bool Player::canWear(uint32_t lookType, uint8_t addons) const
 {
-	if (group->access) {
+	if (group && group->access) {
 		return true;
 	}
 
@@ -3904,7 +3904,7 @@ bool Player::removeOutfitAddon(uint16_t lookType, uint8_t addons)
 
 bool Player::getOutfitAddons(const Outfit& outfit, uint8_t& addons) const
 {
-	if (group->access) {
+	if (group && group->access) {
 		addons = 3;
 		return true;
 	}
@@ -4309,7 +4309,7 @@ bool Player::toggleMount(bool mount)
 			return false;
 		}
 
-		if (!group->access && tile->hasFlag(TILESTATE_PROTECTIONZONE)) {
+		if (group && !group->access && tile->hasFlag(TILESTATE_PROTECTIONZONE)) {
 			sendCancelMessage(RETURNVALUE_ACTIONNOTPERMITTEDINPROTECTIONZONE);
 			return false;
 		}
@@ -4686,7 +4686,7 @@ uint64_t Player::getMoney() const
 
 size_t Player::getMaxVIPEntries() const
 {
-	if (group->maxVipEntries != 0) {
+	if (group && group->maxVipEntries != 0) {
 		return group->maxVipEntries;
 	} else if (isPremium()) {
 		return 100;
@@ -4696,7 +4696,7 @@ size_t Player::getMaxVIPEntries() const
 
 size_t Player::getMaxDepotItems() const
 {
-	if (group->maxDepotItems != 0) {
+	if (group && group->maxDepotItems != 0) {
 		return group->maxDepotItems;
 	} else if (isPremium()) {
 		return 2000;

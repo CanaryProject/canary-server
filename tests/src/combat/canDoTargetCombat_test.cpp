@@ -3,16 +3,20 @@
 extern LuaEnvironment g_luaEnvironment;
 
 TEST_CASE( "CombatTest - canDoTargetCombat" ) {
-
-	SECTION("Monster cannot attack monster") {
     CombatParams params;
     MonsterType type;
-    Monster *a = new Monster(&type);
-    Monster *b = new Monster(&type);
+    Player player(nullptr);
+    Monster *monsterA = new Monster(&type);
+    Monster *monsterB = new Monster(&type);
 
-    CHECK(Combat::canDoTargetCombat(a, b, params) == RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE);
-
-    delete a;
-    delete b;
+	SECTION("Monster cannot attack monster") {
+    CHECK(Combat::canDoTargetCombat(monsterA, monsterB, params) == RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE);
   }
+
+	SECTION("Player cannot attack monster") {
+    CHECK(Combat::canDoTargetCombat(&player, monsterA, params) == RETURNVALUE_NOERROR);
+  }
+
+  delete monsterA;
+  delete monsterB;
 } 
