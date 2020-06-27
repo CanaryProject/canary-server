@@ -123,7 +123,7 @@ std::string Player::getDescription(int32_t lookDistance) const
 
 		if (group && group->access) {
 			sink.append(" You are ").append(group->name).append(1, '.');
-		} else if (vocation->getId() != VOCATION_NONE) {
+		} else if (vocation && vocation->getId() != VOCATION_NONE) {
 			sink.append(" You are ").append(vocation->getVocDescription()).append(1, '.');
 		} else {
 			sink.append(" You have no vocation.");
@@ -143,7 +143,7 @@ std::string Player::getDescription(int32_t lookDistance) const
 
 		if (group && group->access) {
 			sink.append(" is ").append(group->name).append(1, '.');
-		} else if (vocation->getId() != VOCATION_NONE) {
+		} else if (vocation && vocation->getId() != VOCATION_NONE) {
 			sink.append(" is ").append(vocation->getVocDescription()).append(1, '.');
 		} else {
 			sink.append(" has no vocation.");
@@ -315,7 +315,8 @@ int32_t Player::getArmor() const
 			armor += inventoryItem->getArmor();
 		}
 	}
-	return static_cast<int32_t>(armor * vocation->armorMultiplier);
+	float vocationMultiplier = vocation ? vocation->defenseMultiplier : 1;
+	return static_cast<int32_t>(armor * vocationMultiplier);
 }
 
 void Player::getShieldAndWeapon(const Item*& shield, const Item*& weapon) const
@@ -377,7 +378,8 @@ int32_t Player::getDefense() const
 		}
 	}
 
-	return (defenseSkill / 4. + 2.23) * defenseValue * 0.15 * getDefenseFactor() * vocation->defenseMultiplier;
+	float vocationMultiplier = vocation ? vocation->defenseMultiplier : 1;
+	return (defenseSkill / 4. + 2.23) * defenseValue * 0.15 * getDefenseFactor() * vocationMultiplier;
 }
 
 float Player::getAttackFactor() const
@@ -451,6 +453,10 @@ void Player::updateInventoryWeight()
 
 void Player::addSkillAdvance(skills_t skill, uint64_t count)
 {
+	if (!vocation) {
+		return;
+	}
+
 	uint64_t currReqTries = vocation->getReqSkillTries(skill, skills[skill].level);
 	uint64_t nextReqTries = vocation->getReqSkillTries(skill, skills[skill].level + 1);
 	if (currReqTries >= nextReqTries) {
@@ -1414,10 +1420,8 @@ void Player::onRemoveContainerItem(const Container* container, const Item* item)
 	if (tradeState != TRADE_TRANSFER) {
 		checkTradeState(item);
 
-		if (tradeItem) {
-			if (tradeItem->getParent() != container && container->isHoldingItem(tradeItem)) {
-				g_game().internalCloseTrade(this);
-			}
+		if (tradeItem && tradeItem->getParent() != container && container->isHoldingItem(tradeItem)) {
+			g_game().internalCloseTrade(this);
 		}
 	}
 }
@@ -1650,6 +1654,10 @@ void Player::addManaSpent(uint64_t amount)
 		return;
 	}
 
+	if (!vocation) {
+		return;
+	}
+
 	uint64_t currReqMana = vocation->getReqMana(magLevel);
 	uint64_t nextReqMana = vocation->getReqMana(magLevel + 1);
 	if (currReqMana >= nextReqMana) {
@@ -1744,11 +1752,13 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText/* = fal
 	uint32_t prevLevel = level;
 	while (experience >= nextLevelExp) {
 		++level;
-		healthMax += vocation->getHPGain();
-		health += vocation->getHPGain();
-		manaMax += vocation->getManaGain();
-		mana += vocation->getManaGain();
-		capacity += vocation->getCapGain();
+		if (vocation) {
+			healthMax += vocation->getHPGain();
+			health += vocation->getHPGain();
+			manaMax += vocation->getManaGain();
+			mana += vocation->getManaGain();
+			capacity += vocation->getCapGain();
+		}
 
 		currLevelExp = nextLevelExp;
 		nextLevelExp = Player::getExpForLevel(level + 1);
@@ -1837,9 +1847,11 @@ void Player::removeExperience(uint64_t exp, bool sendText/* = false*/)
 
 	while (level > 1 && experience < currLevelExp) {
 		--level;
-		healthMax = std::max<int32_t>(0, healthMax - vocation->getHPGain());
-		manaMax = std::max<int32_t>(0, manaMax - vocation->getManaGain());
-		capacity = std::max<int32_t>(0, capacity - vocation->getCapGain());
+		if (vocation) {
+			healthMax = std::max<int32_t>(0, healthMax - vocation->getHPGain());
+			manaMax = std::max<int32_t>(0, manaMax - vocation->getManaGain());
+			capacity = std::max<int32_t>(0, capacity - vocation->getCapGain());
+		}
 		currLevelExp = Player::getExpForLevel(level);
 	}
 
@@ -2027,7 +2039,7 @@ uint32_t Player::getIP() const
 
 void Player::death(Creature* lastHitCreature)
 {
-	loginPosition = town->getTemplePosition();
+	loginPosition = town ? town->getTemplePosition() : getPosition();
 
 	if (skillLoss) {
 		uint8_t unfairFightReduction = 100;
@@ -2057,8 +2069,10 @@ void Player::death(Creature* lastHitCreature)
 		uint64_t lostMana = 0;
 
 		//sum up all the mana
-		for (uint32_t i = 1; i <= magLevel; ++i) {
-			sumMana += vocation->getReqMana(i);
+		if (vocation) {
+			for (uint32_t i = 1; i <= magLevel; ++i) {
+				sumMana += vocation->getReqMana(i);
+			}
 		}
 
 		sumMana += manaSpent;
@@ -2069,24 +2083,31 @@ void Player::death(Creature* lastHitCreature)
 
 		while (lostMana > manaSpent && magLevel > 0) {
 			lostMana -= manaSpent;
-			manaSpent = vocation->getReqMana(magLevel);
+			if (vocation) {
+				manaSpent = vocation->getReqMana(magLevel);
+			}
 			magLevel--;
 		}
 
 		manaSpent -= lostMana;
 
-		uint64_t nextReqMana = vocation->getReqMana(magLevel + 1);
-		if (nextReqMana > vocation->getReqMana(magLevel)) {
-			magLevelPercent = Player::getPercentLevel(manaSpent, nextReqMana);
-		} else {
-			magLevelPercent = 0;
+		if (vocation) {
+			uint64_t nextReqMana = vocation->getReqMana(magLevel + 1);
+			if (nextReqMana > vocation->getReqMana(magLevel)) {
+				magLevelPercent = Player::getPercentLevel(manaSpent, nextReqMana);
+			} else {
+				magLevelPercent = 0;
+			}
 		}
 
 		//Skill loss
 		for (uint8_t i = SKILL_FIRST; i <= SKILL_LAST; ++i) { //for each skill
 			uint64_t sumSkillTries = 0;
-			for (uint16_t c = 11; c <= skills[i].level; ++c) { //sum up all required tries for all skill levels
-				sumSkillTries += vocation->getReqSkillTries(i, c);
+
+			if (vocation) {
+				for (uint16_t c = 11; c <= skills[i].level; ++c) { //sum up all required tries for all skill levels
+					sumSkillTries += vocation->getReqSkillTries(i, c);
+				}
 			}
 
 			sumSkillTries += skills[i].tries;
@@ -2102,12 +2123,16 @@ void Player::death(Creature* lastHitCreature)
 					break;
 				}
 
-				skills[i].tries = vocation->getReqSkillTries(i, skills[i].level);
+				if (vocation) {
+					skills[i].tries = vocation->getReqSkillTries(i, skills[i].level);
+				}
 				skills[i].level--;
 			}
 
 			skills[i].tries = std::max<int32_t>(0, skills[i].tries - lostSkillTries);
-			skills[i].percent = Player::getPercentLevel(skills[i].tries, vocation->getReqSkillTries(i, skills[i].level));
+			if (vocation) {
+				skills[i].percent = Player::getPercentLevel(skills[i].tries, vocation->getReqSkillTries(i, skills[i].level));
+			}
 		}
 
 		//Level loss
@@ -2117,15 +2142,17 @@ void Player::death(Creature* lastHitCreature)
 		if (expLoss != 0) {
 			uint32_t oldLevel = level;
 
-			if (vocation->getId() == VOCATION_NONE || level > 7) {
+			if ((vocation && vocation->getId() == VOCATION_NONE) || level > 7) {
 				experience -= expLoss;
 			}
 
 			while (level > 1 && experience < Player::getExpForLevel(level)) {
 				--level;
-				healthMax = std::max<int32_t>(0, healthMax - vocation->getHPGain());
-				manaMax = std::max<int32_t>(0, manaMax - vocation->getManaGain());
-				capacity = std::max<int32_t>(0, capacity - vocation->getCapGain());
+				if (vocation) {
+					healthMax = std::max<int32_t>(0, healthMax - vocation->getHPGain());
+					manaMax = std::max<int32_t>(0, manaMax - vocation->getManaGain());
+					capacity = std::max<int32_t>(0, capacity - vocation->getCapGain());
+				}
 			}
 
 			if (oldLevel != level) {
@@ -3806,7 +3833,8 @@ void Player::changeMana(int32_t manaChange)
 void Player::changeSoul(int32_t soulChange)
 {
 	if (soulChange > 0) {
-		soul += std::min<int32_t>(soulChange, vocation->getSoulMax() - soul);
+		uint8_t vocationMaxSoul = vocation ? vocation->getSoulMax() : 0;
+		soul += std::min<int32_t>(soulChange, vocationMaxSoul - soul);
 	} else {
 		soul = std::max<int32_t>(0, soul + soulChange);
 	}
@@ -4042,6 +4070,9 @@ void Player::checkSkullTicks(int64_t ticks)
 
 bool Player::isPromoted() const
 {
+	if (!vocation) {
+		return false;
+	}
 	uint16_t promotedVocation = g_vocations().getPromotedVocation(vocation->getId());
 	return promotedVocation == VOCATION_NONE && vocation->getId() != promotedVocation;
 }
@@ -4447,6 +4478,10 @@ void Player::dismount()
 bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries)
 {
 	if (tries == 0 || skill == SKILL_LEVEL) {
+		return false;
+	}
+
+	if (!vocation) {
 		return false;
 	}
 
