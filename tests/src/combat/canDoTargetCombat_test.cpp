@@ -20,4 +20,9 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
 	TEST_CASE("Player can attack monster") {
     CHECK(Combat::canDoTargetCombat(&player, monsterA, params) == RETURNVALUE_NOERROR);
   }
+
+	TEST_CASE("Free memory") {
+    delete monsterA;
+    delete monsterB;
+  }
 } 
