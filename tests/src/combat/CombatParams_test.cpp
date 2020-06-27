@@ -1,6 +1,8 @@
 #include "../main.hpp"
 
-TEST_CASE( "Combat Test", "CombatParams" ) {
+extern LuaEnvironment g_luaEnvironment;
+
+TEST_CASE( "Combat Test - CombatParams" ) {
 	SECTION("CombatParam default attributes") {
     CombatParams params;
 
