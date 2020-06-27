@@ -6,23 +6,18 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     CombatParams params;
     MonsterType type;
     Player player(nullptr);
-    Monster *monsterA = new Monster(&type);
-    Monster *monsterB = new Monster(&type);
+    Monster monsterA(&type);
+    Monster monsterB(&type);
 
 	TEST_CASE("Monster cannot attack monster") {
-    CHECK(Combat::canDoTargetCombat(monsterA, monsterB, params) == RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE);
+    CHECK(Combat::canDoTargetCombat(&monsterA, &monsterB, params) == RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE);
   }
 
 	TEST_CASE("Monster can attack common player") {
-    CHECK(Combat::canDoTargetCombat(monsterA, &player, params) == RETURNVALUE_NOERROR);
+    CHECK(Combat::canDoTargetCombat(&monsterA, &player, params) == RETURNVALUE_NOERROR);
   }
 
 	TEST_CASE("Player can attack monster") {
-    CHECK(Combat::canDoTargetCombat(&player, monsterA, params) == RETURNVALUE_NOERROR);
-  }
-
-	TEST_CASE("Free memory") {
-    delete monsterA;
-    delete monsterB;
+    CHECK(Combat::canDoTargetCombat(&player, &monsterA, params) == RETURNVALUE_NOERROR);
   }
 } 
