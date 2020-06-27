@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 cd build
-sudo cmake -DPACKAGE_TESTS=Off .. ; make
+sudo cmake -DCMAKE_BUILD_TYPE=Release .. ; make
 cd ..
 rm -rf canary
-cp build/canary ./
+cp build/bin/canary ./
 ./canary 

@@ -1,7 +1,5 @@
 #include "../all.h"
 
-extern LuaEnvironment g_luaEnvironment;
-
 TEST_SUITE("Combat Test") {
   TEST_CASE("CombatParam default attributes") {
     CombatParams params;

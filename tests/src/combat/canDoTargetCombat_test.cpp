@@ -1,6 +1,6 @@
 #include "../all.h"
 
-extern LuaEnvironment g_luaEnvironment;
+LuaEnvironment g_luaEnvironment;
 
 TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     CombatParams params;
