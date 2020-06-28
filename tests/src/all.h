@@ -92,5 +92,6 @@ extern Player player;
 extern Monster monsterA;
 extern Monster monsterB;
 extern Npc npc;
+extern Vocation voc;
 
 #endif

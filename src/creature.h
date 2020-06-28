@@ -426,6 +426,7 @@ class Creature : virtual public Thing
 			return tile;
 		}
 		void setParent(Cylinder* cylinder) override final {
+			if (!cylinder) return;
 			tile = static_cast<Tile*>(cylinder);
 			position = tile->getPosition();
 		}

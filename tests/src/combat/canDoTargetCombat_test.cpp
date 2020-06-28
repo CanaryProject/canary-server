@@ -1,7 +1,10 @@
 #include "../all.h"
 
+Vocation voc(1);
+
 TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
 	TEST_CASE("Can attack when attacker is null") {
+    g_vocations().addVocation(voc);
     CHECK(Combat::canDoTargetCombat(nullptr, &monsterB, CombatParams()) == RETURNVALUE_NOERROR);
   }
 
@@ -39,8 +42,6 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     Player targetPlayer(nullptr);
 
     // set player vocation
-    Vocation voc(1);
-    g_vocations().addVocation(voc);
     targetPlayer.setVocation(voc.getId());
 
     // create no PvP tile and set to player
@@ -62,8 +63,6 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     Player targetPlayer(nullptr);
 
     // set player vocation
-    Vocation voc(1);
-    g_vocations().addVocation(voc);
     targetPlayer.setVocation(voc.getId());
 
     // create no PvP tile and set to player
@@ -92,6 +91,7 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     CHECK(Combat::canDoTargetCombat(&summon, &player, CombatParams()) == RETURNVALUE_YOUMAYNOTATTACKTHISPLAYER);
 
     player.setGroup(nullptr);
+    player.setParent(nullptr);
   }
 
 	TEST_CASE("PvP - [summon attacker] is no pvp tile") {
@@ -105,6 +105,8 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
 
     tile.setFlag(TILESTATE_NOPVPZONE);
     CHECK(Combat::canDoTargetCombat(&summon, &player, CombatParams()) == RETURNVALUE_ACTIONNOTPERMITTEDINANOPVPZONE);
+
+    player.setParent(nullptr);
   }
 
 	TEST_CASE("PvP - [summon attacker] is player protected") {
@@ -119,6 +121,8 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     summon.setMaster(&player);
 
     CHECK(Combat::canDoTargetCombat(&summon, &player, CombatParams()) == RETURNVALUE_YOUMAYNOTATTACKTHISPLAYER);
+
+    player.setParent(nullptr);
   }
 
 	TEST_CASE("PvP - [summon attacker] can attack regular players") {
@@ -133,11 +137,11 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     summon.setMaster(&player);
 
     // set player vocation
-    Vocation voc(1);
-    g_vocations().addVocation(voc);
     player.setVocation(voc.getId());
 
     CHECK(Combat::canDoTargetCombat(&summon, &player, CombatParams()) == RETURNVALUE_NOERROR);
+
+    player.setParent(nullptr);
   }
 
 	TEST_CASE("PvP - [summon attacker] can't attack on no PVP world") {
@@ -153,13 +157,13 @@ TEST_SUITE( "CombatTest - canDoTargetCombat" ) {
     summon.setParent(&tile);
 
     // set player vocation
-    Vocation voc(1);
-    g_vocations().addVocation(voc);
     player.setVocation(voc.getId());
 
     g_game().setWorldType(WORLD_TYPE_NO_PVP);
     CHECK(Combat::canDoTargetCombat(&summon, &player, CombatParams()) == RETURNVALUE_YOUMAYNOTATTACKTHISPLAYER);
     g_game().setWorldType(WORLD_TYPE_PVP);
+    
+    player.setParent(nullptr);
   }
 
 	TEST_CASE("Monster cannot attack monster") {

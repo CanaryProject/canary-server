@@ -36,9 +36,18 @@ Creature::Creature()
 
 Creature::~Creature()
 {
+	if (master) {
+		auto summon = std::find(master->summons.begin(), master->summons.end(), this);
+		if (summon != master->summons.end()) {
+			master->summons.erase(summon);
+		}
+	}
+
 	for (Creature* summon : summons) {
-		summon->setAttackedCreature(nullptr);
-		summon->removeMaster();
+		if (summon) {
+			summon->setAttackedCreature(nullptr);
+			summon->removeMaster();
+		}
 	}
 
 	for (Condition* condition : conditions) {
