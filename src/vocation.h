@@ -140,6 +140,7 @@ class Vocations
 		bool loadFromXml();
 
 		Vocation* getVocation(uint16_t id);
+		void addVocation(Vocation voc);
 		int32_t getVocationId(const std::string& name) const;
 		uint16_t getPromotedVocation(uint16_t vocationId) const;
 

@@ -135,6 +135,10 @@ class ConfigManager
 		int32_t getNumber(integer_config_t what) const;
 		bool getBoolean(boolean_config_t what) const;
 
+		void setString(string_config_t what, std::string& value);
+		void setNumber(integer_config_t what, int32_t value);
+		void setBoolean(boolean_config_t what, bool value);
+
 	private:
 		ConfigManager() {}
 

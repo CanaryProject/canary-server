@@ -239,3 +239,27 @@ bool ConfigManager::getBoolean(boolean_config_t what) const
 	}
 	return boolean[what];
 }
+
+void ConfigManager::setString(string_config_t what, std::string& value) {
+	if (what >= LAST_STRING_CONFIG) {
+		std::cout << "[Warning - ConfigManager::setString] Accessing invalid index: " << what << std::endl;
+		return;
+	}
+	string[what] = value;
+}
+
+void ConfigManager::setNumber(integer_config_t what, int32_t value) {
+	if (what >= LAST_INTEGER_CONFIG) {
+		std::cout << "[Warning - ConfigManager::setNumber] Accessing invalid index: " << what << std::endl;
+		return;
+	}
+	integer[what] = value;
+}
+
+void ConfigManager::setBoolean(boolean_config_t what, bool value) {
+	if (what >= LAST_BOOLEAN_CONFIG) {
+		std::cout << "[Warning - ConfigManager::setBoolean] Accessing invalid index: " << what << std::endl;
+		return;
+	}
+	boolean[what] = value;
+}
