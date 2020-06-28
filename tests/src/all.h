@@ -87,7 +87,6 @@ namespace fs = boost::filesystem;
 
 extern LuaEnvironment g_luaEnvironment;
 
-extern CombatParams params;
 extern MonsterType type;
 extern Player player;
 extern Monster monsterA;
