@@ -2,24 +2,21 @@ Canary Server
 ===============
 
 ## Builds
-[![Build status](https://ci.appveyor.com/api/projects/status/github/opentibiabr/canary-server?branch=develop&passingText=develop%20-%20OK&svg=true)](https://ci.appveyor.com/project/opentibiabr/canary-server "Download nightly builds for Windows")
+[![Build on Ubuntu](https://github.com/opentibiabr/canary-server/workflows/Build%20on%20Ubuntu/badge.svg)](https://github.com/opentibiabr/canary-server/actions?query=workflow%3A%22Build+on+Ubuntu%22)
+[![Build on Windows](https://github.com/opentibiabr/canary-server/workflows/Build%20on%20Windows/badge.svg)](https://github.com/opentibiabr/canary-server/actions?query=workflow%3A%22Build+on+Windows%22)
 
-The Canary Server is a free and open-source MMORPG server emulator written in C++. It is a fork of the optimized version of [OpenTibia Server](https://github.com/opentibia/server) project, made by [SaiyansKing](https://github.com/SaiyansKing/optimized_forgottenserver). To connect to the server, you can use [OTClient](https://github.com/edubart/otclient), [OpenTibiaUnity](https://github.com/slavidodo/OpenTibia-Unity) or [The Forgotten Client](https://github.com/SaiyansKing/The-Forgotten-Client)(work in progress).
+The Canary Server is a free and open-source MMORPG server emulator written in C++. It is a fork of the optimized version of [OpenTibia Server](https://github.com/SaiyansKing/optimized_forgottenserver) project, made by [SaiyansKing](https://github.com/SaiyansKing). To connect to the server, you can use [OTClient](https://github.com/opentibiabr/otclient/tree/canary).
 
-### [WIP] Getting Started
+### Getting Started
 
-* [Compiling](https://github.com/otland/forgottenserver/wiki/Compiling)
+* [Wiki](https://github.com/opentibiabr/canary-server/wiki)
 * [Scripting Reference](https://github.com/otland/forgottenserver/wiki/Script-Interface)
 
-### [WIP] Support
+### Issues
 
-If you need help, please visit the [support forum on OTLand](https://otland.net/forums/support.16/). Our issue tracker is not a support forum, and using it as one will result in your issue being closed. If you were unable to get assistance in the support forum, you should consider [becoming a premium user on OTLand](https://otland.net/account/upgrades) which grants you access to the premium support forum and supports OTLand financially.
+We use the [issue tracker on GitHub](https://github.com/opentibiabr/canary-server/issues). Keep in mind that everyone who is watching the repository gets notified by e-mail when there is activity, so be thoughtful and avoid writing comments that aren't meaningful for an issue (e.g. "+1"). If you'd like for an issue to be fixed faster, you should either fix it yourself and submit a pull request, or place a bounty on the issue.
 
-### [WIP] Issues
-
-We use the [issue tracker on GitHub](https://github.com/SaiyansKing/forgottenserver/issues). Keep in mind that everyone who is watching the repository gets notified by e-mail when there is activity, so be thoughtful and avoid writing comments that aren't meaningful for an issue (e.g. "+1"). If you'd like for an issue to be fixed faster, you should either fix it yourself and submit a pull request, or place a bounty on the issue.
-
-### [WIP] Repository
+### Repository
 
 This repository isn't a simple fork from the main repository because it's conception is to deliver heavily optimization on the project by going to even breaking backward compatiblity if needed.
 

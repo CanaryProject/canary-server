@@ -179,3 +179,5 @@ config.lua
 libmysql.dll
 lua51.dll
 theforgottenserver-AVX2.exe
+*.dll
+*.exe
