@@ -130,7 +130,7 @@ std::string Player::getDescription(int32_t lookDistance) const
 		}
 	} else {
 		sink.append(name);
-		if (!group || (group && !group->access)) {
+		if (!group || !group->access) {
 			sink.append(" (Level ").append(std::to_string(level)).append(1, ')');
 		}
 		sink.append(1, '.');
