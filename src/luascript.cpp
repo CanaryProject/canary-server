@@ -1168,6 +1168,15 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(COMBAT_PARAM_AGGRESSIVE)
 	registerEnum(COMBAT_PARAM_DISPEL)
 	registerEnum(COMBAT_PARAM_USECHARGES)
+	registerEnum(COMBAT_PARAM_VALIDTARGETS)
+
+	registerEnum(COMBAT_TARGET_PARAM_PLAYERS)
+	registerEnum(COMBAT_TARGET_PARAM_MONSTERS)
+	registerEnum(COMBAT_TARGET_PARAM_PLAYERSANDMONSTERS)
+	registerEnum(COMBAT_TARGET_PARAM_NPCS)
+	registerEnum(COMBAT_TARGET_PARAM_PLAYERSANDNPCS)
+	registerEnum(COMBAT_TARGET_PARAM_MONSTERSANDNPCS)
+	registerEnum(COMBAT_TARGET_PARAM_ALL)
 
 	registerEnum(CONDITION_NONE)
 	registerEnum(CONDITION_POISON)
@@ -1401,6 +1410,10 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(CONST_ANI_ENVENOMEDARROW)
 	registerEnum(CONST_ANI_GLOOTHSPEAR)
 	registerEnum(CONST_ANI_SIMPLEARROW)
+	registerEnum(CONST_ANI_LEAFSTAR)
+	registerEnum(CONST_ANI_DIAMONDARROW)
+	registerEnum(CONST_ANI_SPECTRALBOLT)
+	registerEnum(CONST_ANI_ROYALSTAR)
 	registerEnum(CONST_ANI_WEAPONTYPE)
 
 	registerEnum(CONST_PROP_BLOCKSOLID)
@@ -3460,7 +3473,7 @@ int LuaScriptInterface::luaDoAreaCombatHealth(lua_State* L)
 		damage.primary.type = combatType;
 		damage.primary.value = normal_random(getNumber<int32_t>(L, 6), getNumber<int32_t>(L, 5));
 
-		Combat::doCombatHealth(creature, getPosition(L, 3), area, damage, params);
+		Combat::doCombatHealthArea(creature, getPosition(L, 3), area, params, damage);
 		pushBoolean(L, true);
 	} else {
 		reportErrorFunc(getErrorDesc(LUA_ERROR_AREA_NOT_FOUND));
@@ -3497,7 +3510,7 @@ int LuaScriptInterface::luaDoTargetCombatHealth(lua_State* L)
 	damage.primary.type = combatType;
 	damage.primary.value = normal_random(getNumber<int32_t>(L, 4), getNumber<int32_t>(L, 5));
 
-	Combat::doCombatHealth(creature, target, damage, params);
+	Combat::doCombatHealthTarget(creature, target, params, damage);
 	pushBoolean(L, true);
 	return 1;
 }
@@ -3524,7 +3537,7 @@ int LuaScriptInterface::luaDoAreaCombatMana(lua_State* L)
 		damage.primary.value = normal_random(getNumber<int32_t>(L, 4), getNumber<int32_t>(L, 5));
 
 		Position pos = getPosition(L, 2);
-		Combat::doCombatMana(creature, pos, area, damage, params);
+		Combat::doCombatManaArea(creature, pos, area, params, damage);
 		pushBoolean(L, true);
 	} else {
 		reportErrorFunc(getErrorDesc(LUA_ERROR_AREA_NOT_FOUND));
@@ -3558,7 +3571,7 @@ int LuaScriptInterface::luaDoTargetCombatMana(lua_State* L)
 	damage.primary.type = COMBAT_MANADRAIN;
 	damage.primary.value = normal_random(getNumber<int32_t>(L, 3), getNumber<int32_t>(L, 4));
 
-	Combat::doCombatMana(creature, target, damage, params);
+	Combat::doCombatManaTarget(creature, target, params, damage);
 	pushBoolean(L, true);
 	return 1;
 }
@@ -3586,7 +3599,7 @@ int LuaScriptInterface::luaDoAreaCombatCondition(lua_State* L)
 		CombatParams params;
 		params.impactEffect = getNumber<uint8_t>(L, 5);
 		params.conditionList.emplace_back(condition->clone());
-		Combat::doCombatCondition(creature, getPosition(L, 2), area, params);
+		Combat::doCombatConditionArea(creature, getPosition(L, 2), area, params);
 		pushBoolean(L, true);
 	} else {
 		reportErrorFunc(getErrorDesc(LUA_ERROR_AREA_NOT_FOUND));
@@ -3622,7 +3635,7 @@ int LuaScriptInterface::luaDoTargetCombatCondition(lua_State* L)
 	CombatParams params;
 	params.impactEffect = getNumber<uint8_t>(L, 4);
 	params.conditionList.emplace_back(condition->clone());
-	Combat::doCombatCondition(creature, target, params);
+	Combat::doCombatConditionTarget(creature, target, params);
 	pushBoolean(L, true);
 	return 1;
 }
@@ -3643,7 +3656,7 @@ int LuaScriptInterface::luaDoAreaCombatDispel(lua_State* L)
 		CombatParams params;
 		params.impactEffect = getNumber<uint8_t>(L, 5);
 		params.dispelType = getNumber<ConditionType_t>(L, 4);
-		Combat::doCombatDispel(creature, getPosition(L, 2), area, params);
+		Combat::doCombatDispelArea(creature, getPosition(L, 2), area, params);
 
 		pushBoolean(L, true);
 	} else {
@@ -3673,7 +3686,7 @@ int LuaScriptInterface::luaDoTargetCombatDispel(lua_State* L)
 	CombatParams params;
 	params.dispelType = getNumber<ConditionType_t>(L, 3);
 	params.impactEffect = getNumber<uint8_t>(L, 4);
-	Combat::doCombatDispel(creature, target, params);
+	Combat::doCombatDispelTarget(creature, target, params);
 	pushBoolean(L, true);
 	return 1;
 }
@@ -7603,14 +7616,10 @@ int LuaScriptInterface::luaCreatureSetMaster(lua_State* L)
 			}
 		}
 	}
-	#if CLIENT_VERSION >= 1100
 	//Due to cache issues on qt clients we need to recreature creature struct
 	//updateCreatureType doesn't work anymore because it doesn't refresh client cache
 	//I don't know why cipsoft even keep this packet when it don't work anymore
 	g_game.updateCreatureData(creature);
-	#elif CLIENT_VERSION >= 910
-	g_game.updateCreatureType(creature);
-	#endif
 	return 1;
 }
 
@@ -12460,21 +12469,21 @@ int LuaScriptInterface::luaCombatExecute(lua_State* L)
 			}
 
 			if (combat->hasArea()) {
-				combat->doCombat(creature, target->getPosition());
+				combat->executeAreaCombat(creature, target->getPosition());
 			} else {
-				combat->doCombat(creature, target);
+				combat->executeTargetCombat(creature, target);
 			}
 			break;
 		}
 
 		case VARIANT_POSITION: {
-			combat->doCombat(creature, variant.pos);
+			combat->executeAreaCombat(creature, variant.pos);
 			break;
 		}
 
 		case VARIANT_TARGETPOSITION: {
 			if (combat->hasArea()) {
-				combat->doCombat(creature, variant.pos);
+				combat->executeAreaCombat(creature, variant.pos);
 			} else {
 				combat->postCombatEffects(creature, variant.pos);
 				g_game.addMagicEffect(variant.pos, CONST_ME_POFF);
@@ -12489,7 +12498,7 @@ int LuaScriptInterface::luaCombatExecute(lua_State* L)
 				return 1;
 			}
 
-			combat->doCombat(creature, target);
+			combat->executeTargetCombat(creature, target);
 			break;
 		}
 
@@ -13343,14 +13352,7 @@ int LuaScriptInterface::luaMonsterTypeEventOnCallback(lua_State* L)
 	// monstertype:onThink / onAppear / etc. (callback)
 	MonsterType* mType = getUserdata<MonsterType>(L, 1);
 	if (mType) {
-		LuaScriptInterface* scriptsInterface = &g_scripts->getScriptInterface();
-		if (!g_monsters.scriptInterface) {
-			g_monsters.scriptInterface.reset(scriptsInterface);
-			g_monsters.scriptInterface->initState();
-		}
-
-		mType->info.scriptInterface = g_monsters.scriptInterface.get();
-		if (g_monsters.loadCallback(scriptsInterface, mType)) {
+		if (g_monsters.loadCallback(getScriptEnv()->getScriptInterface(), mType)) {
 			pushBoolean(L, true);
 			return 1;
 		}
@@ -13722,7 +13724,11 @@ int LuaScriptInterface::luaLootSetId(lua_State* L)
 			item = Item::items.getItemIdByName(getString(L, 2));
 			loot->lootBlock.id = item;
 		}
-		pushBoolean(L, true);
+		if (Item::items[loot->lootBlock.id].id == 0) {
+			pushBoolean(L, false);
+		} else {
+			pushBoolean(L, true);
+		}
 	} else {
 		lua_pushnil(L);
 	}
@@ -14019,10 +14025,11 @@ int LuaScriptInterface::luaMonsterSpellSetConditionDamage(lua_State* L)
 
 int LuaScriptInterface::luaMonsterSpellSetConditionSpeedChange(lua_State* L)
 {
-	// monsterSpell:setConditionSpeedChange(speed)
+	// monsterSpell:setConditionSpeedChange(minSpeed, maxSpeed)
 	MonsterSpell* spell = getUserdata<MonsterSpell>(L, 1);
 	if (spell) {
-		spell->speedChange = getNumber<int32_t>(L, 2);
+		spell->minSpeedChange = getNumber<int32_t>(L, 2);
+		spell->maxSpeedChange = getNumber<int32_t>(L, 3, 0);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);

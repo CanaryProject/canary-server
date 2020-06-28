@@ -89,7 +89,7 @@ void RSA::setKey(const char* nString, const char* dString)
 	mpz_set_str(d, dString, 10);
 }
 
-void RSA::decrypt(char* msg) const 
+void RSA::decrypt(char* msg) const
 {
 	mpz_t c, m;
 	mpz_init2(c, 1024);

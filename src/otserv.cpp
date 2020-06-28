@@ -29,7 +29,6 @@
 #include "configmanager.h"
 #include "scriptmanager.h"
 #include "rsa.h"
-#include "protocolold.h"
 #include "protocollogin.h"
 #include "protocolstatus.h"
 #include "databasemanager.h"
@@ -71,6 +70,7 @@ void mainLoader(int argc, char* argv[], ServiceManager* services);
 	exit(-1);
 }
 
+#ifndef UNIT_TESTING
 int main(int argc, char* argv[])
 {
 	// Setup bad allocation handler
@@ -105,6 +105,7 @@ int main(int argc, char* argv[])
 	g_database.end();
 	return 0;
 }
+#endif
 
 void mainLoader(int, char*[], ServiceManager* services)
 {
@@ -207,7 +208,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 
 	// load item data
 	std::cout << ">> Loading items" << std::endl;
-	if (!Item::items.loadFromOtb("data/items/" + std::to_string(CLIENT_VERSION) + "/items.otb")) {
+	if (!Item::items.loadFromOtb("data/items/items.otb")) {
 		startupErrorMessage("Unable to load items (OTB)!");
 		return;
 	}
@@ -286,9 +287,6 @@ void mainLoader(int, char*[], ServiceManager* services)
 
 	// OT protocols
 	services->add<ProtocolStatus>(static_cast<uint16_t>(g_config.getNumber(ConfigManager::STATUS_PORT)));
-
-	// Legacy login protocol
-	services->add<ProtocolOld>(static_cast<uint16_t>(g_config.getNumber(ConfigManager::LOGIN_PORT)));
 
 	RentPeriod_t rentPeriod;
 	std::string strRentPeriod = asLowerCaseString(g_config.getString(ConfigManager::HOUSE_RENT_PERIOD));

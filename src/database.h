@@ -22,7 +22,19 @@
 
 #include <boost/lexical_cast.hpp>
 
+#ifdef __has_include
+
+#if __has_include(<mysql/mysql.h>)
+#include <mysql/mysql.h>
+#elif __has_include(<mysql.h>)
 #include <mysql.h>
+#else
+#error "Cannot detect mysql library"
+#endif
+
+#else
+#include <mysql.h>
+#endif
 
 class DBResult;
 using DBResult_ptr = std::shared_ptr<DBResult>;

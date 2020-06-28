@@ -23,9 +23,15 @@
 #include "spells.h"
 #include "movement.h"
 #include "weapons.h"
-
-#include <boost/filesystem.hpp>
 #include "pugicast.h"
+
+#ifdef __cpp_lib_filesystem
+#include <filesystem>
+namespace fs = std::filesystem;
+#else
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#endif
 
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
@@ -146,6 +152,7 @@ const std::unordered_map<std::string, ItemParseAttributes_t> ItemParseAttributes
 	{"elementearth", ITEM_PARSE_ELEMENTEARTH},
 	{"elementfire", ITEM_PARSE_ELEMENTFIRE},
 	{"elementenergy", ITEM_PARSE_ELEMENTENERGY},
+	{"elementdeath", ITEM_PARSE_ELEMENTDEATH},
 	{"walkstack", ITEM_PARSE_WALKSTACK},
 	{"blocking", ITEM_PARSE_BLOCKING},
 	{"allowdistread", ITEM_PARSE_ALLOWDISTREAD},
@@ -168,7 +175,7 @@ bool Items::reload()
 	clear();
 	items.reserve(30000);
 	reverseItemMap.reserve(30000);
-	loadFromOtb("data/items/" + std::to_string(CLIENT_VERSION) + "/items.otb");
+	loadFromOtb("data/items/items.otb");
 	if (!loadFromXml()) {
 		return false;
 	}
@@ -183,7 +190,7 @@ constexpr auto OTBI = OTB::Identifier{{'O','T', 'B', 'I'}};
 
 bool Items::loadFromOtb(const std::string& file)
 {
-	if (!boost::filesystem::exists(file)) {
+	if (!fs::exists(file)) {
 		std::cout << "[Error - Items::loadFromOtb] Failed to load " << file << ": File doesn't exist." << std::endl;
 		return false;
 	}
@@ -934,9 +941,9 @@ bool Items::loadFromOtbLegacy(OTB::Loader& loader, const OTB::Node& rootNode)
 bool Items::loadFromXml()
 {
 	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(("data/items/" + std::to_string(CLIENT_VERSION) + "/items.xml").c_str());
+	pugi::xml_parse_result result = doc.load_file("data/items/items.xml");
 	if (!result) {
-		printXMLError("Error - Items::loadFromXml", "data/items/" + std::to_string(CLIENT_VERSION) + "/items.xml", result);
+		printXMLError("Error - Items::loadFromXml", "data/items/items.xml", result);
 		return false;
 	}
 
@@ -1824,6 +1831,12 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 				case ITEM_PARSE_ELEMENTENERGY: {
 					abilities.elementDamage = pugi::cast<uint16_t>(valueAttribute.value());
 					abilities.elementType = COMBAT_ENERGYDAMAGE;
+					break;
+				}
+
+				case ITEM_PARSE_ELEMENTDEATH: {
+					abilities.elementDamage = pugi::cast<uint16_t>(valueAttribute.value());
+					abilities.elementType = COMBAT_DEATHDAMAGE;
 					break;
 				}
 
