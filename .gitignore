@@ -173,11 +173,8 @@ pip-log.txt
 .*.swo
 
 #############
-## TFS / OT
+## Canary
 #############
 config.lua
-libmysql.dll
-lua51.dll
-theforgottenserver-AVX2.exe
 *.dll
 *.exe
