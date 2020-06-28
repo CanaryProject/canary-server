@@ -279,6 +279,10 @@ bool Combat::isProtected(const Player* attacker, const Player* target)
 }
 
 bool Combat::isTargetValid(Creature* target, const CombatParams& params) {
+	if (!target) {
+		return false;
+	}
+	
 	switch (params.validTargets) {
 		case COMBAT_TARGET_PARAM_PLAYERS:
 			if (!target->getPlayer()) 

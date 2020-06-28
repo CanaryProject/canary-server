@@ -52,6 +52,14 @@ Npc* Npc::createNpc(const std::string& name)
 	return npc.release();
 }
 
+Npc::Npc() :
+	Creature(),
+	npcEventHandler(nullptr),
+	masterRadius(-1),
+	loaded(false) {
+	reset();
+}
+
 Npc::Npc(const std::string& name) :
 	Creature(),
 	filename("data/npc/" + name + ".xml"),

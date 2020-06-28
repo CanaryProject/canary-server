@@ -1,3 +1,6 @@
+#ifndef CANARY_TEST_H
+#define CANARY_TEST_H
+
 #include <boost/filesystem.hpp>
 
 // Include main Doctest framework library
@@ -81,3 +84,14 @@
 #include "../../src/wildcardtree.h"
 
 namespace fs = boost::filesystem;
+
+extern LuaEnvironment g_luaEnvironment;
+
+extern CombatParams params;
+extern MonsterType type;
+extern Player player;
+extern Monster monsterA;
+extern Monster monsterB;
+extern Npc npc;
+
+#endif
