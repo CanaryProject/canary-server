@@ -25,6 +25,10 @@
 
 void Decay::startDecay(Item* item, int32_t duration)
 {
+	if (!item) {
+		return;
+	}
+
 	if (item->hasAttribute(ITEM_ATTRIBUTE_DURATION_TIMESTAMP)) {
 		stopDecay(item, item->getIntAttr(ITEM_ATTRIBUTE_DURATION_TIMESTAMP));
 	}
@@ -47,6 +51,10 @@ void Decay::startDecay(Item* item, int32_t duration)
 
 void Decay::stopDecay(Item* item, int64_t timestamp)
 {
+	if (!item) {
+		return;
+	}
+	
 	auto it = decayMap.find(timestamp);
 	if (it != decayMap.end()) {
 		std::vector<Item*>& decayItems = it->second;
