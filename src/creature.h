@@ -164,6 +164,7 @@ class Creature : virtual public Thing
 			return skull;
 		}
 		virtual Skulls_t getSkullClient(const Creature* creature) const {
+			if (!creature) return SKULL_NONE;
 			return creature->getSkull();
 		}
 		void setSkull(Skulls_t newSkull);
