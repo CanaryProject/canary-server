@@ -23,11 +23,7 @@
 
 std::ostream& operator<<(std::ostream& os, const Position& pos)
 {
-	os << "( " << std::setw(5) << std::setfill('0') << pos.x;
-	os << " / " << std::setw(5) << std::setfill('0') << pos.y;
-	os << " / " << std::setw(3) << std::setfill('0') << pos.getZ();
-	os << " )";
-	return os;
+	return pos.toString(os);
 }
 
 std::ostream& operator<<(std::ostream& os, const Direction& dir)
@@ -70,4 +66,21 @@ std::ostream& operator<<(std::ostream& os, const Direction& dir)
 	}
 
 	return os;
+}
+
+std::ostream& Position::toString(std::ostream& os) const {
+	os << "( " << std::setw(5) << std::setfill('0') << x;
+	os << " / " << std::setw(5) << std::setfill('0') << y;
+	os << " / " << std::setw(3) << std::setfill('0') << z;
+	os << " )";
+	return os;
+}
+
+const std::string& Position::toString() const {
+	std::string str;
+	str.reserve(16);
+	return str.append("( ")
+		.append(std::to_string(x ? x : 0)).append(", ")
+		.append(std::to_string(y ? y : 0)).append(", ")
+		.append(std::to_string(z ? z : 0)).append(" )");
 }

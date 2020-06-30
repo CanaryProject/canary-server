@@ -126,6 +126,9 @@ struct Position
 	int_fast32_t getX() const { return x; }
 	int_fast32_t getY() const { return y; }
 	int_fast16_t getZ() const { return z; }
+
+	std::ostream& toString(std::ostream&) const;
+	const std::string& toString() const;
 };
 
 std::ostream& operator<<(std::ostream&, const Position&);
