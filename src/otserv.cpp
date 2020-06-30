@@ -73,6 +73,13 @@ int main(int argc, char* argv[])
 	g_dispatcher().start();
 	g_scheduler().start();
 
+	#ifdef NDEBUG
+		spdlog::set_level(spdlog::level::debug);
+		spdlog::debug("You're running a debug version.");
+	#else
+		spdlog::info("You're running a release version.");
+	#endif
+
 	g_dispatcher().addTask(std::bind(mainLoader, argc, argv, &serviceManager));
 
 	g_loaderSignal.wait(g_loaderUniqueLock);
