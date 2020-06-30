@@ -125,7 +125,7 @@ bool Weapons::registerEvent(Event_ptr event, const pugi::xml_node&)
 
 	auto result = weapons.emplace(weapon->getID(), weapon);
 	if (!result.second) {
-		std::cout << "[Warning - Weapons::registerEvent] Duplicate registered item with id: " << weapon->getID() << std::endl;
+		spdlog::warn("[Weapons::registerEvent] Duplicate registered item with id: {}", weapon->getID());
 	}
 	return result.second;
 }
@@ -152,7 +152,7 @@ bool Weapon::configureEvent(const pugi::xml_node& node)
 {
 	pugi::xml_attribute attr;
 	if (!(attr = node.attribute("id"))) {
-		std::cout << "[Error - Weapon::configureEvent] Weapon without id." << std::endl;
+		spdlog::error("[Weapons::configureEvent] Weapon without id.");
 		return false;
 	}
 	id = pugi::cast<uint16_t>(attr.value());
@@ -188,7 +188,7 @@ bool Weapon::configureEvent(const pugi::xml_node& node)
 	if ((attr = node.attribute("action"))) {
 		action = getWeaponAction(asLowerCaseString(attr.as_string()));
 		if (action == WEAPONACTION_NONE) {
-			std::cout << "[Warning - Weapon::configureEvent] Unknown action " << attr.as_string() << std::endl;
+			spdlog::warn("[Weapons::configureEvent] Unknown action ", attr.as_string());
 		}
 	}
 
@@ -490,7 +490,7 @@ bool Weapon::executeUseWeapon(Player* player, const LuaVariant& var) const
 {
 	//onUseWeapon(player, var)
 	if (!scriptInterface->reserveScriptEnv()) {
-		std::cout << "[Error - Weapon::executeUseWeapon] Call stack overflow" << std::endl;
+		spdlog::error("[Weapons::executeUseWeapon] Call stack overflow");
 		return false;
 	}
 
@@ -916,7 +916,7 @@ bool WeaponWand::configureEvent(const pugi::xml_node& node)
 	} else if (!tfs_strcmp(tmpStrValue.c_str(), "holy")) {
 		params.combatType = COMBAT_HOLYDAMAGE;
 	} else {
-		std::cout << "[Warning - WeaponWand::configureEvent] Type \"" << attr.as_string() << "\" does not exist." << std::endl;
+		spdlog::warn("[WeaponWand::configureEvent] Type '{}' does not exist.", attr.as_string());
 	}
 	return true;
 }
