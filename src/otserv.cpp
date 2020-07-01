@@ -314,7 +314,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 
 #ifndef _WIN32
 	if (getuid() == 0 || geteuid() == 0) {
-		spdlog::warn("{} has been executed as root user, please consider running it as a normal user.", STATUS_SERVER_NAME);
+		spdlog::critical("{} has been executed as root user, please consider running it as a normal user.", STATUS_SERVER_NAME);
 	}
 #endif
 
