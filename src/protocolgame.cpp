@@ -2263,7 +2263,6 @@ void ProtocolGame::sendBasicData()
 		#endif
 	}
 	playermsg.addByte(player->getVocation()->getClientId());
-	playermsg.addByte(((player->getVocation()->getId() != 0) ? 0x01 : 0x00));
 
 	std::vector<uint16_t> spells = g_spells().getSpellsByVocation(player->getVocationId());
 	playermsg.add<uint16_t>(spells.size());
