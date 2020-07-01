@@ -22,7 +22,7 @@
 #include "bed.h"
 #include "game.h"
 #include "iologindata.h"
-#include "scheduler.h"
+#include "tasks.h"
 
 BedItem::BedItem(uint16_t id) : Item(id)
 {
@@ -162,7 +162,7 @@ bool BedItem::sleep(Player* player)
 
 	// kick player after he sees himself walk onto the bed and it change id
 	uint32_t playerId = player->getID();
-	g_scheduler().addEvent(createSchedulerTask(SCHEDULER_MINTICKS, std::bind(&Game::kickPlayer, &g_game(), playerId, false)));
+	g_dispatcher().addEvent(SERVER_BEAT_MILISECONDS, std::bind(&Game::kickPlayer, &g_game(), playerId, false));
 
 	// change self and partner's appearance
 	updateAppearance(player);

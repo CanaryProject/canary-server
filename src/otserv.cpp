@@ -31,7 +31,6 @@
 #include "protocollogin.h"
 #include "protocolstatus.h"
 #include "databasemanager.h"
-#include "scheduler.h"
 #include "databasetasks.h"
 #include "scripts.h"
 #include <fstream>
@@ -71,8 +70,6 @@ int main(int argc, char* argv[])
 	ServiceManager serviceManager;
 
 	g_dispatcher().start();
-	g_scheduler().start();
-
 	g_dispatcher().addTask(std::bind(mainLoader, argc, argv, &serviceManager));
 
 	g_loaderSignal.wait(g_loaderUniqueLock);
@@ -82,12 +79,10 @@ int main(int argc, char* argv[])
 		serviceManager.run();
 	} else {
     spdlog::error("No services running. The server is NOT online.");
-		g_scheduler().shutdown();
 		g_databaseTasks().shutdown();
 		g_dispatcher().shutdown();
 	}
 
-	g_scheduler().join();
 	g_databaseTasks().join();
 	g_dispatcher().join();
 	g_database().end();

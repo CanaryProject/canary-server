@@ -25,7 +25,6 @@
 #include "databasetasks.h"
 #include "iologindata.h"
 #include "game.h"
-#include "scheduler.h"
 
 #if GAME_FEATURE_MARKET > 0
 MarketOfferList IOMarket::getActiveOffers(MarketAction_t action, uint16_t itemId)
@@ -202,7 +201,7 @@ void IOMarket::checkExpiredOffers()
 		return;
 	}
 
-	g_scheduler().addEvent(createSchedulerTask(checkExpiredMarketOffersEachMinutes * 60 * 1000, IOMarket::checkExpiredOffers));
+	g_dispatcher().addEvent(checkExpiredMarketOffersEachMinutes * 60 * 1000, IOMarket::checkExpiredOffers);
 }
 
 uint32_t IOMarket::getPlayerOfferCount(uint32_t playerId)
