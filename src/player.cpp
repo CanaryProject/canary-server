@@ -675,7 +675,7 @@ void Player::addStorageValue(const uint32_t key, const int32_t value, const bool
 		} else if (IS_IN_KEYRANGE(key, MOUNTS_RANGE)) {
 			// do nothing
 		} else {
-			std::cout << "Warning: unknown reserved key: " << key << " player: " << getName() << std::endl;
+			spdlog::warn("[Player::addStorageValue] unknown reserved key: {} player: {}", key, name);
 			return;
 		}
 	}
@@ -1153,7 +1153,7 @@ void Player::onCreatureAppear(Creature* creature, bool isLogin)
 		Account account = IOLoginData::loadAccount(accountNumber);
 		Game::updatePremium(account);
 
-		std::cout << name << " has logged in." << std::endl;
+		spdlog::info("{} has logged in.", name);
 
 		if (guild) {
 			guild->addMember(this);
@@ -1283,7 +1283,7 @@ void Player::onRemoveCreature(Creature* creature, bool isLogout)
 
 		g_chat().removeUserFromAllChannels(*this);
 
-		std::cout << getName() << " has logged out." << std::endl;
+		spdlog::info("{} has logged out.", name);
 
 		if (guild) {
 			guild->removeMember(this);
@@ -1300,7 +1300,7 @@ void Player::onRemoveCreature(Creature* creature, bool isLogout)
 		}
 
 		if (!saved) {
-			std::cout << "Error while saving player: " << getName() << std::endl;
+			spdlog::error("[Player::onRemoveCreature] Error while saving player: {}", name);
 		}
 	}
 }
