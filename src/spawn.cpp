@@ -93,7 +93,7 @@ bool Spawns::loadFromXml(const std::string& filename)
 					spdlog::warn(
 						"[Spawns::loadFromXml]: {} {} spawntime cannot be less than {} seconds.", 
 						nameAttribute.as_string(),
-						pos,
+						pos.toString(),
 						(MINSPAWN_INTERVAL / 1000)
 					);
 				}
