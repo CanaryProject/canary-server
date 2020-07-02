@@ -65,7 +65,6 @@
 #include "../../src/quests.h"
 #include "../../src/raids.h"
 #include "../../src/rsa.h"
-#include "../../src/scheduler.h"
 #include "../../src/scripts.h"
 #include "../../src/server.h"
 #include "../../src/signals.h"

@@ -35,7 +35,6 @@
 #include "iomarket.h"
 #include "waitlist.h"
 #include "ban.h"
-#include "scheduler.h"
 #include "spells.h"
 
 extern Actions actions;
@@ -56,9 +55,9 @@ void ProtocolGame::release()
 }
 
 #if GAME_FEATURE_SESSIONKEY > 0
-void ProtocolGame::login(const std::string accountName, const std::string password, std::string characterName, std::string token, uint32_t tokenTime, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem)
+void ProtocolGame::login(const std::string& accountName, const std::string& password, std::string& characterName, std::string& token, uint32_t tokenTime, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem)
 #else
-void ProtocolGame::login(const std::string accountName, const std::string password, std::string characterName, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem)
+void ProtocolGame::login(const std::string& accountName, const std::string& password, std::string& characterName, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem)
 #endif
 {
 	//dispatcher thread
@@ -193,7 +192,7 @@ void ProtocolGame::login(const std::string accountName, const std::string passwo
 			foundPlayer->disconnect();
 			foundPlayer->isConnecting = true;
 
-			eventConnect = g_scheduler().addEvent(createSchedulerTask(1000, std::bind(&ProtocolGame::connect, getThis(), foundPlayer->getID(), operatingSystem, tfcOperatingSystem)));
+			eventConnect = g_dispatcher().addEvent(1000, std::bind(&ProtocolGame::connect, getThis(), foundPlayer->getID(), operatingSystem, tfcOperatingSystem));
 		} else {
 			connect(foundPlayer->getID(), operatingSystem, tfcOperatingSystem);
 		}
@@ -2264,7 +2263,6 @@ void ProtocolGame::sendBasicData()
 		#endif
 	}
 	playermsg.addByte(player->getVocation()->getClientId());
-	playermsg.addByte(((player->getVocation()->getId() != 0) ? 0x01 : 0x00));
 
 	std::vector<uint16_t> spells = g_spells().getSpellsByVocation(player->getVocationId());
 	playermsg.add<uint16_t>(spells.size());
@@ -3592,7 +3590,7 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 	#endif
 
 	playermsg.add<uint32_t>(player->getID());
-	playermsg.add<uint16_t>(0x32); // beat duration (50)
+	playermsg.add<uint16_t>(SERVER_BEAT_MILISECONDS);
 
 	#if GAME_FEATURE_NEWSPEED_LAW > 0
 	playermsg.addDouble(Creature::speedA, 3);
