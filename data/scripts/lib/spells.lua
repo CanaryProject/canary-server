@@ -282,6 +282,16 @@ AREADIAGONAL_WALLFIELD = {
 {1, 0, 0, 0, 0},
 }
 
+-- Large Beam
+AREA_LARGEBEAM1X1 = {
+{1, 3, 1}
+}
+
+AREADIAGONAL_LARGEBEAM1X1 = {
+{1, 1},
+{1, 3}
+}
+
 -- Spells-only arrays
 
 --This HUGE array contains all corpses of the game, until protocol 8.0

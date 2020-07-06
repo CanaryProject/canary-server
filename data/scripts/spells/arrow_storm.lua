@@ -19,39 +19,15 @@ local configs = {
 local tilesCount
 local area = {}
 local direction = DIRECTION_NORTH
-local directionMap = {
-	[DIRECTION_NORTH] = {
-		inversion = true,
-		dmgOffset = {{x = 1, y = 0}, {x = -1, y = 0}}
-	},
-	[DIRECTION_EAST] = {
-		inversion = false,
-		dmgOffset = {{x = 0, y = 1}, {x = 0, y = -1}}
-	},
-	[DIRECTION_SOUTH] = {
-		inversion = false,
-		dmgOffset = {{x = 1, y = 0}, {x = -1, y = 0}}
-	},
-	[DIRECTION_WEST] = {
-		inversion = true,
-		dmgOffset = {{x = 0, y = 1}, {x = 0, y = -1}}
-	},
-	[DIRECTION_SOUTHWEST] = {
-		inversion = false,
-		dmgOffset = {{x = -1, y = 0}, {x = 0, y = 1}}
-	},
-	[DIRECTION_SOUTHEAST] = {
-		inversion = false,
-		dmgOffset = {{x = 1, y = 0}, {x = 0, y = 1}}
-	},
-	[DIRECTION_NORTHWEST] = {
-		inversion = true,
-		dmgOffset = {{x = -1, y = 0}, {x = 0, y = -1}}
-	},
-	[DIRECTION_NORTHEAST] = {
-		inversion = true,
-		dmgOffset = {{x = 1, y = 0}, {x = 0, y = -1}}
-	},
+local inversionMap = {
+	[DIRECTION_NORTH] = true,
+	[DIRECTION_WEST] = true,
+	[DIRECTION_NORTHWEST] = true,
+	[DIRECTION_NORTHEAST] = true,
+	[DIRECTION_EAST] = false,
+	[DIRECTION_SOUTH] = false,
+	[DIRECTION_SOUTHWEST] = false,
+	[DIRECTION_SOUTHEAST] = false
 }
 
 -- Combat Principal
@@ -69,23 +45,17 @@ end
 
 local dmgCombat = Combat()
 dmgCombat:setParameter(COMBAT_PARAM_TYPE, COMBAT_PHYSICALDAMAGE)
+dmgCombat:setArea(createCombatArea(AREA_LARGEBEAM1X1, AREADIAGONAL_LARGEBEAM1X1))
 dmgCombat:setCallback(CALLBACK_PARAM_SKILLVALUE, "onGetFormulaValues")
 
 local function performCombatEffects(creature)
 	local bPos, ePos = area[1], area[configs.totalTiles]
-	if (directionMap[direction].inversion) then bPos, ePos = ePos, bPos end
+	if inversionMap[direction] then bPos, ePos = ePos, bPos end
 
 	bPos:sendDistanceEffect(ePos, configs.effects.waveEffect)
-	local dmgOffset = directionMap[direction].dmgOffset
 
 	for i = 1, configs.totalTiles do
-		local dPos = area[i]
-		-- garante que o dano ao redor tb seja dado
-		for i = 1, 2 do
-			local ndPos = Position(dPos.x + dmgOffset[i].x, dPos.y + dmgOffset[i].y, dPos.z)
-			dmgCombat:execute(creature, Variant(ndPos))
-		end
-		dmgCombat:execute(creature, Variant(dPos))
+		dmgCombat:execute(creature, Variant(area[i]))
 	end
 end
 
@@ -107,7 +77,11 @@ combat:setCallback(CALLBACK_PARAM_TARGETTILE, "onMainTargetTile")
 -- Função de combate principal
 local function doMainCombat(cid, tid)
 	local creature = Creature(cid)
-	local tPos = Creature(tid):getPosition()
+	local target = Creature(tid)
+
+	if not target or not creature then return end
+
+	local tPos = target:getPosition()
 	local pos = creature:getPosition()
 	direction = pos:getDirectionTo(tPos)
 
@@ -123,7 +97,7 @@ end
 
 	-- Delayed hit effect
 function onTriggerTargetTile(creature, tPos)
-	hitTimer = directionMap[direction].inversion 
+	hitTimer = inversionMap[direction] 
 		and (configs.hitDelay * configs.totalTiles) - (configs.hitDelay * tilesCount)
 		or configs.hitDelay * tilesCount
 	addEvent(sendMagicEffectEvent, hitTimer, tPos)
