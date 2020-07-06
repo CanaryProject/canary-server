@@ -32,7 +32,7 @@ dmgCombat:setParameter(COMBAT_PARAM_DISTANCEEFFECT, configs.effects.shootEffect)
 dmgCombat:setCallback(CALLBACK_PARAM_SKILLVALUE, "onGetFormulaValues")
 
 	-- Delayed hit effect
-function dmgFunction(cid, tid)
+local function dmgFunction(cid, tid)
 	local target = Creature(tid)
 	if target then
 		dmgCombat:execute(Creature(cid), Variant(target:getPosition()))
@@ -69,7 +69,7 @@ end
 
 local spell = Spell("instant")
 
-function combatDuration(cid, startedAt, cicle)
+local function combatDuration(cid, startedAt, cicle)
 	if ((os.time() - startedAt) >= configs.duration) then return end
 
 	cicle = cicle or 1

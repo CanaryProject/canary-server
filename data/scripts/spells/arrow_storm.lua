@@ -71,7 +71,7 @@ local dmgCombat = Combat()
 dmgCombat:setParameter(COMBAT_PARAM_TYPE, COMBAT_PHYSICALDAMAGE)
 dmgCombat:setCallback(CALLBACK_PARAM_SKILLVALUE, "onGetFormulaValues")
 
-function performCombatEffects(creature)
+local function performCombatEffects(creature)
 	local bPos, ePos = area[1], area[configs.totalTiles]
 	if (directionMap[direction].inversion) then bPos, ePos = ePos, bPos end
 
@@ -105,7 +105,7 @@ combat:setArea(createCombatArea(AREA_BEAM5, AREADIAGONAL_BEAM5))
 combat:setCallback(CALLBACK_PARAM_TARGETTILE, "onMainTargetTile")
 
 -- Função de combate principal
-function doMainCombat(cid, tid)
+local function doMainCombat(cid, tid)
 	local creature = Creature(cid)
 	local tPos = Creature(tid):getPosition()
 	local pos = creature:getPosition()
@@ -117,7 +117,7 @@ end
 
 -- Trigger Combat
 	-- Função pra mandar efeito com delay
-function sendMagicEffectEvent(pos)
+local function sendMagicEffectEvent(pos)
 	pos:sendMagicEffect(configs.effects.hitEffect)
 end
 

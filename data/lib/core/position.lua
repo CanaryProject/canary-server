@@ -16,6 +16,7 @@ function Position:getNextPosition(direction, steps)
 		self.x = self.x + offset.x * steps
 		self.y = self.y + offset.y * steps
 	end
+	return self
 end
 
 function Position:moveUpstairs()
@@ -69,4 +70,30 @@ function Position:isInRange(from, to)
 		return true
 	end
 	return false
+end
+
+function Position:getDirectionTo(toPos)
+	local dir = DIRECTION_NORTH
+	if (self.x > toPos.x) then
+			dir = DIRECTION_WEST
+			if(self.y > toPos.y) then
+							dir = DIRECTION_NORTHWEST
+			elseif(self.y < toPos.y) then
+							dir = DIRECTION_SOUTHWEST
+			end
+	elseif (self.x < toPos.x) then
+			dir = DIRECTION_EAST
+			if(self.y > toPos.y) then
+							dir = DIRECTION_NORTHEAST
+			elseif(self.y < toPos.y) then
+							dir = DIRECTION_SOUTHEAST
+			end
+	else
+			if (self.y > toPos.y) then
+					dir = DIRECTION_NORTH
+			elseif(self.y < toPos.y) then
+					dir = DIRECTION_SOUTH
+			end
+	end
+	return dir
 end
