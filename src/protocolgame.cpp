@@ -1663,7 +1663,7 @@ void ProtocolGame::sendCreatureType(const Creature* creature, uint8_t creatureTy
 	writeToOutputBuffer(playermsg);
 }
 
-void ProtocolGame::sendCreatureSquare(const Creature* creature, SquareColor_t color)
+void ProtocolGame::sendCreatureSquare(const Creature* creature, Color_t color)
 {
 	if (!canSee(creature)) {
 		return;
