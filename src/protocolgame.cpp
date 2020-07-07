@@ -3622,8 +3622,10 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 	#endif
 
 	#if GAME_FEATURE_LOGIN_PENDING > 0
-	playermsg.addByte(CanaryLib::GameServerLoginOrPendingState); // sendPendingStateEntered
-	playermsg.addByte(CanaryLib::GameServerEnterGame); // sendWorldEnter
+	// sendPendingStateEntered
+	playermsg.addByte(CanaryLib::GameServerLoginOrPendingState);
+	// sendWorldEnter
+	playermsg.addByte(CanaryLib::GameServerEnterGame);
 	#endif
 
 	//gameworld settings

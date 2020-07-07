@@ -4088,7 +4088,7 @@ const luaL_Reg LuaScriptInterface::luaBitReg[] = {
 
 int LuaScriptInterface::luaBitNot(lua_State* L)
 {
-	lua_pushnumber(L, ~getNumber<uint32_t>(L, -1));
+	lua_pushnumber(L, getNumber<uint32_t>(L, ~(-1)));
 	return 1;
 }
 
@@ -9578,7 +9578,12 @@ int LuaScriptInterface::luaPlayerShowTextDialog(lua_State* L)
 
 int LuaScriptInterface::luaPlayerSendTextMessage(lua_State* L)
 {
-	// player:sendTextMessage(type, text[, position, primaryValue = 0, primaryColor = COLOR_NONE[, secondaryValue = 0, secondaryColor = COLOR_NONE]])
+	// player:sendTextMessage(
+	// 	type,
+	// 	text[, position, primaryValue = 0,
+	// 	primaryColor = COLOR_NONE[, secondaryValue = 0,
+	// 	secondaryColor = COLOR_NONE]]
+	// )
 	// player:sendTextMessage(type, text, channelId)
 
 	Player* player = getUserdata<Player>(L, 1);
