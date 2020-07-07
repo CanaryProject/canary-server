@@ -6008,7 +6008,7 @@ int LuaScriptInterface::luaNetworkMessageGetMsgPosition(lua_State* L)
 int LuaScriptInterface::luaNetworkMessageSetMsgPosition(lua_State* L)
 {
 	// networkMessage:setMsgPosition(position)
-	auto position = getNumber<NetworkMessage::MsgSize_t>(L, 2);
+	auto position = getNumber<CanaryLib::MsgSize_t>(L, 2);
 	NetworkMessage* message = getUserdata<NetworkMessage>(L, 1);
 	if (message) {
 		message->setBufferPosition(position);

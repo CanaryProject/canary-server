@@ -21,7 +21,6 @@
 #define FS_CONST_H_0A49B5996F074465BF44B90F4F780E8B
 
 static constexpr size_t NETWORKMESSAGE_PLAYERNAME_MAXLENGTH = 30;
-static constexpr int32_t NETWORKMESSAGE_MAXSIZE = 65500;
 
 //QT clients probably have bigger input buffer because of exiva options
 //but for now we don't support exiva options
