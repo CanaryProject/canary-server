@@ -162,7 +162,7 @@ add_executable(canary
 # *****************************************************************************
 # canary build options
 # *****************************************************************************
-target_link_libraries(canary PRIVATE canary_lib::server_lib canary_lib::canary_lib)
+target_link_libraries(canary PRIVATE canary_lib::server_lib canary_lib::common_lib)
 set_target_properties(canary
     PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
