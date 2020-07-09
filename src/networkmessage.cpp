@@ -56,9 +56,7 @@ void NetworkMessage::addString(const std::string& value)
 	}
 
 	add<uint16_t>(stringLen);
-	memcpy(buffer + info.position, value.c_str(), stringLen);
-	info.position += stringLen;
-	info.length += stringLen;
+  addBytes(value.c_str(), stringLen);
 }
 
 void NetworkMessage::addDouble(double value, uint8_t precision/* = 2*/)
