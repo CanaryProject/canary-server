@@ -40,7 +40,7 @@ class OutputMessage : public NetworkMessage
 		}
 
 		void writeMessageLength() {
-			add_header(info.length);
+			add_header(m_info.length);
 		}
 
 		void addCryptoHeader(bool addChecksum, uint32_t checksum) {
@@ -53,16 +53,16 @@ class OutputMessage : public NetworkMessage
 
 		void append(const NetworkMessage& msg) {
 			auto msgLen = msg.getLength();
-			memcpy(buffer + info.position, msg.getBuffer() + CanaryLib::MAX_HEADER_SIZE, msgLen);
-			info.length += msgLen;
-			info.position += msgLen;
+			memcpy(buffer + m_info.position, msg.getBuffer() + CanaryLib::MAX_HEADER_SIZE, msgLen);
+			m_info.length += msgLen;
+			m_info.position += msgLen;
 		}
 
 		void append(const OutputMessage_ptr& msg) {
 			auto msgLen = msg->getLength();
-			memcpy(buffer + info.position, msg->getBuffer() + CanaryLib::MAX_HEADER_SIZE, msgLen);
-			info.length += msgLen;
-			info.position += msgLen;
+			memcpy(buffer + m_info.position, msg->getBuffer() + CanaryLib::MAX_HEADER_SIZE, msgLen);
+			m_info.length += msgLen;
+			m_info.position += msgLen;
 		}
 
 	private:
@@ -72,7 +72,7 @@ class OutputMessage : public NetworkMessage
 			outputBufferStart -= sizeof(T);
 			memcpy(buffer + outputBufferStart, &add, sizeof(T));
 			//added header size to the message size
-			info.length += sizeof(T);
+			m_info.length += sizeof(T);
 		}
 
 		CanaryLib::MsgSize_t outputBufferStart = CanaryLib::MAX_HEADER_SIZE;

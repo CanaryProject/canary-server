@@ -31,20 +31,10 @@ class RSA;
 class NetworkMessage
 {
 	public:
-		// Headers:
-		// 2 bytes for unencrypted message size
-		// 4 bytes for checksum
-		// 2 bytes for encrypted message size
-		enum { HEADER_LENGTH = 2 };
-		enum { CHECKSUM_LENGTH = 4 };
-		enum { XTEA_MULTIPLE = 8 };
-		enum { MAX_BODY_LENGTH = CanaryLib::NETWORKMESSAGE_MAXSIZE - HEADER_LENGTH - CHECKSUM_LENGTH - XTEA_MULTIPLE };
-		enum { MAX_PROTOCOL_BODY_LENGTH = MAX_BODY_LENGTH - XTEA_MULTIPLE };
-
 		NetworkMessage() = default;
 
 		void reset() {
-			info = {};
+			m_info = {};
 		}
 
 		// simply read functions for incoming message
@@ -53,11 +43,11 @@ class NetworkMessage
 				return 0;
 			}
 
-			return buffer[info.position++];
+			return buffer[m_info.position++];
 		}
 
 		uint8_t getPreviousByte() {
-			return buffer[--info.position];
+			return buffer[--m_info.position];
 		}
 
 		template<typename T>
@@ -67,8 +57,8 @@ class NetworkMessage
 			}
 
 			T v;
-			memcpy(&v, buffer + info.position, sizeof(T));
-			info.position += sizeof(T);
+			memcpy(&v, buffer + m_info.position, sizeof(T));
+			m_info.position += sizeof(T);
 			return v;
 		}
 
@@ -77,7 +67,7 @@ class NetworkMessage
 
 		// skips count unknown/unused bytes in an incoming message
 		void skipBytes(int16_t count) {
-			info.position += count;
+			m_info.position += count;
 		}
 
 		// simply write functions for outgoing message
@@ -86,8 +76,8 @@ class NetworkMessage
 				return;
 			}
 
-			buffer[info.position++] = value;
-			info.length++;
+			buffer[m_info.position++] = value;
+			m_info.length++;
 		}
 
 		template<typename T>
@@ -96,9 +86,9 @@ class NetworkMessage
 				return;
 			}
 
-			memcpy(buffer + info.position, &value, sizeof(T));
-			info.position += sizeof(T);
-			info.length += sizeof(T);
+			memcpy(buffer + m_info.position, &value, sizeof(T));
+			m_info.position += sizeof(T);
+			m_info.length += sizeof(T);
 		}
 
 		void addBytes(const char* bytes, size_t size);
@@ -113,19 +103,19 @@ class NetworkMessage
 		void addItemId(uint16_t itemId);
 
 		CanaryLib::MsgSize_t getLength() const {
-			return info.length;
+			return m_info.length;
 		}
 
 		void setLength(CanaryLib::MsgSize_t newLength) {
-			info.length = newLength;
+			m_info.length = newLength;
 		}
 
 		CanaryLib::MsgSize_t getBufferPosition() const {
-			return info.position;
+			return m_info.position;
 		}
 
 		void setBufferPosition(CanaryLib::MsgSize_t newPosition) {
-			info.position = newPosition;
+			m_info.position = newPosition;
 		}
 
 		uint16_t getLengthHeader() const {
@@ -133,7 +123,7 @@ class NetworkMessage
 		}
 
 		bool isOverrun() const {
-			return info.overrun;
+			return m_info.overrun;
 		}
 
 		uint8_t* getBuffer() {
@@ -145,8 +135,8 @@ class NetworkMessage
 		}
 
 		uint8_t* getBodyBuffer() {
-			info.position = HEADER_LENGTH;
-			return buffer + HEADER_LENGTH;
+			m_info.position = CanaryLib::HEADER_LENGTH;
+			return buffer + CanaryLib::HEADER_LENGTH;
 		}
 
 	protected:
@@ -156,17 +146,17 @@ class NetworkMessage
 			bool overrun = false;
 		};
 
-		NetworkMessageInfo info;
+		NetworkMessageInfo m_info;
 		uint8_t buffer[CanaryLib::NETWORKMESSAGE_MAXSIZE];
 
 	private:
 		bool canAdd(size_t size) const {
-			return (size + info.position) < MAX_BODY_LENGTH;
+			return (size + m_info.position) < CanaryLib::MAX_BODY_LENGTH;
 		}
 
 		bool canRead(int32_t size) {
-			if ((info.position + size) > (info.length + 8) || size >= (CanaryLib::NETWORKMESSAGE_MAXSIZE - info.position)) {
-				info.overrun = true;
+			if ((m_info.position + size) > (m_info.length + 8) || size >= (CanaryLib::NETWORKMESSAGE_MAXSIZE - m_info.position)) {
+				m_info.overrun = true;
 				return false;
 			}
 			return true;
