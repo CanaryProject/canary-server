@@ -34,7 +34,7 @@ std::string NetworkMessage::getString(uint16_t stringLen/* = 0*/)
 		return std::string();
 	}
 
-	char* v = reinterpret_cast<char*>(buffer) + m_info.m_bufferPos; //does not break strict aliasing
+	char* v = reinterpret_cast<char*>(m_buffer) + m_info.m_bufferPos; //does not break strict aliasing
 	m_info.m_bufferPos += stringLen;
 	return std::string(v, stringLen);
 }
@@ -71,7 +71,7 @@ void NetworkMessage::addBytes(const char* bytes, size_t size)
 		return;
 	}
 
-	memcpy(buffer + m_info.m_bufferPos, bytes, size);
+	memcpy(m_buffer + m_info.m_bufferPos, bytes, size);
 	m_info.m_bufferPos += size;
 	m_info.m_messageSize += size;
 }
@@ -84,7 +84,7 @@ void NetworkMessage::addPaddingBytes(size_t n)
 	}
 	#undef canAdd
 
-	memset(buffer + m_info.m_bufferPos, 0x33, n);
+	memset(m_buffer + m_info.m_bufferPos, 0x33, n);
 	m_info.m_messageSize += n;
 }
 
