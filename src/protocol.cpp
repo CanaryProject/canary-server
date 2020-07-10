@@ -133,7 +133,7 @@ void Protocol::XTEA_encrypt(OutputMessage& msg) const
 	// The message must be a multiple of 8
 	size_t paddingBytes = msg.getLength() & 7;
 	if (paddingBytes != 0) {
-		msg.addPaddingBytes(8 - paddingBytes);
+		msg.writePaddingBytes(8 - paddingBytes);
 	}
 
 	uint8_t* buffer = msg.getOutputBuffer();
@@ -494,7 +494,7 @@ bool Protocol::RSA_decrypt(NetworkMessage& msg)
 	}
 
 	g_RSA().decrypt(reinterpret_cast<char*>(msg.getBuffer()) + msg.getBufferPosition()); //does not break strict aliasing
-	return (msg.getByte() == 0);
+	return (msg.readByte() == 0);
 }
 
 uint32_t Protocol::getIP() const
@@ -545,6 +545,6 @@ bool Protocol::compression(OutputMessage& msg)
 	}
 
 	msg.reset();
-	msg.addBytes(reinterpret_cast<const char*>(defBuffer), static_cast<size_t>(totalSize));
+	msg.write(reinterpret_cast<const char*>(defBuffer), static_cast<size_t>(totalSize));
 	return true;
 }

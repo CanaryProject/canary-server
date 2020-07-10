@@ -33,23 +33,6 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 	public:
 		NetworkMessage() = default;
 
-		void reset() {
-			m_info = {};
-		}
-
-		// simply read functions for incoming message
-		uint8_t getByte() {
-			if (!canRead(1)) {
-				return 0;
-			}
-
-			return m_buffer[m_info.m_bufferPos++];
-		}
-
-		uint8_t getPreviousByte() {
-			return m_buffer[--m_info.m_bufferPos];
-		}
-
 		template<typename T>
 		T get() {
 			if (!canRead(sizeof(T))) {
@@ -72,7 +55,7 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 
 		// simply write functions for outgoing message
 		void addByte(uint8_t value) {
-			if (!canAdd(1)) {
+			if (!canWrite(1)) {
 				return;
 			}
 
@@ -82,7 +65,7 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 
 		template<typename T>
 		void add(T value) {
-			if (!canAdd(sizeof(T))) {
+			if (!canWrite(sizeof(T))) {
 				return;
 			}
 
@@ -90,11 +73,6 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 			m_info.m_bufferPos += sizeof(T);
 			m_info.m_messageSize += sizeof(T);
 		}
-
-		void addBytes(const char* bytes, size_t size);
-		void addPaddingBytes(size_t n);
-
-		void addString(const std::string& value);
 
 		void addDouble(double value, uint8_t precision = 2);
 
@@ -137,19 +115,6 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 		uint8_t* getBodyBuffer() {
 			m_info.m_bufferPos = CanaryLib::HEADER_LENGTH;
 			return m_buffer + CanaryLib::HEADER_LENGTH;
-		}
-
-	private:
-		bool canAdd(size_t size) const {
-			return (size + m_info.m_bufferPos) < CanaryLib::MAX_BODY_LENGTH;
-		}
-
-		bool canRead(int32_t size) {
-			if ((m_info.m_bufferPos + size) > (m_info.m_messageSize + 8) || size >= (CanaryLib::NETWORKMESSAGE_MAXSIZE - m_info.m_bufferPos)) {
-				m_info.overflow = true;
-				return false;
-			}
-			return true;
 		}
 };
 

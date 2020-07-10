@@ -24,68 +24,19 @@
 #include "container.h"
 #include "creature.h"
 
-std::string NetworkMessage::getString(uint16_t stringLen/* = 0*/)
-{
-	if (stringLen == 0) {
-		stringLen = get<uint16_t>();
-	}
-
-	if (!canRead(stringLen)) {
-		return std::string();
-	}
-
-	char* v = reinterpret_cast<char*>(m_buffer) + m_info.m_bufferPos; //does not break strict aliasing
-	m_info.m_bufferPos += stringLen;
-	return std::string(v, stringLen);
-}
-
 Position NetworkMessage::getPosition()
 {
 	Position pos;
 	pos.x = get<uint16_t>();
 	pos.y = get<uint16_t>();
-	pos.z = getByte();
+	pos.z = readByte();
 	return pos;
-}
-
-void NetworkMessage::addString(const std::string& value)
-{
-	size_t stringLen = value.length();
-	if (!canAdd(stringLen + 2)) {
-		return;
-	}
-
-	add<uint16_t>(stringLen);
-  addBytes(value.c_str(), stringLen);
 }
 
 void NetworkMessage::addDouble(double value, uint8_t precision/* = 2*/)
 {
 	addByte(precision);
 	add<uint32_t>((value * std::pow(static_cast<float>(10), precision)) + std::numeric_limits<int32_t>::max());
-}
-
-void NetworkMessage::addBytes(const char* bytes, size_t size)
-{
-	if (!canAdd(size)) {
-		return;
-	}
-
-	memcpy(m_buffer + m_info.m_bufferPos, bytes, size);
-	m_info.m_bufferPos += size;
-	m_info.m_messageSize += size;
-}
-
-void NetworkMessage::addPaddingBytes(size_t n)
-{
-	#define canAdd(size) ((size + m_info.m_bufferPos) < CanaryLib::NETWORKMESSAGE_MAXSIZE)
-	if (!canAdd(n)) {
-		return;
-	}
-	#undef canAdd
-
-	memset(m_buffer + m_info.m_bufferPos, 0x33, n);
-	m_info.m_messageSize += n;
 }
 
 void NetworkMessage::addPosition(const Position& pos)

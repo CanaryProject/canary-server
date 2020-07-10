@@ -33,7 +33,7 @@ void ProtocolLogin::disconnectClient(const std::string& message)
 {
 	auto output = OutputMessagePool::getOutputMessage();
 	output->addByte(0x0B);
-	output->addString(message);
+	output->writeString(message);
 	send(output);
 
 	disconnect();
@@ -112,13 +112,13 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 
 		std::ostringstream ss;
 		ss << g_game().getMotdNum() << "\n" << motd;
-		output->addString(ss.str());
+		output->writeString(ss.str());
 	}
 
 	#if GAME_FEATURE_SESSIONKEY > 0
 	//Add session key
 	output->addByte(0x28);
-	output->addString(accountName + "\n" + password + "\n" + token + "\n" + std::to_string(ticks));
+	output->writeString(accountName + "\n" + password + "\n" + token + "\n" + std::to_string(ticks));
 	#endif
 
 	//Add char list
@@ -128,8 +128,8 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	output->addByte(1); // number of worlds
 
 	output->addByte(0); // world id
-	output->addString(g_config().getString(ConfigManager::SERVER_NAME));
-	output->addString(g_config().getString(ConfigManager::IP));
+	output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
+	output->writeString(g_config().getString(ConfigManager::IP));
 	output->add<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
 	output->addByte(0);
 
@@ -137,14 +137,14 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	output->addByte(size);
 	for (uint8_t i = 0; i < size; i++) {
 		output->addByte(0);
-		output->addString(account.characters[i]);
+		output->writeString(account.characters[i]);
 	}
 	#else
 	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
 	output->addByte(size);
 	for (uint8_t i = 0; i < size; i++) {
-		output->addString(account.characters[i]);
-		output->addString(g_config().getString(ConfigManager::SERVER_NAME));
+		output->writeString(account.characters[i]);
+		output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
 		output->add<uint32_t>(serverIp);
 		output->add<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
 		#if GAME_FEATURE_PREVIEW_STATE > 0
@@ -218,7 +218,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 	}
 
 	#if GAME_FEATURE_ACCOUNT_NAME > 0
-	std::string accountName = msg.getString();
+	std::string accountName = msg.readString();
 	#else
 	std::string accountName = std::to_string(msg.get<uint32_t>());
 	#endif
@@ -227,7 +227,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 		return;
 	}
 
-	std::string password = msg.getString();
+	std::string password = msg.readString();
 	if (password.empty()) {
 		disconnectClient("Invalid password.");
 		return;
@@ -241,7 +241,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 		return;
 	}
 
-	std::string authToken = msg.getString();
+	std::string authToken = msg.readString();
 
 	auto thisPtr = std::static_pointer_cast<ProtocolLogin>(shared_from_this());
 	g_dispatcher().addTask(std::bind(&ProtocolLogin::getCharacterList, thisPtr, std::move(accountName), std::move(password), std::move(authToken)));

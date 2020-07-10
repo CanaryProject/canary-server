@@ -54,10 +54,10 @@ void ProtocolStatus::onRecvFirstMessage(NetworkMessage& msg)
 
 	ipConnectMap[ip] = OTSYS_TIME();
 
-	switch (msg.getByte()) {
+	switch (msg.readByte()) {
 		//XML info protocol
 		case 0xFF: {
-			if (!tfs_strcmp(msg.getString(4).c_str(), "info")) {
+			if (!tfs_strcmp(msg.readString(4).c_str(), "info")) {
 				g_dispatcher().addTask(std::bind(&ProtocolStatus::sendStatusString, std::static_pointer_cast<ProtocolStatus>(shared_from_this())));
 				return;
 			}
@@ -69,7 +69,7 @@ void ProtocolStatus::onRecvFirstMessage(NetworkMessage& msg)
 			uint16_t requestedInfo = msg.get<uint16_t>(); // only a Byte is necessary, though we could add new info here
 			std::string characterName;
 			if (requestedInfo & REQUEST_PLAYER_STATUS_INFO) {
-				characterName = msg.getString();
+				characterName = msg.readString();
 			}
 			g_dispatcher().addTask(std::bind(&ProtocolStatus::sendInfo, std::static_pointer_cast<ProtocolStatus>(shared_from_this()), requestedInfo, std::move(characterName)));
 			return;
@@ -145,7 +145,7 @@ void ProtocolStatus::sendStatusString()
 	doc.save(ss, "", pugi::format_raw);
 
 	std::string data = ss.str();
-	output->addBytes(data.c_str(), data.size());
+	output->write(data.c_str(), data.size());
 	send(output);
 	disconnect();
 }
@@ -156,22 +156,22 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 
 	if (requestedInfo & REQUEST_BASIC_SERVER_INFO) {
 		output->addByte(0x10);
-		output->addString(g_config().getString(ConfigManager::SERVER_NAME));
-		output->addString(g_config().getString(ConfigManager::IP));
-		output->addString(std::to_string(g_config().getNumber(ConfigManager::LOGIN_PORT)));
+		output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
+		output->writeString(g_config().getString(ConfigManager::IP));
+		output->writeString(std::to_string(g_config().getNumber(ConfigManager::LOGIN_PORT)));
 	}
 
 	if (requestedInfo & REQUEST_OWNER_SERVER_INFO) {
 		output->addByte(0x11);
-		output->addString(g_config().getString(ConfigManager::OWNER_NAME));
-		output->addString(g_config().getString(ConfigManager::OWNER_EMAIL));
+		output->writeString(g_config().getString(ConfigManager::OWNER_NAME));
+		output->writeString(g_config().getString(ConfigManager::OWNER_EMAIL));
 	}
 
 	if (requestedInfo & REQUEST_MISC_SERVER_INFO) {
 		output->addByte(0x12);
-		output->addString(g_config().getString(ConfigManager::MOTD));
-		output->addString(g_config().getString(ConfigManager::LOCATION));
-		output->addString(g_config().getString(ConfigManager::URL));
+		output->writeString(g_config().getString(ConfigManager::MOTD));
+		output->writeString(g_config().getString(ConfigManager::LOCATION));
+		output->writeString(g_config().getString(ConfigManager::URL));
 		output->add<uint64_t>((OTSYS_TIME() - ProtocolStatus::start) / 1000);
 	}
 
@@ -184,8 +184,8 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 
 	if (requestedInfo & REQUEST_MAP_INFO) {
 		output->addByte(0x30);
-		output->addString(g_config().getString(ConfigManager::MAP_NAME));
-		output->addString(g_config().getString(ConfigManager::MAP_AUTHOR));
+		output->writeString(g_config().getString(ConfigManager::MAP_NAME));
+		output->writeString(g_config().getString(ConfigManager::MAP_AUTHOR));
 		uint32_t mapWidth, mapHeight;
 		g_game().getMapDimensions(mapWidth, mapHeight);
 		output->add<uint16_t>(mapWidth);
@@ -198,7 +198,7 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 		const auto& players = g_game().getPlayers();
 		output->add<uint32_t>(players.size());
 		for (const auto& it : players) {
-			output->addString(it.second->getName());
+			output->writeString(it.second->getName());
 			output->add<uint32_t>(it.second->getLevel());
 		}
 	}
@@ -214,9 +214,9 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 
 	if (requestedInfo & REQUEST_SERVER_SOFTWARE_INFO) {
 		output->addByte(0x23); // server software info
-		output->addString(STATUS_SERVER_NAME);
-		output->addString(STATUS_SERVER_VERSION);
-		output->addString(std::to_string(CLIENT_VERSION_UPPER) + "." + std::to_string(CLIENT_VERSION_LOWER));
+		output->writeString(STATUS_SERVER_NAME);
+		output->writeString(STATUS_SERVER_VERSION);
+		output->writeString(std::to_string(CLIENT_VERSION_UPPER) + "." + std::to_string(CLIENT_VERSION_LOWER));
 	}
 	send(output);
 	disconnect();
