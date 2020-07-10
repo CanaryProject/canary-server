@@ -34,8 +34,8 @@ std::string NetworkMessage::getString(uint16_t stringLen/* = 0*/)
 		return std::string();
 	}
 
-	char* v = reinterpret_cast<char*>(buffer) + m_info.position; //does not break strict aliasing
-	m_info.position += stringLen;
+	char* v = reinterpret_cast<char*>(buffer) + m_info.m_bufferPos; //does not break strict aliasing
+	m_info.m_bufferPos += stringLen;
 	return std::string(v, stringLen);
 }
 
@@ -71,21 +71,21 @@ void NetworkMessage::addBytes(const char* bytes, size_t size)
 		return;
 	}
 
-	memcpy(buffer + m_info.position, bytes, size);
-	m_info.position += size;
-	m_info.length += size;
+	memcpy(buffer + m_info.m_bufferPos, bytes, size);
+	m_info.m_bufferPos += size;
+	m_info.m_messageSize += size;
 }
 
 void NetworkMessage::addPaddingBytes(size_t n)
 {
-	#define canAdd(size) ((size + m_info.position) < CanaryLib::NETWORKMESSAGE_MAXSIZE)
+	#define canAdd(size) ((size + m_info.m_bufferPos) < CanaryLib::NETWORKMESSAGE_MAXSIZE)
 	if (!canAdd(n)) {
 		return;
 	}
 	#undef canAdd
 
-	memset(buffer + m_info.position, 0x33, n);
-	m_info.length += n;
+	memset(buffer + m_info.m_bufferPos, 0x33, n);
+	m_info.m_messageSize += n;
 }
 
 void NetworkMessage::addPosition(const Position& pos)

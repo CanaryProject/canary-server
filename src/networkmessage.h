@@ -43,11 +43,11 @@ class NetworkMessage
 				return 0;
 			}
 
-			return buffer[m_info.position++];
+			return buffer[m_info.m_bufferPos++];
 		}
 
 		uint8_t getPreviousByte() {
-			return buffer[--m_info.position];
+			return buffer[--m_info.m_bufferPos];
 		}
 
 		template<typename T>
@@ -57,8 +57,8 @@ class NetworkMessage
 			}
 
 			T v;
-			memcpy(&v, buffer + m_info.position, sizeof(T));
-			m_info.position += sizeof(T);
+			memcpy(&v, buffer + m_info.m_bufferPos, sizeof(T));
+			m_info.m_bufferPos += sizeof(T);
 			return v;
 		}
 
@@ -67,7 +67,7 @@ class NetworkMessage
 
 		// skips count unknown/unused bytes in an incoming message
 		void skipBytes(int16_t count) {
-			m_info.position += count;
+			m_info.m_bufferPos += count;
 		}
 
 		// simply write functions for outgoing message
@@ -76,8 +76,8 @@ class NetworkMessage
 				return;
 			}
 
-			buffer[m_info.position++] = value;
-			m_info.length++;
+			buffer[m_info.m_bufferPos++] = value;
+			m_info.m_messageSize++;
 		}
 
 		template<typename T>
@@ -86,9 +86,9 @@ class NetworkMessage
 				return;
 			}
 
-			memcpy(buffer + m_info.position, &value, sizeof(T));
-			m_info.position += sizeof(T);
-			m_info.length += sizeof(T);
+			memcpy(buffer + m_info.m_bufferPos, &value, sizeof(T));
+			m_info.m_bufferPos += sizeof(T);
+			m_info.m_messageSize += sizeof(T);
 		}
 
 		void addBytes(const char* bytes, size_t size);
@@ -103,19 +103,19 @@ class NetworkMessage
 		void addItemId(uint16_t itemId);
 
 		CanaryLib::MsgSize_t getLength() const {
-			return m_info.length;
+			return m_info.m_messageSize;
 		}
 
 		void setLength(CanaryLib::MsgSize_t newLength) {
-			m_info.length = newLength;
+			m_info.m_messageSize = newLength;
 		}
 
 		CanaryLib::MsgSize_t getBufferPosition() const {
-			return m_info.position;
+			return m_info.m_bufferPos;
 		}
 
 		void setBufferPosition(CanaryLib::MsgSize_t newPosition) {
-			m_info.position = newPosition;
+			m_info.m_bufferPos = newPosition;
 		}
 
 		uint16_t getLengthHeader() const {
@@ -123,7 +123,7 @@ class NetworkMessage
 		}
 
 		bool isOverrun() const {
-			return m_info.overrun;
+			return m_info.overflow;
 		}
 
 		uint8_t* getBuffer() {
@@ -135,15 +135,15 @@ class NetworkMessage
 		}
 
 		uint8_t* getBodyBuffer() {
-			m_info.position = CanaryLib::HEADER_LENGTH;
+			m_info.m_bufferPos = CanaryLib::HEADER_LENGTH;
 			return buffer + CanaryLib::HEADER_LENGTH;
 		}
 
 	protected:
 		struct NetworkMessageInfo {
-			CanaryLib::MsgSize_t length = 0;
-			CanaryLib::MsgSize_t position = CanaryLib::MAX_HEADER_SIZE;
-			bool overrun = false;
+			CanaryLib::MsgSize_t m_messageSize = 0;
+			CanaryLib::MsgSize_t m_bufferPos = CanaryLib::MAX_HEADER_SIZE;
+			bool overflow = false;
 		};
 
 		NetworkMessageInfo m_info;
@@ -151,12 +151,12 @@ class NetworkMessage
 
 	private:
 		bool canAdd(size_t size) const {
-			return (size + m_info.position) < CanaryLib::MAX_BODY_LENGTH;
+			return (size + m_info.m_bufferPos) < CanaryLib::MAX_BODY_LENGTH;
 		}
 
 		bool canRead(int32_t size) {
-			if ((m_info.position + size) > (m_info.length + 8) || size >= (CanaryLib::NETWORKMESSAGE_MAXSIZE - m_info.position)) {
-				m_info.overrun = true;
+			if ((m_info.m_bufferPos + size) > (m_info.m_messageSize + 8) || size >= (CanaryLib::NETWORKMESSAGE_MAXSIZE - m_info.m_bufferPos)) {
+				m_info.overflow = true;
 				return false;
 			}
 			return true;
