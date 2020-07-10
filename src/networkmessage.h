@@ -28,7 +28,7 @@ class Player;
 struct Position;
 class RSA;
 
-class NetworkMessage
+class NetworkMessage : public CanaryLib::NetworkMessage
 {
 	public:
 		NetworkMessage() = default;
@@ -138,10 +138,6 @@ class NetworkMessage
 			m_info.m_bufferPos = CanaryLib::HEADER_LENGTH;
 			return m_buffer + CanaryLib::HEADER_LENGTH;
 		}
-
-	protected:
-		CanaryLib::NetworkMessageInfo m_info;
-		uint8_t m_buffer[CanaryLib::NETWORKMESSAGE_MAXSIZE];
 
 	private:
 		bool canAdd(size_t size) const {
