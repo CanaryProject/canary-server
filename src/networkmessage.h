@@ -35,22 +35,14 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 
 		template<typename T>
 		T get() {
-			if (!canRead(sizeof(T))) {
-				return 0;
-			}
-
-			T v;
-			memcpy(&v, m_buffer + m_info.m_bufferPos, sizeof(T));
-			m_info.m_bufferPos += sizeof(T);
-			return v;
+			read<T>();
 		}
 
-		std::string getString(uint16_t stringLen = 0);
 		Position getPosition();
 
 		// skips count unknown/unused bytes in an incoming message
 		void skipBytes(int16_t count) {
-			m_info.m_bufferPos += count;
+			skip(count);
 		}
 
 		// simply write functions for outgoing message
@@ -65,13 +57,7 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 
 		template<typename T>
 		void add(T value) {
-			if (!canWrite(sizeof(T))) {
-				return;
-			}
-
-			memcpy(m_buffer + m_info.m_bufferPos, &value, sizeof(T));
-			m_info.m_bufferPos += sizeof(T);
-			m_info.m_messageSize += sizeof(T);
+			write<T>(value);
 		}
 
 		void addDouble(double value, uint8_t precision = 2);
@@ -80,41 +66,8 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 		void addPosition(const Position& pos);
 		void addItemId(uint16_t itemId);
 
-		CanaryLib::MsgSize_t getLength() const {
-			return m_info.m_messageSize;
-		}
-
-		void setLength(CanaryLib::MsgSize_t newLength) {
-			m_info.m_messageSize = newLength;
-		}
-
-		CanaryLib::MsgSize_t getBufferPosition() const {
-			return m_info.m_bufferPos;
-		}
-
-		void setBufferPosition(CanaryLib::MsgSize_t newPosition) {
-			m_info.m_bufferPos = newPosition;
-		}
-
-		uint16_t getLengthHeader() const {
-			return static_cast<uint16_t>(m_buffer[0] | m_buffer[1] << 8);
-		}
-
 		bool isOverrun() const {
-			return m_info.overflow;
-		}
-
-		uint8_t* getBuffer() {
-			return m_buffer;
-		}
-
-		const uint8_t* getBuffer() const {
-			return m_buffer;
-		}
-
-		uint8_t* getBodyBuffer() {
-			m_info.m_bufferPos = CanaryLib::HEADER_LENGTH;
-			return m_buffer + CanaryLib::HEADER_LENGTH;
+			return hasOverflow();
 		}
 };
 

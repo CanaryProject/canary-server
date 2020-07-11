@@ -232,7 +232,7 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		packetsSent = 0;
 	}
 
-	uint16_t size = msg.getLengthHeader();
+	uint16_t size = msg.getHeaderSize();
 	if (size == 0 || size > INPUTMESSAGE_MAXSIZE) {
 		close(FORCE_CLOSE);
 		return;
@@ -245,7 +245,7 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		// Read packet content
 		msg.setLength(size + CanaryLib::HEADER_LENGTH);
 		boost::asio::async_read(socket,
-								boost::asio::buffer(msg.getBodyBuffer(), size),
+								boost::asio::buffer(msg.getBody(), size),
 		                        std::bind(&Connection::parsePacket, shared_from_this(), std::placeholders::_1));
 	} catch (boost::system::system_error& e) {
 		std::cout << "[Network error - Connection::parseHeader] " << e.what() << std::endl;

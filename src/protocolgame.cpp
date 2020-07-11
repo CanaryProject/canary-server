@@ -447,7 +447,7 @@ void ProtocolGame::disconnectClient(const std::string& message) const
 	disconnect();
 }
 
-void ProtocolGame::writeToOutputBuffer(const NetworkMessage& msg)
+void ProtocolGame::writeToOutputBuffer(NetworkMessage& msg)
 {
 	auto out = getOutputBuffer(msg.getLength());
 	out->append(msg);
