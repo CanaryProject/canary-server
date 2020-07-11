@@ -66,7 +66,7 @@ void ProtocolStatus::onRecvFirstMessage(NetworkMessage& msg)
 
 		//Another ServerInfo protocol
 		case 0x01: {
-			uint16_t requestedInfo = msg.get<uint16_t>(); // only a Byte is necessary, though we could add new info here
+			uint16_t requestedInfo = msg.read<uint16_t>(); // only a Byte is necessary, though we could add new info here
 			std::string characterName;
 			if (requestedInfo & REQUEST_PLAYER_STATUS_INFO) {
 				characterName = msg.readString();
@@ -172,14 +172,14 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 		output->writeString(g_config().getString(ConfigManager::MOTD));
 		output->writeString(g_config().getString(ConfigManager::LOCATION));
 		output->writeString(g_config().getString(ConfigManager::URL));
-		output->add<uint64_t>((OTSYS_TIME() - ProtocolStatus::start) / 1000);
+		output->write<uint64_t>((OTSYS_TIME() - ProtocolStatus::start) / 1000);
 	}
 
 	if (requestedInfo & REQUEST_PLAYERS_INFO) {
 		output->addByte(0x20);
-		output->add<uint32_t>(g_game().getPlayersOnline());
-		output->add<uint32_t>(g_config().getNumber(ConfigManager::MAX_PLAYERS));
-		output->add<uint32_t>(g_game().getPlayersRecord());
+		output->write<uint32_t>(g_game().getPlayersOnline());
+		output->write<uint32_t>(g_config().getNumber(ConfigManager::MAX_PLAYERS));
+		output->write<uint32_t>(g_game().getPlayersRecord());
 	}
 
 	if (requestedInfo & REQUEST_MAP_INFO) {
@@ -188,18 +188,18 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 		output->writeString(g_config().getString(ConfigManager::MAP_AUTHOR));
 		uint32_t mapWidth, mapHeight;
 		g_game().getMapDimensions(mapWidth, mapHeight);
-		output->add<uint16_t>(mapWidth);
-		output->add<uint16_t>(mapHeight);
+		output->write<uint16_t>(mapWidth);
+		output->write<uint16_t>(mapHeight);
 	}
 
 	if (requestedInfo & REQUEST_EXT_PLAYERS_INFO) {
 		output->addByte(0x21); // players info - online players list
 
 		const auto& players = g_game().getPlayers();
-		output->add<uint32_t>(players.size());
+		output->write<uint32_t>(players.size());
 		for (const auto& it : players) {
 			output->writeString(it.second->getName());
-			output->add<uint32_t>(it.second->getLevel());
+			output->write<uint32_t>(it.second->getLevel());
 		}
 	}
 

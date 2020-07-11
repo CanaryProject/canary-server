@@ -27,8 +27,8 @@
 Position NetworkMessage::getPosition()
 {
 	Position pos;
-	pos.x = get<uint16_t>();
-	pos.y = get<uint16_t>();
+	pos.x = read<uint16_t>();
+	pos.y = read<uint16_t>();
 	pos.z = readByte();
 	return pos;
 }
@@ -36,17 +36,17 @@ Position NetworkMessage::getPosition()
 void NetworkMessage::addDouble(double value, uint8_t precision/* = 2*/)
 {
 	addByte(precision);
-	add<uint32_t>((value * std::pow(static_cast<float>(10), precision)) + std::numeric_limits<int32_t>::max());
+	write<uint32_t>((value * std::pow(static_cast<float>(10), precision)) + std::numeric_limits<int32_t>::max());
 }
 
 void NetworkMessage::addPosition(const Position& pos)
 {
-	add<uint16_t>(pos.x);
-	add<uint16_t>(pos.y);
+	write<uint16_t>(pos.x);
+	write<uint16_t>(pos.y);
 	addByte(pos.z);
 }
 
 void NetworkMessage::addItemId(uint16_t itemId)
 {
-	add<uint16_t>(Item::items[itemId].clientId);
+	write<uint16_t>(Item::items[itemId].clientId);
 }

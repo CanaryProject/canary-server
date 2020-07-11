@@ -130,7 +130,7 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	output->addByte(0); // world id
 	output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
 	output->writeString(g_config().getString(ConfigManager::IP));
-	output->add<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
+	output->write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
 	output->addByte(0);
 
 	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
@@ -145,8 +145,8 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	for (uint8_t i = 0; i < size; i++) {
 		output->writeString(account.characters[i]);
 		output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
-		output->add<uint32_t>(serverIp);
-		output->add<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
+		output->write<uint32_t>(serverIp);
+		output->write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
 		#if GAME_FEATURE_PREVIEW_STATE > 0
 		output->addByte(0);
 		#endif
@@ -160,16 +160,16 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	#endif
 	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
 		output->addByte(1);
-		output->add<uint32_t>(0);
+		output->write<uint32_t>(0);
 	} else {
 		output->addByte(account.premiumDays > 0 ? 1 : 0);
-		output->add<uint32_t>(time(nullptr) + (account.premiumDays * 86400));
+		output->write<uint32_t>(time(nullptr) + (account.premiumDays * 86400));
 	}
 	#else
 	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
-		output->add<uint16_t>(0xFFFF); //client displays free premium
+		output->write<uint16_t>(0xFFFF); //client displays free premium
 	} else {
-		output->add<uint16_t>(account.premiumDays);
+		output->write<uint16_t>(account.premiumDays);
 	}
 	#endif
 
@@ -185,7 +185,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 		return;
 	}
 
-	msg.skipBytes(21);
+	msg.skip(21);
 	/*
 	 * Skipped bytes:
 	 * Client OS
@@ -201,7 +201,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 		return;
 	}
 
-	uint32_t key[4] = {msg.get<uint32_t>(), msg.get<uint32_t>(), msg.get<uint32_t>(), msg.get<uint32_t>()};
+	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
 	enableXTEAEncryption();
 	setXTEAKey(key);
 
@@ -220,7 +220,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 	#if GAME_FEATURE_ACCOUNT_NAME > 0
 	std::string accountName = msg.readString();
 	#else
-	std::string accountName = std::to_string(msg.get<uint32_t>());
+	std::string accountName = std::to_string(msg.read<uint32_t>());
 	#endif
 	if (accountName.empty()) {
 		disconnectClient("Invalid account name.");
@@ -235,7 +235,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 
 	#if GAME_FEATURE_SESSIONKEY > 0
 	// read authenticator token and stay logged in flag from last 128 bytes
-	msg.skipBytes((msg.getLength() - 128) - msg.getBufferPosition());
+	msg.skip((msg.getLength() - 128) - msg.getBufferPosition());
 	if (!Protocol::RSA_decrypt(msg)) {
 		disconnectClient("Invalid authentification token.");
 		return;

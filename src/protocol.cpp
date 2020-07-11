@@ -63,7 +63,7 @@ void Protocol::onSendMessage(const OutputMessage_ptr& msg)
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
 	if (checksumMethod != CHECKSUM_METHOD_NONE) {
-		uint32_t recvChecksum = msg.get<uint32_t>();
+		uint32_t recvChecksum = msg.read<uint32_t>();
 		if (checksumMethod == CHECKSUM_METHOD_SEQUENCE) {
 			if (recvChecksum == 0) {
 				// checksum 0 indicate that the packet should be connection ping - 0x1C packet header
@@ -478,7 +478,7 @@ bool Protocol::XTEA_decrypt(NetworkMessage& msg) const
 		readPos += 8;
 	}
 
-	uint16_t innerLength = msg.get<uint16_t>();
+	uint16_t innerLength = msg.read<uint16_t>();
 	if (innerLength > msgLength - 2) {
 		return false;
 	}

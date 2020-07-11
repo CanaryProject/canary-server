@@ -33,42 +33,16 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 	public:
 		NetworkMessage() = default;
 
-		template<typename T>
-		T get() {
-			read<T>();
-		}
-
-		Position getPosition();
-
-		// skips count unknown/unused bytes in an incoming message
-		void skipBytes(int16_t count) {
-			skip(count);
-		}
-
 		// simply write functions for outgoing message
 		void addByte(uint8_t value) {
-			if (!canWrite(1)) {
-				return;
-			}
-
-			m_buffer[m_info.m_bufferPos++] = value;
-			m_info.m_messageSize++;
+			writeByte(value);
 		}
 
-		template<typename T>
-		void add(T value) {
-			write<T>(value);
-		}
-
+		// TODO: migrate that to lib in a generic way. needs to update client too.
+		Position getPosition();
 		void addDouble(double value, uint8_t precision = 2);
-
-		// write functions for complex types
-		void addPosition(const Position& pos);
 		void addItemId(uint16_t itemId);
-
-		bool isOverrun() const {
-			return hasOverflow();
-		}
+		void addPosition(const Position& pos);
 };
 
 #endif // #ifndef __NETWORK_MESSAGE_H__
