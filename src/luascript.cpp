@@ -5849,7 +5849,7 @@ int LuaScriptInterface::luaNetworkMessageAddByte(lua_State* L)
 	uint8_t number = getNumber<uint8_t>(L, 2);
 	NetworkMessage* message = getUserdata<NetworkMessage>(L, 1);
 	if (message) {
-		message->addByte(number);
+		message->writeByte(number);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);

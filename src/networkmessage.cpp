@@ -35,7 +35,7 @@ Position NetworkMessage::getPosition()
 
 void NetworkMessage::addDouble(double value, uint8_t precision/* = 2*/)
 {
-	addByte(precision);
+	writeByte(precision);
 	write<uint32_t>((value * std::pow(static_cast<float>(10), precision)) + std::numeric_limits<int32_t>::max());
 }
 
@@ -43,7 +43,7 @@ void NetworkMessage::addPosition(const Position& pos)
 {
 	write<uint16_t>(pos.x);
 	write<uint16_t>(pos.y);
-	addByte(pos.z);
+	writeByte(pos.z);
 }
 
 void NetworkMessage::addItemId(uint16_t itemId)

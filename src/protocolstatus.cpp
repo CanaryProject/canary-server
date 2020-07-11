@@ -155,20 +155,20 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 	auto output = OutputMessagePool::getOutputMessage();
 
 	if (requestedInfo & REQUEST_BASIC_SERVER_INFO) {
-		output->addByte(0x10);
+		output->writeByte(0x10);
 		output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
 		output->writeString(g_config().getString(ConfigManager::IP));
 		output->writeString(std::to_string(g_config().getNumber(ConfigManager::LOGIN_PORT)));
 	}
 
 	if (requestedInfo & REQUEST_OWNER_SERVER_INFO) {
-		output->addByte(0x11);
+		output->writeByte(0x11);
 		output->writeString(g_config().getString(ConfigManager::OWNER_NAME));
 		output->writeString(g_config().getString(ConfigManager::OWNER_EMAIL));
 	}
 
 	if (requestedInfo & REQUEST_MISC_SERVER_INFO) {
-		output->addByte(0x12);
+		output->writeByte(0x12);
 		output->writeString(g_config().getString(ConfigManager::MOTD));
 		output->writeString(g_config().getString(ConfigManager::LOCATION));
 		output->writeString(g_config().getString(ConfigManager::URL));
@@ -176,14 +176,14 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 	}
 
 	if (requestedInfo & REQUEST_PLAYERS_INFO) {
-		output->addByte(0x20);
+		output->writeByte(0x20);
 		output->write<uint32_t>(g_game().getPlayersOnline());
 		output->write<uint32_t>(g_config().getNumber(ConfigManager::MAX_PLAYERS));
 		output->write<uint32_t>(g_game().getPlayersRecord());
 	}
 
 	if (requestedInfo & REQUEST_MAP_INFO) {
-		output->addByte(0x30);
+		output->writeByte(0x30);
 		output->writeString(g_config().getString(ConfigManager::MAP_NAME));
 		output->writeString(g_config().getString(ConfigManager::MAP_AUTHOR));
 		uint32_t mapWidth, mapHeight;
@@ -193,7 +193,7 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 	}
 
 	if (requestedInfo & REQUEST_EXT_PLAYERS_INFO) {
-		output->addByte(0x21); // players info - online players list
+		output->writeByte(0x21); // players info - online players list
 
 		const auto& players = g_game().getPlayers();
 		output->write<uint32_t>(players.size());
@@ -204,16 +204,16 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 	}
 
 	if (requestedInfo & REQUEST_PLAYER_STATUS_INFO) {
-		output->addByte(0x22); // players info - online status info of a player
+		output->writeByte(0x22); // players info - online status info of a player
 		if (g_game().getPlayerByName(characterName) != nullptr) {
-			output->addByte(0x01);
+			output->writeByte(0x01);
 		} else {
-			output->addByte(0x00);
+			output->writeByte(0x00);
 		}
 	}
 
 	if (requestedInfo & REQUEST_SERVER_SOFTWARE_INFO) {
-		output->addByte(0x23); // server software info
+		output->writeByte(0x23); // server software info
 		output->writeString(STATUS_SERVER_NAME);
 		output->writeString(STATUS_SERVER_VERSION);
 		output->writeString(std::to_string(CLIENT_VERSION_UPPER) + "." + std::to_string(CLIENT_VERSION_LOWER));

@@ -33,11 +33,6 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 	public:
 		NetworkMessage() = default;
 
-		// simply write functions for outgoing message
-		void addByte(uint8_t value) {
-			writeByte(value);
-		}
-
 		// TODO: migrate that to lib in a generic way. needs to update client too.
 		Position getPosition();
 		void addDouble(double value, uint8_t precision = 2);

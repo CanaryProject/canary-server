@@ -32,7 +32,7 @@
 void ProtocolLogin::disconnectClient(const std::string& message)
 {
 	auto output = OutputMessagePool::getOutputMessage();
-	output->addByte(0x0B);
+	output->writeByte(0x0B);
 	output->writeString(message);
 	send(output);
 
@@ -90,14 +90,14 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	uint32_t ticks = time(nullptr) / AUTHENTICATOR_PERIOD;
 	if (!account.key.empty()) {
 		if (token.empty() || !(token == generateToken(account.key, ticks) || token == generateToken(account.key, ticks - 1) || token == generateToken(account.key, ticks + 1))) {
-			output->addByte(0x0D);
-			output->addByte(0);
+			output->writeByte(0x0D);
+			output->writeByte(0);
 			send(output);
 			disconnect();
 			return;
 		}
-		output->addByte(0x0C);
-		output->addByte(0);
+		output->writeByte(0x0C);
+		output->writeByte(0);
 	}
 	#endif
 
@@ -108,7 +108,7 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	const std::string& motd = g_config().getString(ConfigManager::MOTD);
 	if (!motd.empty()) {
 		//Add MOTD
-		output->addByte(CanaryLib::LoginServerMotd);
+		output->writeByte(CanaryLib::LoginServerMotd);
 
 		std::ostringstream ss;
 		ss << g_game().getMotdNum() << "\n" << motd;
@@ -117,38 +117,38 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 
 	#if GAME_FEATURE_SESSIONKEY > 0
 	//Add session key
-	output->addByte(0x28);
+	output->writeByte(0x28);
 	output->writeString(accountName + "\n" + password + "\n" + token + "\n" + std::to_string(ticks));
 	#endif
 
 	//Add char list
-	output->addByte(CanaryLib::LoginServerCharacterList);
+	output->writeByte(CanaryLib::LoginServerCharacterList);
 
 	#if GAME_FEATURE_LOGIN_EXTENDED > 0
-	output->addByte(1); // number of worlds
+	output->writeByte(1); // number of worlds
 
-	output->addByte(0); // world id
+	output->writeByte(0); // world id
 	output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
 	output->writeString(g_config().getString(ConfigManager::IP));
 	output->write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
-	output->addByte(0);
+	output->writeByte(0);
 
 	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
-	output->addByte(size);
+	output->writeByte(size);
 	for (uint8_t i = 0; i < size; i++) {
-		output->addByte(0);
+		output->writeByte(0);
 		output->writeString(account.characters[i]);
 	}
 	#else
 	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
-	output->addByte(size);
+	output->writeByte(size);
 	for (uint8_t i = 0; i < size; i++) {
 		output->writeString(account.characters[i]);
 		output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
 		output->write<uint32_t>(serverIp);
 		output->write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
 		#if GAME_FEATURE_PREVIEW_STATE > 0
-		output->addByte(0);
+		output->writeByte(0);
 		#endif
 	}
 	#endif
@@ -156,13 +156,13 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	//Add premium days
 	#if GAME_FEATURE_LOGIN_PREMIUM_TIMESTAMP > 0
 	#if GAME_FEATURE_LOGIN_PREMIUM_TYPE > 0
-	output->addByte(0);
+	output->writeByte(0);
 	#endif
 	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
-		output->addByte(1);
+		output->writeByte(1);
 		output->write<uint32_t>(0);
 	} else {
-		output->addByte(account.premiumDays > 0 ? 1 : 0);
+		output->writeByte(account.premiumDays > 0 ? 1 : 0);
 		output->write<uint32_t>(time(nullptr) + (account.premiumDays * 86400));
 	}
 	#else
