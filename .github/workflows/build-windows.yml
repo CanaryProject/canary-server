@@ -40,7 +40,9 @@ jobs:
           submodules: true
 
       - name: Unshallow
-        run: git fetch --prune --unshallow
+        run: |
+          git fetch --prune
+          git submodules update --init --recursive
 
       - name: Get latest CMake
         # Using 'latest' branch, the latest CMake is installed.
