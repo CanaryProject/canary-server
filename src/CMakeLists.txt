@@ -126,11 +126,11 @@ target_include_directories(canary_server_lib SYSTEM
 target_link_libraries(canary_server_lib
                         PUBLIC
                           Boost::boost Threads::Threads mariadbclient
+                          canary_lib::common_lib
                         PRIVATE
                           ZLIB::ZLIB pugixml::pugixml ${GMP_LIBRARIES}
                           Boost::system Boost::filesystem Boost::iostreams
                           Boost::date_time doctest::doctest ${LUA_LIBRARIES}
-                          canary_lib::common_lib
 )
 
 
