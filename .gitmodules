@@ -4,3 +4,6 @@
 [submodule "external/pugixml"]
 	path = external/pugixml
 	url = https://github.com/zeux/pugixml.git
+[submodule "CanaryLib"]
+	path = canary-lib
+	url = https://github.com/CanaryProject/lib
