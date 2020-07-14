@@ -9,7 +9,7 @@ project(canary VERSION 1.0.0 LANGUAGES CXX)
 # *****************************************************************************
 # Configure CanaryLib variable
 # *****************************************************************************
-set(CANARY_LIB_PATH ${CMAKE_SOURCE_DIR}/src/lib)
+set(CANARY_LIB_PATH ${CMAKE_SOURCE_DIR}/lib)
 
 # *****************************************************************************
 # Configure 3rd party variables
@@ -34,6 +34,8 @@ include(ToolIWYU)
 include(ToolClangFormat)
 include(ToolCTags)
 include(ToolGitSubmodule)
+
+include(doctest)
 
 include(OptionCompilerWarnings)
 add_subdirectory(3rd)
