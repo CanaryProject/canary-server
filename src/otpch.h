@@ -30,7 +30,7 @@
 #include "features.h"
 
 // Canary Lib
-#include "lib/include.hpp"
+#include "../lib/include.hpp"
 
 #if GAME_FEATURE_ROBINHOOD_HASH_MAP > 0
 #include "robin_hood.h"

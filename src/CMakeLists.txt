@@ -120,6 +120,7 @@ target_include_directories(canary_server_lib SYSTEM
                           PUBLIC
                             ${LUA_INCLUDE_DIR}
                             ${CANARY_EXTERNAL_PATH}
+                            ${CANARY_LIB_PATH}
                             ${GMP_INCLUDE_DIR}
 )
 
