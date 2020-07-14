@@ -130,7 +130,7 @@ target_link_libraries(canary_server_lib
                         PRIVATE
                           ZLIB::ZLIB pugixml::pugixml ${GMP_LIBRARIES}
                           Boost::system Boost::filesystem Boost::iostreams
-                          Boost::date_time doctest::doctest ${LUA_LIBRARIES}
+                          Boost::date_time ${LUA_LIBRARIES}
 )
 
 
