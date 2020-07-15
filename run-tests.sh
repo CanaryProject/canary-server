@@ -2,14 +2,10 @@
 
 TESTS="ALL"
 
-ORANGE='\033[0;33m'
-NC='\033[0m' # No Color
-CANARY_PROJECT="${ORANGE}[CanaryProject]${NC}"
-
 usage()
 {
-    echo -e "${CANARY_PROJECT} Usage: [--all, --server, --lib]"
-    echo -e "${CANARY_PROJECT} You can pass tests arguments, like -s, --help or -d yes"
+    ./canary_echo.sh "Usage: [--all, --server, --lib]"
+    ./canary_echo.sh "You can pass tests arguments, like -s, --help or -d yes"
     exit 1
 }
 
@@ -32,11 +28,11 @@ done
 # useful arguments --success -d yes
 
 if [ ${TESTS} != "LIB" ]; then
-  echo -e "${CANARY_PROJECT} Running server tests"
+  ./canary_echo.sh "Running server tests"
   ./build/bin/canary-tests $@
 fi
 
 if [ ${TESTS} != "SERVER" ]; then
-  echo -e "${CANARY_PROJECT} Running lib tests"
+  ./canary_echo.sh "Running lib tests"
   ./canary-lib/tests/canary-lib-tests $@
 fi

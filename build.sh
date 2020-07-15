@@ -3,13 +3,9 @@ TYPE="Debug"
 TESTS="Off"
 EXECUTE="Off"
 
-ORANGE='\033[0;33m'
-NC='\033[0m' # No Color
-CANARY_PROJECT="${ORANGE}[CanaryProject]${NC}"
-
 usage()
 {
-    echo -e "${CANARY_PROJECT} Usage: -r for release, -t for build tests and -e for execute]]"
+    ./canary_echo.sh "Usage: -r for release, -t for build tests and -e for execute]]"
     exit 1
 }
 
