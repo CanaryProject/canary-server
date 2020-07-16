@@ -6,10 +6,12 @@ cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 # *****************************************************************************
 project(canary VERSION 1.0.0 LANGUAGES CXX)
 
+
 # *****************************************************************************
 # Configure CanaryLib variable
 # *****************************************************************************
 set(CANARY_LIB_PATH ${CMAKE_SOURCE_DIR}/canary-lib)
+
 
 # *****************************************************************************
 # Configure 3rd party variables
@@ -20,24 +22,23 @@ set(CANARY_EXTERNAL_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/build/external)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+
+# *****************************************************************************
+# Include cmake tools
+# *****************************************************************************
 include(MessageColors)
 include(LoggingHelper)
-include(TargetLinkLibrariesSystem)
-
-add_library(common_project_options INTERFACE)
-
-include(CommonProjectOptions)
-
-include(ToolCppCheck)
-include(ToolClangTidy)
-include(ToolIWYU)
-include(ToolClangFormat)
-include(ToolCTags)
 include(ToolGitSubmodule)
 
-include(doctest)
 
-include(OptionCompilerWarnings)
+# *****************************************************************************
+# Add 3rd party libraries
+# *****************************************************************************
 add_subdirectory(3rd)
-add_subdirectory(src)
 add_subdirectory(canary-lib)
+
+
+# *****************************************************************************
+# Add Source Code
+# *****************************************************************************
+add_subdirectory(src)
