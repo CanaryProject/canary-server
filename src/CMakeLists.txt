@@ -92,7 +92,6 @@ target_sources(canary_server_lib
     ${CMAKE_CURRENT_LIST_DIR}/protocolstatus.cpp
     ${CMAKE_CURRENT_LIST_DIR}/quests.cpp
     ${CMAKE_CURRENT_LIST_DIR}/raids.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/rsa.cpp
     ${CMAKE_CURRENT_LIST_DIR}/scripts.cpp
     ${CMAKE_CURRENT_LIST_DIR}/server.cpp
     ${CMAKE_CURRENT_LIST_DIR}/signals.cpp

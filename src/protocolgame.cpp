@@ -308,12 +308,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	// }
 	#endif
 
-	#if GAME_FEATURE_RSA1024 > 0
-	if (!Protocol::RSA_decrypt(msg)) {
+	if (!msg.RSA_decrypt()) {
 		disconnect();
 		return;
 	}
-	#endif
 
 	#if GAME_FEATURE_XTEA > 0
 	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};

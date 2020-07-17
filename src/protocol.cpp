@@ -23,7 +23,6 @@
 #include "configmanager.h"
 #include "protocol.h"
 #include "outputmessage.h"
-#include "rsa.h"
 
 Protocol::~Protocol()
 {
@@ -485,16 +484,6 @@ bool Protocol::XTEA_decrypt(NetworkMessage& msg) const
 
 	msg.setLength(innerLength);
 	return true;
-}
-
-bool Protocol::RSA_decrypt(NetworkMessage& msg)
-{
-	if ((msg.getLength() - msg.getBufferPosition()) < 128) {
-		return false;
-	}
-
-	g_RSA().decrypt(reinterpret_cast<char*>(msg.getBuffer()) + msg.getBufferPosition()); //does not break strict aliasing
-	return (msg.readByte() == 0);
 }
 
 uint32_t Protocol::getIP() const
