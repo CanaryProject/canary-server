@@ -196,7 +196,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 	 * 1 byte: preview world(971+)
 	 */
 
-	if (!msg.RSA_decrypt()) {
+	if (!msg.decryptRSA()) {
 		disconnect();
 		return;
 	}
@@ -236,7 +236,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 	#if GAME_FEATURE_SESSIONKEY > 0
 	// read authenticator token and stay logged in flag from last 128 bytes
 	msg.skip((msg.getLength() - 128) - msg.getBufferPosition());
-	if (!msg.RSA_decrypt()) {
+	if (!msg.decryptRSA()) {
 		disconnectClient("Invalid authentification token.");
 		return;
 	}
