@@ -20,32 +20,6 @@
 #ifndef FS_RSA_H_C4E277DA8E884B578DDBF0566F504E91
 #define FS_RSA_H_C4E277DA8E884B578DDBF0566F504E91
 
-#include <gmp.h>
-
-class RSA
-{
-	public:
-		RSA();
-		~RSA();
-
-		// Singleton - ensures we don't accidentally copy it
-		RSA(const RSA&) = delete;
-		RSA& operator=(const RSA&) = delete;
-
-		static RSA& getInstance() {
-			static RSA instance; // Guaranteed to be destroyed.
-														// Instantiated on first use.
-			return instance;
-		}
-
-		void queryNanD(const char* pString, const char* qString);
-		void setKey(const char* nString, const char* dString);
-		void decrypt(char* msg) const;
-
-	private:
-		mpz_t n, d;
-};
-
-constexpr auto g_RSA = &RSA::getInstance;
+constexpr auto g_RSA = &CanaryLib::RSACrypt::getInstance;
 
 #endif
