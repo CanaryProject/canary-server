@@ -203,9 +203,9 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 
 	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
 	enableXTEAEncryption();
-	setXTEAKey(key);
+  CanaryLib::XTEA().setKey(key);
 
-	setChecksumMethod(CHECKSUM_METHOD_ADLER32);
+	setChecksumMethod(CanaryLib::CHECKSUM_METHOD_ADLER32);
 
 	if (g_game().getGameState() == GAME_STATE_STARTUP) {
 		disconnectClient("Gameworld is starting up. Please wait.");
