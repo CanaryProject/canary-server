@@ -25,7 +25,6 @@
 
 #include "container.h"
 #include "housetile.h"
-#include "position.h"
 
 class House;
 class BedItem;

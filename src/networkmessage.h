@@ -22,7 +22,6 @@
 
 #include "const.h"
 #include "item.h"
-#include "position.h"
 
 class Item;
 struct Position;

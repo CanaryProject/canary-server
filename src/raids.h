@@ -21,7 +21,6 @@
 #define FS_RAIDS_H_3583C7C054584881856D55765DEDAFA9
 
 #include "const.h"
-#include "position.h"
 #include "baseevents.h"
 
 enum RaidState_t : uint8_t {
