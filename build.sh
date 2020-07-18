@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 TYPE="Debug"
-TESTS="Off"
-EXECUTE="Off"
-WARNING_FLAGS="Off"
-REMOVE_EXTERNAL_WARNINGS="On"
+TESTS="OFF"
+EXECUTE="OFF"
+WARNING_FLAGS="OFF"
+REMOVE_EXTERNAL_WARNINGS="ON"
 
 usage()
 {
@@ -13,11 +13,11 @@ usage()
 
 while getopts "ehrtv" opt; do
   case "$opt" in
-    e) EXECUTE="On" ;;
+    e) EXECUTE="ON" ;;
     h) usage ;;
     r) TYPE="Release" ;;
-    t) TESTS="On" ;;
-    v) WARNING_FLAGS="On" REMOVE_EXTERNAL_WARNINGS="Off" ;;
+    t) TESTS="ON" ;;
+    v) WARNING_FLAGS="ON" REMOVE_EXTERNAL_WARNINGS="OFF" ;;
   esac
 done
 
@@ -27,6 +27,6 @@ cd ..
 rm -rf canary
 cp build/bin/canary ./
 
-if [ "$EXECUTE" = "On" ]; then
+if [ "$EXECUTE" = "ON" ]; then
   ./canary
 fi
