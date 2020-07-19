@@ -48,7 +48,7 @@ void Protocol::onSendMessage(const OutputMessage_ptr& msg)
       if (checksumMethod == CanaryLib::CHECKSUM_METHOD_NONE) {
         msg->addCryptoHeader(false, 0);
       } else if (checksumMethod == CanaryLib::CHECKSUM_METHOD_ADLER32) {
-        msg->addCryptoHeader(true, adlerChecksum(msg->getOutputBuffer(), msg->getLength()));
+        msg->addCryptoHeader(true, NetworkMessage::getChecksum(msg->getOutputBuffer(), msg->getLength()));
       } else if (checksumMethod == CanaryLib::CHECKSUM_METHOD_SEQUENCE) {
         msg->addCryptoHeader(true, _compression | (++serverSequenceNumber));
         if (serverSequenceNumber >= 0x7FFFFFFF) {
@@ -83,7 +83,7 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 			uint32_t checksum;
 			int32_t len = msg.getLength() - msg.getBufferPosition();
 			if (len > 0) {
-				checksum = adlerChecksum(msg.getBuffer() + msg.getBufferPosition(), len);
+				checksum = NetworkMessage::getChecksum(msg.getBuffer() + msg.getBufferPosition(), len);
 			} else {
 				checksum = 0;
 			}

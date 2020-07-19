@@ -431,7 +431,7 @@ void ProtocolGame::onConnect()
 
 	// Go back and write checksum
 	output->skip(-12);
-	output->write<uint32_t>(adlerChecksum(output->getOutputBuffer() + sizeof(uint32_t), 8));
+	output->write<uint32_t>(NetworkMessage::getChecksum(output->getOutputBuffer() + sizeof(uint32_t), 8));
 
 	send(output);
 }
