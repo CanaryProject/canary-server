@@ -29,8 +29,6 @@
 
 // Canary Lib
 #include "../canary-lib/include/include.hpp"
-typedef CanaryLib::Position Position;
-typedef CanaryLib::Direction Direction;
 
 #if GAME_FEATURE_ROBINHOOD_HASH_MAP > 0
 #include "robin_hood.h"
