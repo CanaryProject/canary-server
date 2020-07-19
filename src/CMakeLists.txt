@@ -289,6 +289,7 @@ target_sources(canary_server_lib
     ${CMAKE_CURRENT_LIST_DIR}/outputmessage.cpp
     ${CMAKE_CURRENT_LIST_DIR}/party.cpp
     ${CMAKE_CURRENT_LIST_DIR}/player.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/position.cpp
     ${CMAKE_CURRENT_LIST_DIR}/protocol.cpp
     ${CMAKE_CURRENT_LIST_DIR}/protocolgame.cpp
     ${CMAKE_CURRENT_LIST_DIR}/protocollogin.cpp

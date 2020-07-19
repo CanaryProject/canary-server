@@ -17,26 +17,57 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_NETWORKMESSAGE_H_B853CFED58D1413A87ACED07B2926E03
-#define FS_NETWORKMESSAGE_H_B853CFED58D1413A87ACED07B2926E03
+#include "otpch.h"
 
-#include "const.h"
-#include "item.h"
 #include "position.h"
 
-class Item;
-struct Position;
-
-class NetworkMessage : public CanaryLib::NetworkMessage
+std::ostream& operator<<(std::ostream& os, const Position& pos)
 {
-	public:
-		NetworkMessage() = default;
+	os << "( " << std::setw(5) << std::setfill('0') << pos.x;
+	os << " / " << std::setw(5) << std::setfill('0') << pos.y;
+	os << " / " << std::setw(3) << std::setfill('0') << pos.getZ();
+	os << " )";
+	return os;
+}
 
-		// TODO: migrate that to lib in a generic way. needs to update client too.
-		Position getPosition();
-		void addDouble(double value, uint8_t precision = 2);
-		void addItemId(uint16_t itemId);
-		void addPosition(const Position& pos);
-};
+std::ostream& operator<<(std::ostream& os, const Direction& dir)
+{
+	switch (dir) {
+		case DIRECTION_NORTH:
+			os << "North";
+			break;
 
-#endif // #ifndef __NETWORK_MESSAGE_H__
+		case DIRECTION_EAST:
+			os << "East";
+			break;
+
+		case DIRECTION_WEST:
+			os << "West";
+			break;
+
+		case DIRECTION_SOUTH:
+			os << "South";
+			break;
+
+		case DIRECTION_SOUTHWEST:
+			os << "South-West";
+			break;
+
+		case DIRECTION_SOUTHEAST:
+			os << "South-East";
+			break;
+
+		case DIRECTION_NORTHWEST:
+			os << "North-West";
+			break;
+
+		case DIRECTION_NORTHEAST:
+			os << "North-East";
+			break;
+
+		default:
+			break;
+	}
+
+	return os;
+}

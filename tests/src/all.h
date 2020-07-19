@@ -57,6 +57,7 @@
 #include "../../src/outputmessage.h"
 #include "../../src/party.h"
 #include "../../src/player.h"
+#include "../../src/position.h"
 #include "../../src/protocol.h"
 #include "../../src/protocolgame.h"
 #include "../../src/protocollogin.h"

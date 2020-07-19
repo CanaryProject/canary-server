@@ -23,6 +23,7 @@
 #include "const.h"
 #include "enums.h"
 #include "itemloader.h"
+#include "position.h"
 
 enum SlotPositionBits : uint32_t {
 	SLOTP_WHEREEVER = 0xFFFFFFFF,

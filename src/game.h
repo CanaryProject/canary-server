@@ -25,6 +25,7 @@
 #include "decay.h"
 #include "groups.h"
 #include "map.h"
+#include "position.h"
 #include "item.h"
 #include "container.h"
 #include "player.h"

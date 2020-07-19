@@ -22,6 +22,7 @@
 
 #include <random>
 
+#include "position.h"
 #include "const.h"
 #include "enums.h"
 
