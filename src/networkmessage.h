@@ -21,12 +21,12 @@
 #define FS_NETWORKMESSAGE_H_B853CFED58D1413A87ACED07B2926E03
 
 #include "const.h"
+#include "item.h"
+#include "position.h"
+#include "rsa.h"
 
 class Item;
-class Creature;
-class Player;
 struct Position;
-class RSA;
 
 class NetworkMessage : public CanaryLib::NetworkMessage
 {
@@ -38,6 +38,9 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 		void addDouble(double value, uint8_t precision = 2);
 		void addItemId(uint16_t itemId);
 		void addPosition(const Position& pos);
+
+    // RSA
+    bool decryptRSA();
 };
 
 #endif // #ifndef __NETWORK_MESSAGE_H__
