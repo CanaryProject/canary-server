@@ -38,9 +38,6 @@ class NetworkMessage : public CanaryLib::NetworkMessage
 		void addDouble(double value, uint8_t precision = 2);
 		void addItemId(uint16_t itemId);
 		void addPosition(const Position& pos);
-
-    // RSA
-    bool decryptRSA();
 };
 
 #endif // #ifndef __NETWORK_MESSAGE_H__
