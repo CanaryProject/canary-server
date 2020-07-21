@@ -23,7 +23,6 @@
 #include <zlib.h>
 
 #include "connection.h"
-#include "rsa.h"
 
 class Protocol : public std::enable_shared_from_this<Protocol>
 {
