@@ -91,11 +91,7 @@ class TalkActions final : public BaseEvents
 		Event_ptr getEvent(const std::string& nodeName) override;
 		bool registerEvent(Event_ptr event, const pugi::xml_node& node) override;
 		
-		#if GAME_FEATURE_ROBINHOOD_HASH_MAP > 0
 		robin_hood::unordered_map<std::string, TalkAction_ptr> talkActions;
-		#else
-		std::unordered_map<std::string, TalkAction_ptr> talkActions;
-		#endif
 
 		LuaScriptInterface scriptInterface;
 };

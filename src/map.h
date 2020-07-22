@@ -237,11 +237,7 @@ class Map
 		SpectatorCache spectatorCache;
 		SpectatorCache playersSpectatorCache;
 
-		#if GAME_FEATURE_ROBINHOOD_HASH_MAP > 0
 		robin_hood::unordered_map<uint32_t, MapSector> mapSectors;
-		#else
-		std::unordered_map<uint32_t, MapSector> mapSectors;
-		#endif
 
 		std::string spawnfile;
 		std::string housefile;
