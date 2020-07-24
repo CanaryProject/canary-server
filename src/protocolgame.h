@@ -83,7 +83,8 @@ class ProtocolGame final : public Protocol
 		#endif
 		void logout(bool displayEffect, bool forced);
 
-		static NetworkMessage playermsg;
+		NetworkMessage playermsg;
+		NetworkMessage input_msg;
 
 	private:
 		ProtocolGame_ptr getThis() {
@@ -92,6 +93,7 @@ class ProtocolGame final : public Protocol
 		void connect(uint32_t playerId, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem);
 		void disconnectClient(const std::string& message) const;
 		void writeToOutputBuffer(NetworkMessage& msg);
+		void writeToOutputBuffer();
 
 		void release() override;
 
@@ -108,94 +110,94 @@ class ProtocolGame final : public Protocol
 
 		//Parse methods
 		#if GAME_FEATURE_QUEST_TRACKER > 0
-		void parseTrackedQuestFlags(NetworkMessage& msg);
+		void parseTrackedQuestFlags();
 		#endif
-		void parseAutoWalk(NetworkMessage& msg);
-		void parseSetOutfit(NetworkMessage& msg);
-		void parseSay(NetworkMessage& msg);
-		void parseWrapableItem(NetworkMessage& msg);
-		void parseLookAt(NetworkMessage& msg);
-		void parseLookInBattleList(NetworkMessage& msg);
-		void parseFightModes(NetworkMessage& msg);
-		void parseAttack(NetworkMessage& msg);
-		void parseFollow(NetworkMessage& msg);
-		void parseEquipObject(NetworkMessage& msg);
-		void parseTeleport(NetworkMessage& msg);
+		void parseAutoWalk();
+		void parseSetOutfit();
+		void parseSay();
+		void parseWrapableItem();
+		void parseLookAt();
+		void parseLookInBattleList();
+		void parseFightModes();
+		void parseAttack();
+		void parseFollow();
+		void parseEquipObject();
+		void parseTeleport();
 
-		void parseCyclopediaMonsters(NetworkMessage& msg);
-		void parseCyclopediaRace(NetworkMessage& msg);
-		void parseCyclopediaHouseAction(NetworkMessage& msg);
-		void parseCyclopediaCharacterInfo(NetworkMessage& msg);
+		void parseCyclopediaMonsters();
+		void parseCyclopediaRace();
+		void parseCyclopediaHouseAction();
+		void parseCyclopediaCharacterInfo();
 
-		void parseTournamentLeaderboard(NetworkMessage& msg);
+		void parseTournamentLeaderboard();
 
-		void parseBugReport(NetworkMessage& msg);
-		void parseDebugAssert(NetworkMessage& msg);
-		void parseRuleViolationReport(NetworkMessage& msg);
+		void parseBugReport();
+		void parseDebugAssert();
+		void parseRuleViolationReport();
 
-		void parseThrow(NetworkMessage& msg);
-		void parseUseItemEx(NetworkMessage& msg);
-		void parseUseWithCreature(NetworkMessage& msg);
-		void parseUseItem(NetworkMessage& msg);
-		void parseCloseContainer(NetworkMessage& msg);
-		void parseUpArrowContainer(NetworkMessage& msg);
-		void parseUpdateContainer(NetworkMessage& msg);
-		void parseTextWindow(NetworkMessage& msg);
-		void parseHouseWindow(NetworkMessage& msg);
+		void parseThrow();
+		void parseUseItemEx();
+		void parseUseWithCreature();
+		void parseUseItem();
+		void parseCloseContainer();
+		void parseUpArrowContainer();
+		void parseUpdateContainer();
+		void parseTextWindow();
+		void parseHouseWindow();
 
-		void parseLookInShop(NetworkMessage& msg);
-		void parsePlayerPurchase(NetworkMessage& msg);
-		void parsePlayerSale(NetworkMessage& msg);
+		void parseLookInShop();
+		void parsePlayerPurchase();
+		void parsePlayerSale();
 
-		void parseQuestLine(NetworkMessage& msg);
+		void parseQuestLine();
 
-		void parseInviteToParty(NetworkMessage& msg);
-		void parseJoinParty(NetworkMessage& msg);
-		void parseRevokePartyInvite(NetworkMessage& msg);
-		void parsePassPartyLeadership(NetworkMessage& msg);
-		void parseEnableSharedPartyExperience(NetworkMessage& msg);
+		void parseInviteToParty();
+		void parseJoinParty();
+		void parseRevokePartyInvite();
+		void parsePassPartyLeadership();
+		void parseEnableSharedPartyExperience();
 
 		#if GAME_FEATURE_MOUNTS > 0
-		void parseToggleMount(NetworkMessage& msg);
+		void parseToggleMount();
 		#endif
-		void parseModalWindowAnswer(NetworkMessage& msg);
+		void parseModalWindowAnswer();
 
 		#if GAME_FEATURE_BROWSEFIELD > 0
-		void parseBrowseField(NetworkMessage& msg);
+		void parseBrowseField();
 		#endif
 		#if GAME_FEATURE_CONTAINER_PAGINATION > 0
-		void parseSeekInContainer(NetworkMessage& msg);
+		void parseSeekInContainer();
 		#endif
 		#if GAME_FEATURE_INSPECTION > 0
-		void parseInspectionObject(NetworkMessage& msg);
+		void parseInspectionObject();
 		#endif
 
 		//trade methods
-		void parseRequestTrade(NetworkMessage& msg);
-		void parseLookInTrade(NetworkMessage& msg);
+		void parseRequestTrade();
+		void parseLookInTrade();
 
 		#if GAME_FEATURE_MARKET > 0
 		//market methods
 		void parseMarketLeave();
-		void parseMarketBrowse(NetworkMessage& msg);
-		void parseMarketCreateOffer(NetworkMessage& msg);
-		void parseMarketCancelOffer(NetworkMessage& msg);
-		void parseMarketAcceptOffer(NetworkMessage& msg);
+		void parseMarketBrowse();
+		void parseMarketCreateOffer();
+		void parseMarketCancelOffer();
+		void parseMarketAcceptOffer();
 		#endif
 
 		//VIP methods
-		void parseAddVip(NetworkMessage& msg);
-		void parseRemoveVip(NetworkMessage& msg);
-		void parseEditVip(NetworkMessage& msg);
+		void parseAddVip();
+		void parseRemoveVip();
+		void parseEditVip();
 
-		void parseRotateItem(NetworkMessage& msg);
+		void parseRotateItem();
 
 		//Channel tabs
-		void parseChannelInvite(NetworkMessage& msg);
-		void parseChannelExclude(NetworkMessage& msg);
-		void parseOpenChannel(NetworkMessage& msg);
-		void parseOpenPrivateChannel(NetworkMessage& msg);
-		void parseCloseChannel(NetworkMessage& msg);
+		void parseChannelInvite();
+		void parseChannelExclude();
+		void parseOpenChannel();
+		void parseOpenPrivateChannel();
+		void parseCloseChannel();
 
 		//Send functions
 		#if GAME_FEATURE_INSPECTION > 0
@@ -387,7 +389,7 @@ class ProtocolGame final : public Protocol
 		void AddItem(const Item* item);
 
 		//otclient
-		void parseExtendedOpcode(NetworkMessage& msg);
+		void parseExtendedOpcode();
 
 		//translations
 		SpeakClasses translateSpeakClassFromClient(uint8_t talkType);
