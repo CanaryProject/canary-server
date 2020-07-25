@@ -35,18 +35,6 @@ class OutputMessage : public NetworkMessage
 		OutputMessage(const OutputMessage&) = delete;
 		OutputMessage& operator=(const OutputMessage&) = delete;
 
-		void writeMessageLength() {
-			add_header(m_info.m_messageSize);
-		}
-
-		void addCryptoHeader(bool addChecksum, uint32_t checksum) {
-			if (addChecksum) {
-				add_header(checksum);
-			}
-
-			writeMessageLength();
-		}
-
 		void append(NetworkMessage& msg) {
 			auto msgLen = msg.getLength();
 			memcpy(m_buffer + m_info.m_bufferPos, msg.getBuffer() + CanaryLib::MAX_HEADER_SIZE, msgLen);
