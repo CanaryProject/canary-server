@@ -59,17 +59,8 @@ void Protocol::onSendMessage(const OutputMessage_ptr& msg)
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
 	if (checksumMethod != CanaryLib::CHECKSUM_METHOD_NONE) {
-		uint32_t recvChecksum = msg.read<uint32_t>();
-    uint32_t checksum;
-    int32_t len = msg.getLength() - msg.getBufferPosition();
-    if (len > 0) {
-      checksum = NetworkMessage::getChecksum(msg.getBuffer() + msg.getBufferPosition(), len);
-    } else {
-      checksum = 0;
-    }
-
-    if (recvChecksum != checksum) {
-      // incorrect packet - skip it
+      // if the packet is incorrect, skip
+    if (!msg.readChecksum()) {
       return false;
     }
 	}

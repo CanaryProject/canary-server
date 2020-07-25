@@ -271,23 +271,14 @@ void Connection::parsePacket(const boost::system::error_code& error)
 		receivedFirst = true;
 
 		if (!protocol) {
-			//Check packet checksum
-			uint32_t checksum;
-			int32_t len = msg.getLength() - msg.getBufferPosition() - CanaryLib::CHECKSUM_LENGTH;
-			if (len > 0) {
-				checksum = NetworkMessage::getChecksum(msg.getBuffer() + msg.getBufferPosition() + CanaryLib::CHECKSUM_LENGTH, len);
-			} else {
-				checksum = 0;
-			}
-
-			uint32_t recvChecksum = msg.read<uint32_t>();
-			if (recvChecksum != checksum) {
-				// it might not have been the checksum, step back
+      // it might not have been the checksum, step back
+      bool checksummed = msg.readChecksum();
+			if (!checksummed) {
 				msg.skip(-CanaryLib::CHECKSUM_LENGTH);
 			}
 
 			// Game protocol has already been created at this point
-			protocol = service_port->make_protocol(recvChecksum == checksum, msg, shared_from_this());
+			protocol = service_port->make_protocol(checksummed, msg, shared_from_this());
 			if (!protocol) {
 				close(FORCE_CLOSE);
 				return;
