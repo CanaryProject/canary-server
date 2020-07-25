@@ -265,6 +265,9 @@ void Connection::parsePacket(const boost::system::error_code& error)
 		return;
 	}
 
+  // validate checksum
+  bool checksummed = msg.readChecksum();
+
 	bool skipReadingNextPacket = false;
 	if (!receivedFirst) {
 		// First message received
@@ -272,10 +275,9 @@ void Connection::parsePacket(const boost::system::error_code& error)
 
 		if (!protocol) {
       // it might not have been the checksum, step back
-      bool checksummed = msg.readChecksum();
-			if (!checksummed) {
-				msg.skip(-CanaryLib::CHECKSUM_LENGTH);
-			}
+      if (!checksummed) {
+        msg.skip(-CanaryLib::CHECKSUM_LENGTH);
+      }
 
 			// Game protocol has already been created at this point
 			protocol = service_port->make_protocol(checksummed, msg, shared_from_this());
@@ -284,15 +286,16 @@ void Connection::parsePacket(const boost::system::error_code& error)
 				return;
 			}
 		} else {
-			// It is rather hard to detect if we have checksum or sequence method here so let's skip checksum check
-			// it doesn't generate any problem because olders protocol don't use 'server sends first' feature
-			msg.read<uint32_t>();
 			msg.skip(1);    // Skip protocol ID
 		}
 
 		protocol->onRecvFirstMessage(msg);
 	} else {
-		skipReadingNextPacket = protocol->onRecvMessage(msg); // Send the packet to the current protocol
+    if (!checksummed) {
+      skipReadingNextPacket = false;
+    } else {
+		  skipReadingNextPacket = protocol->onRecvMessage(msg); // Send the packet to the current protocol
+    }
 	}
 
 	try {

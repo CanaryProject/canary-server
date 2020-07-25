@@ -58,12 +58,6 @@ void Protocol::onSendMessage(const OutputMessage_ptr& msg)
 
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
-	if (checksumMethod != CanaryLib::CHECKSUM_METHOD_NONE) {
-      // if the packet is incorrect, skip
-    if (!msg.readChecksum()) {
-      return false;
-    }
-	}
 	if (encryptionEnabled && !msg.decryptXTEA(static_cast<CanaryLib::ChecksumMethods_t>(checksumMethod))) {
 		return false;
 	}
