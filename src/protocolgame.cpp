@@ -279,16 +279,8 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	OperatingSystem_t operatingSystem = static_cast<OperatingSystem_t>(msg.readByte());
 	OperatingSystem_t TFCoperatingSystem = static_cast<OperatingSystem_t>(msg.readByte());
 	msg.read<uint16_t>();
-	// if it's not OTC use SEQUENCE checksum
-	if (operatingSystem < CLIENTOS_OTCLIENT_LINUX) {
-		setChecksumMethod(CanaryLib::CHECKSUM_METHOD_SEQUENCE);
-		if (TFCoperatingSystem < CLIENTOS_TFC_ANDROID) {
-			//compression on the forgotten client will be implemented in the next client update
-			enableCompression();
-		}
-	} else { // if it's OTC use ADLER32 checksum
-		setChecksumMethod(CanaryLib::CHECKSUM_METHOD_ADLER32);
-	}
+  
+  setChecksumMethod(CanaryLib::CHECKSUM_METHOD_ADLER32);
 
 	#if GAME_FEATURE_CLIENT_VERSION > 0
 	msg.skip(4);

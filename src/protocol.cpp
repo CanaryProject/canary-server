@@ -47,14 +47,10 @@ void Protocol::onSendMessage(const OutputMessage_ptr& msg)
 		if (encryptionEnabled) {
       msg->encryptXTEA();
       if (checksumMethod == CanaryLib::CHECKSUM_METHOD_NONE) {
-        msg->addCryptoHeader(false, 0);
+        // write encrypted length
+        msg->writeMessageLength();
       } else if (checksumMethod == CanaryLib::CHECKSUM_METHOD_ADLER32) {
-        msg->addCryptoHeader(true, NetworkMessage::getChecksum(msg->getOutputBuffer(), msg->getLength()));
-      } else if (checksumMethod == CanaryLib::CHECKSUM_METHOD_SEQUENCE) {
-        msg->addCryptoHeader(true, _compression | (++serverSequenceNumber));
-        if (serverSequenceNumber >= 0x7FFFFFFF) {
-          serverSequenceNumber = 0;
-        }
+        msg->addCryptoHeader();
       }
 		}
   }
@@ -64,36 +60,18 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
 	if (checksumMethod != CanaryLib::CHECKSUM_METHOD_NONE) {
 		uint32_t recvChecksum = msg.read<uint32_t>();
-		if (checksumMethod == CanaryLib::CHECKSUM_METHOD_SEQUENCE) {
-			if (recvChecksum == 0) {
-				// checksum 0 indicate that the packet should be connection ping - 0x1C packet header
-				// since we don't need that packet skip it
-				return false;
-			}
+    uint32_t checksum;
+    int32_t len = msg.getLength() - msg.getBufferPosition();
+    if (len > 0) {
+      checksum = NetworkMessage::getChecksum(msg.getBuffer() + msg.getBufferPosition(), len);
+    } else {
+      checksum = 0;
+    }
 
-			uint32_t checksum = ++clientSequenceNumber;
-			if (clientSequenceNumber >= 0x7FFFFFFF) {
-				clientSequenceNumber = 0;
-			}
-
-			if (recvChecksum != checksum) {
-				// incorrect packet - skip it
-				return false;
-			}
-		} else {
-			uint32_t checksum;
-			int32_t len = msg.getLength() - msg.getBufferPosition();
-			if (len > 0) {
-				checksum = NetworkMessage::getChecksum(msg.getBuffer() + msg.getBufferPosition(), len);
-			} else {
-				checksum = 0;
-			}
-
-			if (recvChecksum != checksum) {
-				// incorrect packet - skip it
-				return false;
-			}
-		}
+    if (recvChecksum != checksum) {
+      // incorrect packet - skip it
+      return false;
+    }
 	}
 	if (encryptionEnabled && !msg.decryptXTEA(static_cast<CanaryLib::ChecksumMethods_t>(checksumMethod))) {
 		return false;
