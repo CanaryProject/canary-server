@@ -395,7 +395,6 @@ uint32_t Connection::getIP()
 
 void Connection::onWriteOperation(const boost::system::error_code& error)
 {
-	std::unique_lock<std::recursive_mutex> lockClass(connectionLock);
 	writeTimer.cancel();
 	messageQueue.pop_front();
 
@@ -405,15 +404,7 @@ void Connection::onWriteOperation(const boost::system::error_code& error)
 		return;
 	}
 
-	if (!messageQueue.empty()) {
-		const OutputMessage_ptr& msg = messageQueue.front();
-		lockClass.unlock();
-		protocol->onSendMessage(msg);
-		lockClass.lock();
-		internalSend(msg);
-	} else if (connectionState == CONNECTION_STATE_CLOSED) {
-		closeSocket();
-	}
+	internalWorker();
 }
 
 void Connection::handleTimeout(ConnectionWeak_ptr connectionWeak, const boost::system::error_code& error)
