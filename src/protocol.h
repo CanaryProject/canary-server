@@ -73,6 +73,9 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		void enableXTEAEncryption() {
 			encryptionEnabled = true;
 		}
+		void setupXTEA(const uint32_t* key) {
+      xtea.setKey(key);
+		}
 		void setChecksumMethod(CanaryLib::ChecksumMethods_t method) {
 			checksumMethod = method;
 		}
@@ -94,12 +97,12 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		std::unique_ptr<z_stream> defStream;
 
 		const ConnectionWeak_ptr connection;
-		uint32_t key[4] = {};
+		CanaryLib::XTEA xtea;
 		uint32_t serverSequenceNumber = 0;
 		uint32_t clientSequenceNumber = 0;
-		std::underlying_type<CanaryLib::ChecksumMethods_t>::type checksumMethod = CanaryLib::CHECKSUM_METHOD_NONE;
+	  CanaryLib::ChecksumMethods_t checksumMethod = CanaryLib::CHECKSUM_METHOD_NONE;
 		bool encryptionEnabled = false;
-    bool rawMessages = false;
+		bool rawMessages = false;
 		bool compreesionEnabled = false;
 };
 

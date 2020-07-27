@@ -45,20 +45,19 @@ void Protocol::onSendMessage(const OutputMessage_ptr& msg)
 		msg->writeMessageLength();
 
 		if (encryptionEnabled) {
-      msg->encryptXTEA();
-      if (checksumMethod == CanaryLib::CHECKSUM_METHOD_NONE) {
-        // write encrypted length
-        msg->writeMessageLength();
-      } else if (checksumMethod == CanaryLib::CHECKSUM_METHOD_ADLER32) {
-        msg->addCryptoHeader();
+      msg->encryptXTEA(xtea);
+      if (checksumMethod == CanaryLib::CHECKSUM_METHOD_ADLER32) {
+        msg->writeChecksum();
       }
+      // write encrypted length
+      msg->writeMessageLength();
 		}
   }
 }
 
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
-	if (encryptionEnabled && !msg.decryptXTEA(static_cast<CanaryLib::ChecksumMethods_t>(checksumMethod))) {
+	if (encryptionEnabled && !msg.decryptXTEA(xtea, checksumMethod)) {
 		return false;
 	}
 

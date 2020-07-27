@@ -203,7 +203,7 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 
 	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
 	enableXTEAEncryption();
-  CanaryLib::XTEA().setKey(key);
+	setupXTEA(key);
 
 	setChecksumMethod(CanaryLib::CHECKSUM_METHOD_ADLER32);
 

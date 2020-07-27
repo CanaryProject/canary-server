@@ -303,10 +303,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 		return;
 	}
 
-  #if GAME_FEATURE_XTEA > 0
-    uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
-    enableXTEAEncryption();
-    CanaryLib::XTEA().setKey(key);
+	#if GAME_FEATURE_XTEA > 0
+	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
+	enableXTEAEncryption();
+	setupXTEA(key);
 	#endif
 
 	if (operatingSystem >= (CLIENTOS_OTCLIENT_LINUX + CLIENTOS_OTCLIENT_LINUX)) {
