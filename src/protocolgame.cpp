@@ -3983,7 +3983,7 @@ void ProtocolGame::sendVIP(uint32_t guid, const std::string& name, VipStatus_t s
 
 void ProtocolGame::sendVIPEntries()
 {
-	std::ostringstream query;
+	std::stringExtended query(256);
 	#if GAME_FEATURE_ADDITIONAL_VIPINFO > 0
 	query << "SELECT `player_id`, (SELECT `name` FROM `players` WHERE `id` = `player_id`) AS `name`, `description`, `icon`, `notify` FROM `account_viplist` WHERE `account_id` = " << player->getAccount();
 	#else
@@ -4014,7 +4014,7 @@ void ProtocolGame::sendVIPEntries()
 			}
 		}
 	};
-	g_databaseTasks().addTask(query.str(), callback, true);
+	g_databaseTasks().addTask(std::move(static_cast<std::string&>(query)), callback, true);
 }
 
 void ProtocolGame::sendSpellCooldown(uint8_t spellId, uint32_t time)

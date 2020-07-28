@@ -37,7 +37,7 @@ class OutputMessage : public NetworkMessage
 
 		void append(NetworkMessage& msg) {
 			auto msgLen = msg.getLength();
-			memcpy(m_buffer + m_info.m_bufferPos, msg.getBuffer() + CanaryLib::MAX_HEADER_SIZE, msgLen);
+			memcpy(m_buffer + m_info.m_bufferPos, msg.getDataBuffer(), msgLen);
 			m_info.m_messageSize += msgLen;
 			m_info.m_bufferPos += msgLen;
 		}

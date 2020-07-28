@@ -187,17 +187,17 @@ std::string Database::escapeBlob(const char* s, uint32_t length) const
 	size_t maxLength = (length * 2) + 1;
 
 	std::string escaped;
-	escaped.reserve(maxLength + 2);
-	escaped.push_back('\'');
+	escaped.resize(maxLength + 2);
+
+	size_t position = 0;
+	escaped[position++] = '\'';
 
 	if (length != 0) {
-		char* output = new char[maxLength];
-		mysql_real_escape_string(handle, output, s, length);
-		escaped.append(output);
-		delete[] output;
+		position += mysql_real_escape_string(handle, &escaped[position], s, length);
 	}
 
-	escaped.push_back('\'');
+	escaped[position++] = '\'';
+	escaped.resize(position);
 	return escaped;
 }
 
@@ -205,15 +205,15 @@ DBResult::DBResult(MYSQL_RES* res)
 {
 	handle = res;
 
-	size_t i = 0;
+	unsigned int num_fields = mysql_num_fields(handle);
+	listNames.reserve(num_fields);
 
-	MYSQL_FIELD* field = mysql_fetch_field(handle);
-	while (field) {
-		listNames[field->name] = i++;
-		field = mysql_fetch_field(handle);
-	}
-
+	MYSQL_FIELD* fields = mysql_fetch_fields(handle);
+	for (size_t i = 0; i < num_fields; ++i) {
+		listNames.emplace(std::piecewise_construct, std::forward_as_tuple(fields[i].name, fields[i].name_length), std::forward_as_tuple(i));
+  }
 	row = mysql_fetch_row(handle);
+	lengths = mysql_fetch_lengths(handle);
 }
 
 DBResult::~DBResult()
@@ -233,7 +233,7 @@ std::string DBResult::getString(const std::string& s) const
 		return std::string();
 	}
 
-	return std::string(row[it->second]);
+	return std::string(row[it->second], lengths[it->second]);
 }
 
 const char* DBResult::getStream(const std::string& s, unsigned long& size) const
@@ -250,7 +250,7 @@ const char* DBResult::getStream(const std::string& s, unsigned long& size) const
 		return nullptr;
 	}
 
-	size = mysql_fetch_lengths(handle)[it->second];
+	size = lengths[it->second];
 	return row[it->second];
 }
 
@@ -262,6 +262,7 @@ bool DBResult::hasNext() const
 bool DBResult::next()
 {
 	row = mysql_fetch_row(handle);
+	lengths = mysql_fetch_lengths(handle);
 	return row != nullptr;
 }
 

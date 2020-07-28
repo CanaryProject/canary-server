@@ -876,14 +876,12 @@ bool Map::getPathMatching(const Creature& creature, const Position& targetPos, s
 			pos.x = x + *neighbors++;
 			pos.y = y + *neighbors++;
 
-			const Tile* tile;
 			int_fast32_t extraCost;
 			AStarNode* neighborNode = nodes.getNodeByPosition(pos.x, pos.y);
 			if (neighborNode) {
-				tile = getTile(pos.x, pos.y, pos.z);
 				extraCost = neighborNode->c;
 			} else {
-				tile = Map::canWalkTo(creature, pos);
+				const Tile* tile = Map::canWalkTo(creature, pos);
 				if (!tile) {
 					continue;
 				}
@@ -1054,14 +1052,12 @@ bool Map::getPathMatchingCond(const Creature& creature, const Position& targetPo
 				continue;
 			}
 
-			const Tile* tile;
 			int_fast32_t extraCost;
 			AStarNode* neighborNode = nodes.getNodeByPosition(pos.x, pos.y);
 			if (neighborNode) {
-				tile = getTile(pos.x, pos.y, pos.z);
 				extraCost = neighborNode->c;
 			} else {
-				tile = Map::canWalkTo(creature, pos);
+				const Tile* tile = Map::canWalkTo(creature, pos);
 				if (!tile) {
 					continue;
 				}
@@ -1138,16 +1134,26 @@ bool Map::getPathMatchingCond(const Creature& creature, const Position& targetPo
 }
 
 // AStarNodes
-AStarNodes::AStarNodes(uint32_t x, uint32_t y, int_fast32_t extraCost): nodes(), openNodes()
+AStarNodes::AStarNodes(uint32_t x, uint32_t y, int_fast32_t extraCost): openNodes()
 {
-	#if defined(__SSE2__)
+	#if defined(__AVX2__)
+	__m256i defaultCost = _mm256_set1_epi32(std::numeric_limits<int32_t>::max());
+	for (int32_t i = 0; i < MAX_NODES; i += 32) {
+		_mm256_stream_si256(reinterpret_cast<__m256i*>(&calculatedNodes[i + 0]), defaultCost);
+		_mm256_stream_si256(reinterpret_cast<__m256i*>(&calculatedNodes[i + 8]), defaultCost);
+		_mm256_stream_si256(reinterpret_cast<__m256i*>(&calculatedNodes[i + 16]), defaultCost);
+		_mm256_stream_si256(reinterpret_cast<__m256i*>(&calculatedNodes[i + 24]), defaultCost);
+	}
+	_mm_sfence();
+	#elif defined(__SSE2__)
 	__m128i defaultCost = _mm_set1_epi32(std::numeric_limits<int32_t>::max());
 	for (int32_t i = 0; i < MAX_NODES; i += 16) {
-		_mm_store_si128(reinterpret_cast<__m128i*>(&calculatedNodes[i + 0]), defaultCost);
-		_mm_store_si128(reinterpret_cast<__m128i*>(&calculatedNodes[i + 4]), defaultCost);
-		_mm_store_si128(reinterpret_cast<__m128i*>(&calculatedNodes[i + 8]), defaultCost);
-		_mm_store_si128(reinterpret_cast<__m128i*>(&calculatedNodes[i + 12]), defaultCost);
+		_mm_stream_si128(reinterpret_cast<__m128i*>(&calculatedNodes[i + 0]), defaultCost);
+		_mm_stream_si128(reinterpret_cast<__m128i*>(&calculatedNodes[i + 4]), defaultCost);
+		_mm_stream_si128(reinterpret_cast<__m128i*>(&calculatedNodes[i + 8]), defaultCost);
+		_mm_stream_si128(reinterpret_cast<__m128i*>(&calculatedNodes[i + 12]), defaultCost);
 	}
+	_mm_sfence();
 	#endif
 
 	curNode = 1;
@@ -1185,7 +1191,7 @@ bool AStarNodes::createOpenNode(AStarNode* parent, uint32_t x, uint32_t y, int_f
 	node.c = extraCost;
 	nodesTable[retNode] = (x << 16) | y;
 	#if defined(__SSE2__)
-	calculatedNodes[retNode] = f + node.g;
+	calculatedNodes[retNode] = f + heuristic;
 	#endif
 	return true;
 }
