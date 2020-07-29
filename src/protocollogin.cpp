@@ -31,9 +31,13 @@
 
 void ProtocolLogin::disconnectClient(const std::string& message)
 {
-	auto output = OutputMessagePool::getOutputMessage();
-	output->writeByte(0x0B);
-	output->writeString(message);
+  CanaryLib::NetworkMessage msg;
+	msg.writeByte(0x0B);
+	msg.writeString(message);
+
+  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
+  output->write(msg.getDataBuffer(), msg.getLength());
+
 	send(output);
 
 	disconnect();
@@ -84,20 +88,24 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 		return;
 	}
 
-	auto output = OutputMessagePool::getOutputMessage();
+  CanaryLib::NetworkMessage msg;
 
 	#if GAME_FEATURE_SESSIONKEY > 0
 	uint32_t ticks = time(nullptr) / AUTHENTICATOR_PERIOD;
 	if (!account.key.empty()) {
 		if (token.empty() || !(token == generateToken(account.key, ticks) || token == generateToken(account.key, ticks - 1) || token == generateToken(account.key, ticks + 1))) {
-			output->writeByte(0x0D);
-			output->writeByte(0);
+			msg.writeByte(0x0D);
+			msg.writeByte(0);
+
+      Wrapper_ptr output = OutputMessagePool::getOutputMessage();
+      output->write(msg.getDataBuffer(), msg.getLength());
+
 			send(output);
 			disconnect();
 			return;
 		}
-		output->writeByte(0x0C);
-		output->writeByte(0);
+		msg.writeByte(0x0C);
+		msg.writeByte(0);
 	}
 	#endif
 
@@ -108,47 +116,47 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	const std::string& motd = g_config().getString(ConfigManager::MOTD);
 	if (!motd.empty()) {
 		//Add MOTD
-		output->writeByte(CanaryLib::LoginServerMotd);
+		msg.writeByte(CanaryLib::LoginServerMotd);
 
 		std::ostringstream ss;
 		ss << g_game().getMotdNum() << "\n" << motd;
-		output->writeString(ss.str());
+		msg.writeString(ss.str());
 	}
 
 	#if GAME_FEATURE_SESSIONKEY > 0
 	//Add session key
-	output->writeByte(0x28);
-	output->writeString(accountName + "\n" + password + "\n" + token + "\n" + std::to_string(ticks));
+	msg.writeByte(0x28);
+	msg.writeString(accountName + "\n" + password + "\n" + token + "\n" + std::to_string(ticks));
 	#endif
 
 	//Add char list
-	output->writeByte(CanaryLib::LoginServerCharacterList);
+	msg.writeByte(CanaryLib::LoginServerCharacterList);
 
 	#if GAME_FEATURE_LOGIN_EXTENDED > 0
-	output->writeByte(1); // number of worlds
+	msg.writeByte(1); // number of worlds
 
-	output->writeByte(0); // world id
-	output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
-	output->writeString(g_config().getString(ConfigManager::IP));
-	output->write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
-	output->writeByte(0);
+	msg.writeByte(0); // world id
+	msg.writeString(g_config().getString(ConfigManager::SERVER_NAME));
+	msg.writeString(g_config().getString(ConfigManager::IP));
+	msg.write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
+	msg.writeByte(0);
 
 	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
-	output->writeByte(size);
+	msg.writeByte(size);
 	for (uint8_t i = 0; i < size; i++) {
-		output->writeByte(0);
-		output->writeString(account.characters[i]);
+		msg.writeByte(0);
+		msg.writeString(account.characters[i]);
 	}
 	#else
 	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
-	output->writeByte(size);
+	msg.writeByte(size);
 	for (uint8_t i = 0; i < size; i++) {
-		output->writeString(account.characters[i]);
-		output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
-		output->write<uint32_t>(serverIp);
-		output->write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
+		msg.writeString(account.characters[i]);
+		msg.writeString(g_config().getString(ConfigManager::SERVER_NAME));
+		msg.write<uint32_t>(serverIp);
+		msg.write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
 		#if GAME_FEATURE_PREVIEW_STATE > 0
-		output->writeByte(0);
+		msg.writeByte(0);
 		#endif
 	}
 	#endif
@@ -156,22 +164,25 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	//Add premium days
 	#if GAME_FEATURE_LOGIN_PREMIUM_TIMESTAMP > 0
 	#if GAME_FEATURE_LOGIN_PREMIUM_TYPE > 0
-	output->writeByte(0);
+	msg.writeByte(0);
 	#endif
 	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
-		output->writeByte(1);
-		output->write<uint32_t>(0);
+		msg.writeByte(1);
+		msg.write<uint32_t>(0);
 	} else {
-		output->writeByte(account.premiumDays > 0 ? 1 : 0);
-		output->write<uint32_t>(time(nullptr) + (account.premiumDays * 86400));
+		msg.writeByte(account.premiumDays > 0 ? 1 : 0);
+		msg.write<uint32_t>(time(nullptr) + (account.premiumDays * 86400));
 	}
 	#else
 	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
-		output->write<uint16_t>(0xFFFF); //client displays free premium
+		msg.write<uint16_t>(0xFFFF); //client displays free premium
 	} else {
-		output->write<uint16_t>(account.premiumDays);
+		msg.write<uint16_t>(account.premiumDays);
 	}
 	#endif
+
+  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
+  output->write(msg.getDataBuffer(), msg.getLength());
 
 	send(output);
 

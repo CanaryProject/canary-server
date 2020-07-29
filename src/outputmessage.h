@@ -58,7 +58,7 @@ class OutputMessagePool
 		void sendAll();
 		void scheduleSendAll();
 
-		static OutputMessage_ptr getOutputMessage();
+		static Wrapper_ptr getOutputMessage();
 
 		void addProtocolToAutosend(Protocol_ptr protocol);
 		void removeProtocolFromAutosend(const Protocol_ptr& protocol);

@@ -83,7 +83,7 @@ void ProtocolStatus::onRecvFirstMessage(NetworkMessage& msg)
 
 void ProtocolStatus::sendStatusString()
 {
-	auto output = OutputMessagePool::getOutputMessage();
+  CanaryLib::NetworkMessage msg;
 
 	setRawMessages(true);
 
@@ -145,79 +145,86 @@ void ProtocolStatus::sendStatusString()
 	doc.save(ss, "", pugi::format_raw);
 
 	std::string data = ss.str();
-	output->write(data.c_str(), data.size());
+	msg.write(data.c_str(), data.size());
+
+  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
+  output->write(msg.getDataBuffer(), msg.getLength());
 	send(output);
 	disconnect();
 }
 
 void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& characterName)
 {
-	auto output = OutputMessagePool::getOutputMessage();
+  CanaryLib::NetworkMessage msg;
 
 	if (requestedInfo & REQUEST_BASIC_SERVER_INFO) {
-		output->writeByte(0x10);
-		output->writeString(g_config().getString(ConfigManager::SERVER_NAME));
-		output->writeString(g_config().getString(ConfigManager::IP));
-		output->writeString(std::to_string(g_config().getNumber(ConfigManager::LOGIN_PORT)));
+		msg.writeByte(0x10);
+		msg.writeString(g_config().getString(ConfigManager::SERVER_NAME));
+		msg.writeString(g_config().getString(ConfigManager::IP));
+		msg.writeString(std::to_string(g_config().getNumber(ConfigManager::LOGIN_PORT)));
 	}
 
 	if (requestedInfo & REQUEST_OWNER_SERVER_INFO) {
-		output->writeByte(0x11);
-		output->writeString(g_config().getString(ConfigManager::OWNER_NAME));
-		output->writeString(g_config().getString(ConfigManager::OWNER_EMAIL));
+		msg.writeByte(0x11);
+		msg.writeString(g_config().getString(ConfigManager::OWNER_NAME));
+		msg.writeString(g_config().getString(ConfigManager::OWNER_EMAIL));
 	}
 
 	if (requestedInfo & REQUEST_MISC_SERVER_INFO) {
-		output->writeByte(0x12);
-		output->writeString(g_config().getString(ConfigManager::MOTD));
-		output->writeString(g_config().getString(ConfigManager::LOCATION));
-		output->writeString(g_config().getString(ConfigManager::URL));
-		output->write<uint64_t>((OTSYS_TIME() - ProtocolStatus::start) / 1000);
+		msg.writeByte(0x12);
+		msg.writeString(g_config().getString(ConfigManager::MOTD));
+		msg.writeString(g_config().getString(ConfigManager::LOCATION));
+		msg.writeString(g_config().getString(ConfigManager::URL));
+		msg.write<uint64_t>((OTSYS_TIME() - ProtocolStatus::start) / 1000);
 	}
 
 	if (requestedInfo & REQUEST_PLAYERS_INFO) {
-		output->writeByte(0x20);
-		output->write<uint32_t>(g_game().getPlayersOnline());
-		output->write<uint32_t>(g_config().getNumber(ConfigManager::MAX_PLAYERS));
-		output->write<uint32_t>(g_game().getPlayersRecord());
+		msg.writeByte(0x20);
+		msg.write<uint32_t>(g_game().getPlayersOnline());
+		msg.write<uint32_t>(g_config().getNumber(ConfigManager::MAX_PLAYERS));
+		msg.write<uint32_t>(g_game().getPlayersRecord());
 	}
 
 	if (requestedInfo & REQUEST_MAP_INFO) {
-		output->writeByte(0x30);
-		output->writeString(g_config().getString(ConfigManager::MAP_NAME));
-		output->writeString(g_config().getString(ConfigManager::MAP_AUTHOR));
+		msg.writeByte(0x30);
+		msg.writeString(g_config().getString(ConfigManager::MAP_NAME));
+		msg.writeString(g_config().getString(ConfigManager::MAP_AUTHOR));
 		uint32_t mapWidth, mapHeight;
 		g_game().getMapDimensions(mapWidth, mapHeight);
-		output->write<uint16_t>(mapWidth);
-		output->write<uint16_t>(mapHeight);
+		msg.write<uint16_t>(mapWidth);
+		msg.write<uint16_t>(mapHeight);
 	}
 
 	if (requestedInfo & REQUEST_EXT_PLAYERS_INFO) {
-		output->writeByte(0x21); // players info - online players list
+		msg.writeByte(0x21); // players info - online players list
 
 		const auto& players = g_game().getPlayers();
-		output->write<uint32_t>(players.size());
+		msg.write<uint32_t>(players.size());
 		for (const auto& it : players) {
-			output->writeString(it.second->getName());
-			output->write<uint32_t>(it.second->getLevel());
+			msg.writeString(it.second->getName());
+			msg.write<uint32_t>(it.second->getLevel());
 		}
 	}
 
 	if (requestedInfo & REQUEST_PLAYER_STATUS_INFO) {
-		output->writeByte(0x22); // players info - online status info of a player
+		msg.writeByte(0x22); // players info - online status info of a player
 		if (g_game().getPlayerByName(characterName) != nullptr) {
-			output->writeByte(0x01);
+			msg.writeByte(0x01);
 		} else {
-			output->writeByte(0x00);
+			msg.writeByte(0x00);
 		}
 	}
 
 	if (requestedInfo & REQUEST_SERVER_SOFTWARE_INFO) {
-		output->writeByte(0x23); // server software info
-		output->writeString(STATUS_SERVER_NAME);
-		output->writeString(STATUS_SERVER_VERSION);
-		output->writeString(std::to_string(CLIENT_VERSION_UPPER) + "." + std::to_string(CLIENT_VERSION_LOWER));
+		msg.writeByte(0x23); // server software info
+		msg.writeString(STATUS_SERVER_NAME);
+		msg.writeString(STATUS_SERVER_VERSION);
+		msg.writeString(std::to_string(CLIENT_VERSION_UPPER) + "." + std::to_string(CLIENT_VERSION_LOWER));
 	}
+
+  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
+  output->write(msg.getDataBuffer(), msg.getLength());
+
 	send(output);
 	disconnect();
 }

@@ -143,10 +143,13 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 			ss << "Too many players online.\nYou are at place "
 			   << currentSlot << " on the waiting list.";
 
-			auto output = OutputMessagePool::getOutputMessage();
-			output->writeByte(0x16);
-			output->writeString(ss.str());
-			output->writeByte(static_cast<uint8_t>(retryTime));
+			CanaryLib::NetworkMessage msg;
+			msg.writeByte(0x16);
+			msg.writeString(ss.str());
+			msg.writeByte(static_cast<uint8_t>(retryTime));
+
+      Wrapper_ptr output = OutputMessagePool::getOutputMessage();
+      output->write(msg.getDataBuffer(), msg.getLength());
 			send(output);
 			disconnect();
 			return;
@@ -400,38 +403,46 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 
 void ProtocolGame::onConnect()
 {
-	auto output = OutputMessagePool::getOutputMessage();
+	CanaryLib::NetworkMessage msg;
 	static std::random_device rd;
 	static std::ranlux24 generator(rd());
 	static std::uniform_int_distribution<uint16_t> randNumber(0x00, 0xFF);
 
 	// Skip checksum
-	output->skip(sizeof(uint32_t));
+	msg.skip(sizeof(uint32_t));
 
 	// Packet length & type
-	output->write<uint16_t>(0x0006);
-	output->writeByte(0x1F);
+	msg.write<uint16_t>(0x0006);
+	msg.writeByte(0x1F);
 
 	// Add timestamp & random number
 	challengeTimestamp = static_cast<uint32_t>(time(nullptr));
-	output->write<uint32_t>(challengeTimestamp);
+	msg.write<uint32_t>(challengeTimestamp);
 
 	challengeRandom = randNumber(generator);
-	output->writeByte(challengeRandom);
+	msg.writeByte(challengeRandom);
 
 	// Go back and write checksum
-	output->skip(-12);
-	output->write<uint32_t>(NetworkMessage::getChecksum(output->getOutputBuffer() + sizeof(uint32_t), 8));
+	msg.skip(-12);
+	msg.write<uint32_t>(NetworkMessage::getChecksum(msg.getOutputBuffer() + sizeof(uint32_t), 8));
 
+  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
+  output->write(msg.getDataBuffer(), msg.getLength());
 	send(output);
 }
 
 void ProtocolGame::disconnectClient(const std::string& message) const
 {
-	auto output = OutputMessagePool::getOutputMessage();
-	output->writeByte(0x14);
-	output->writeString(message);
+	CanaryLib::NetworkMessage msg;
+	msg.writeByte(0x14);
+	msg.writeString(message);
+
+  spdlog::critical("{}", message);
+
+  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
+  output->write(msg.getDataBuffer(), msg.getLength());
 	send(output);
+  
 	disconnect();
 }
 
@@ -442,8 +453,8 @@ void ProtocolGame::writeToOutputBuffer()
 
 void ProtocolGame::writeToOutputBuffer(NetworkMessage& msg)
 {
-	auto out = getOutputBuffer(playermsg.getLength());
-	out->append(playermsg);
+	Wrapper_ptr output = getOutputBuffer(msg.getLength());
+	output->write(msg.getDataBuffer(), msg.getLength(), true);
 }
 
 void ProtocolGame::parsePacket(NetworkMessage& msg)

@@ -36,7 +36,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 
 		virtual void parsePacket(NetworkMessage&) {}
 
-		virtual void onSendMessage(const OutputMessage_ptr& msg);
+		virtual void onSendMessage(const Wrapper_ptr& wrapper);
 		bool onRecvMessage(NetworkMessage& msg);
 		virtual void onRecvFirstMessage(NetworkMessage& msg) = 0;
 		virtual void onConnect() {}
@@ -52,15 +52,15 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		uint32_t getIP() const;
 
 		//Use this function for autosend messages only
-		OutputMessage_ptr getOutputBuffer(int32_t size);
+		Wrapper_ptr getOutputBuffer(int32_t size);
 
-		OutputMessage_ptr& getCurrentBuffer() {
+		Wrapper_ptr& getCurrentBuffer() {
 			return outputBuffer;
 		}
 
-		void send(OutputMessage_ptr msg) const {
+		void send(Wrapper_ptr wrapper) const {
 			if (auto connection = getConnection()) {
-				connection->send(msg);
+				connection->send(wrapper);
 			}
 		}
 
@@ -93,7 +93,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 
 		friend class Connection;
 
-		OutputMessage_ptr outputBuffer;
+		Wrapper_ptr outputBuffer;
 		std::unique_ptr<z_stream> defStream;
 
 		const ConnectionWeak_ptr connection;

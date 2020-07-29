@@ -32,26 +32,21 @@ Protocol::~Protocol()
 	}
 }
 
-void Protocol::onSendMessage(const OutputMessage_ptr& msg)
+void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
 {
 	if (!rawMessages) {
 		uint32_t _compression = 0;
-		if (compreesionEnabled && msg->getLength() >= 128) {
-			if (compression(*msg)) {
-				_compression = (1U << 31);
-			}
+		if (compreesionEnabled && wrapper->size() >= 128) {
+			// if (compression(*wrapper)) {
+			// 	_compression = (1U << 31);
+			// }
 		}
-
-		msg->writeMessageLength();
 
 		if (encryptionEnabled) {
-      msg->encryptXTEA(xtea);
-      if (checksumMethod == CanaryLib::CHECKSUM_METHOD_ADLER32) {
-        msg->writeChecksum();
-      }
-      // write encrypted length
-      msg->writeMessageLength();
-		}
+      wrapper->encryptXTEA(xtea);
+    }
+
+    wrapper->serialize();
   }
 }
 
@@ -76,12 +71,12 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 	return true;
 }
 
-OutputMessage_ptr Protocol::getOutputBuffer(int32_t size)
+Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 {
 	//dispatcher thread
 	if (!outputBuffer) {
 		outputBuffer = OutputMessagePool::getOutputMessage();
-	} else if ((outputBuffer->getLength() + size) > CanaryLib::MAX_PROTOCOL_BODY_LENGTH) {
+	} else if ((outputBuffer->size() + size) > CanaryLib::MAX_PROTOCOL_BODY_LENGTH) {
 		send(outputBuffer);
 		outputBuffer = OutputMessagePool::getOutputMessage();
 	}

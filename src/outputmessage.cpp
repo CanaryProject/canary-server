@@ -36,9 +36,9 @@ void OutputMessagePool::sendAll()
 {
 	//dispatcher thread
 	for (auto& protocol : bufferedProtocols) {
-		auto& msg = protocol->getCurrentBuffer();
-		if (msg) {
-			protocol->send(std::move(msg));
+		auto& wrapper = protocol->getCurrentBuffer();
+		if (wrapper) {
+			protocol->send(std::move(wrapper));
 		}
 	}
 
@@ -66,9 +66,9 @@ void OutputMessagePool::removeProtocolFromAutosend(const Protocol_ptr& protocol)
 	}
 }
 
-OutputMessage_ptr OutputMessagePool::getOutputMessage()
+Wrapper_ptr OutputMessagePool::getOutputMessage()
 {
 	// LockfreePoolingAllocator<void,...> will leave (void* allocate) ill-formed because
 	// of sizeof(T), so this guaranatees that only one list will be initialized
-	return std::allocate_shared<OutputMessage>(LockfreePoolingAllocator<void, OUTPUTMESSAGE_FREE_LIST_CAPACITY>());
+	return std::allocate_shared<Wrapper>(LockfreePoolingAllocator<void, OUTPUTMESSAGE_FREE_LIST_CAPACITY>());
 }

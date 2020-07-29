@@ -325,7 +325,7 @@ void Connection::resumeWork()
 	}
 }
 
-void Connection::send(const OutputMessage_ptr& msg)
+void Connection::send(const Wrapper_ptr& wrapper)
 {
 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
 	if (connectionState == CONNECTION_STATE_CLOSED) {
@@ -333,7 +333,7 @@ void Connection::send(const OutputMessage_ptr& msg)
 	}
 
 	bool noPendingWrite = messageQueue.empty();
-	messageQueue.emplace_back(msg);
+	messageQueue.emplace_back(wrapper);
 	if (noPendingWrite) {
 		// Make asio thread handle xtea encryption instead of dispatcher
 		try {
@@ -354,24 +354,24 @@ void Connection::internalWorker()
 {
 	std::unique_lock<std::recursive_mutex> lockClass(connectionLock);
 	if (!messageQueue.empty()) {
-		const OutputMessage_ptr& msg = messageQueue.front();
+		const Wrapper_ptr& wrapper = messageQueue.front();
 		lockClass.unlock();
-		protocol->onSendMessage(msg);
+		protocol->onSendMessage(wrapper);
 		lockClass.lock();
-		internalSend(msg);
+		internalSend(wrapper);
 	} else if (connectionState == CONNECTION_STATE_CLOSED) {
 		closeSocket();
 	}
 }
 
-void Connection::internalSend(const OutputMessage_ptr& msg)
+void Connection::internalSend(const Wrapper_ptr& wrapper)
 {
 	try {
 		writeTimer.expires_from_now(boost::posix_time::seconds(CONNECTION_WRITE_TIMEOUT));
 		writeTimer.async_wait(std::bind(&Connection::handleTimeout, std::weak_ptr<Connection>(shared_from_this()), std::placeholders::_1));
 
 		boost::asio::async_write(socket,
-		                         boost::asio::buffer(msg->getOutputBuffer(), msg->getLength()),
+		                         boost::asio::buffer(wrapper->buffer(), wrapper->outputSize()),
 		                         std::bind(&Connection::onWriteOperation, shared_from_this(), std::placeholders::_1));
 	} catch (boost::system::system_error& e) {
 		std::cout << "[Network error - Connection::internalSend] " << e.what() << std::endl;

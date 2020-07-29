@@ -30,7 +30,6 @@ static constexpr int32_t CONNECTION_READ_TIMEOUT = 30;
 class Protocol;
 using Protocol_ptr = std::shared_ptr<Protocol>;
 class OutputMessage;
-using OutputMessage_ptr = std::shared_ptr<OutputMessage>;
 class Connection;
 using Connection_ptr = std::shared_ptr<Connection>;
 using ConnectionWeak_ptr = std::weak_ptr<Connection>;
@@ -39,6 +38,9 @@ using Service_ptr = std::shared_ptr<ServiceBase>;
 class ServicePort;
 using ServicePort_ptr = std::shared_ptr<ServicePort>;
 using ConstServicePort_ptr = std::shared_ptr<const ServicePort>;
+
+using Wrapper = CanaryLib::FlatbuffersWrapper;
+using Wrapper_ptr = std::shared_ptr<Wrapper>;
 
 class ConnectionManager
 {
@@ -92,7 +94,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 		void accept();
 
 		void resumeWork();
-		void send(const OutputMessage_ptr& msg);
+		void send(const Wrapper_ptr& wrapper);
 
 		uint32_t getIP();
 
@@ -107,7 +109,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 
 		void closeSocket();
 		void internalWorker();
-		void internalSend(const OutputMessage_ptr& msg);
+		void internalSend(const Wrapper_ptr& wrapper);
 
 		boost::asio::ip::tcp::socket& getSocket() {
 			return socket;
@@ -121,7 +123,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 
 		std::recursive_mutex connectionLock;
 
-		std::list<OutputMessage_ptr> messageQueue;
+		std::list<Wrapper_ptr> messageQueue;
 
 		ConstServicePort_ptr service_port;
 		Protocol_ptr protocol;
