@@ -408,11 +408,6 @@ void ProtocolGame::onConnect()
 	static std::ranlux24 generator(rd());
 	static std::uniform_int_distribution<uint16_t> randNumber(0x00, 0xFF);
 
-	// Skip checksum
-	msg.skip(sizeof(uint32_t));
-
-	// Packet length & type
-	msg.write<uint16_t>(0x0006);
 	msg.writeByte(0x1F);
 
 	// Add timestamp & random number
@@ -421,10 +416,6 @@ void ProtocolGame::onConnect()
 
 	challengeRandom = randNumber(generator);
 	msg.writeByte(challengeRandom);
-
-	// Go back and write checksum
-	msg.skip(-12);
-	msg.write<uint32_t>(NetworkMessage::getChecksum(msg.getOutputBuffer() + sizeof(uint32_t), 8));
 
   Wrapper_ptr output = OutputMessagePool::getOutputMessage();
   output->write(msg.getDataBuffer(), msg.getLength());
@@ -436,8 +427,6 @@ void ProtocolGame::disconnectClient(const std::string& message) const
 	CanaryLib::NetworkMessage msg;
 	msg.writeByte(0x14);
 	msg.writeString(message);
-
-  spdlog::critical("{}", message);
 
   Wrapper_ptr output = OutputMessagePool::getOutputMessage();
   output->write(msg.getDataBuffer(), msg.getLength());
