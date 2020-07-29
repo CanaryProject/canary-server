@@ -80,7 +80,6 @@ Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 	} else if ((outputBuffer->size() + size) > CanaryLib::MAX_PROTOCOL_BODY_LENGTH) {
 		send(outputBuffer);
 		outputBuffer = OutputMessagePool::getOutputMessage();
-    outputBuffer->reset();
 	}
 	return outputBuffer;
 }
