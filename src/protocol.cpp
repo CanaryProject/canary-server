@@ -42,7 +42,6 @@ void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
 			// }
 		}
 
-    spdlog::critical("{}", encryptionEnabled);
 		if (encryptionEnabled) {
       wrapper->encryptXTEA(xtea);
     }
