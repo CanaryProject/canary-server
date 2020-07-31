@@ -47,7 +47,7 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 		if (auto protocol = protocolWeak.lock()) {
 			if (auto connection = protocol->getConnection()) {
 				protocol->parsePacket(msg);
-				connection->resumeWork();
+				connection->recv();
 			}
 		}
 	};

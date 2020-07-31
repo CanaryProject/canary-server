@@ -104,7 +104,7 @@ void Connection::accept(Protocol_ptr protocol /* = nullptr */)
 	  this->protocol = protocol;
 	  g_dispatcher().addTask(std::bind(&Protocol::onConnect, protocol));
   }
-  resumeWork(true);
+  recv(true);
 }
 
 void Connection::parseHeader(const boost::system::error_code& error)
@@ -117,8 +117,9 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		return;
 	}
 
-	uint32_t timePassed = std::max<uint32_t>(1, (time(nullptr) - timeConnected) + 1);
-	if ((++packetsSent / timePassed) > static_cast<uint32_t>(g_config().getNumber(ConfigManager::MAX_PACKETS_PER_SECOND))) {
+	uint32_t packetsPerSec = (++packetsSent / std::max<uint32_t>(1, (time(nullptr) - timeConnected) + 1));
+  uint32_t packetsPerSecMax = static_cast<uint32_t>(g_config().getNumber(ConfigManager::MAX_PACKETS_PER_SECOND));
+	if (packetsPerSec > packetsPerSecMax) {
     spdlog::warn("{} disconnected for exceeding packet per second limit.", convertIPToString(getIP()));
 		close();
 		return;
@@ -139,12 +140,19 @@ void Connection::parseHeader(const boost::system::error_code& error)
 
 	try {
 		readTimer.expires_from_now(boost::posix_time::seconds(CONNECTION_READ_TIMEOUT));
-		readTimer.async_wait(std::bind(&Connection::handleTimeout, std::weak_ptr<Connection>(shared_from_this()), std::placeholders::_1));
+		readTimer.async_wait(
+      std::bind(
+        &Connection::handleTimeout, 
+        std::weak_ptr<Connection>(shared_from_this()), 
+        std::placeholders::_1
+    ));
 
 		// Read packet content
-		boost::asio::async_read(socket,
-		                        boost::asio::buffer(m_inputStream.prepare(size)),
-		                        std::bind(&Connection::parsePacket, shared_from_this(), std::placeholders::_1));
+		boost::asio::async_read(
+      socket,
+      boost::asio::buffer(m_inputStream.prepare(size)),
+      std::bind(&Connection::parsePacket, shared_from_this(), std::placeholders::_1)
+    );
 	} catch (boost::system::system_error& e) {
     spdlog::error("[Connection::parseHeader]: Network error during header reading - {}", e.what());
 		close(FORCE_CLOSE);
@@ -165,52 +173,63 @@ void Connection::parsePacket(const boost::system::error_code& error)
 
   // validate checksum
   bool checksummed = inputWrapper.readChecksum();
+  
   inputWrapper.deserialize();
   
   if (protocol && protocol->encryptionEnabled) {
     inputWrapper.decryptXTEA(protocol->xtea);
   }
-  
+
   NetworkMessage msg;
   msg.write(inputWrapper.body(), inputWrapper.msgSize(), CanaryLib::MESSAGE_OPERATION_PEEK);
 
-	if (!receivedFirst) {
-		// First message received
-		receivedFirst = true;
-
-		if (!protocol) {
-			// Game protocol has already been created at this point
-			protocol = service_port->make_protocol(checksummed, msg, shared_from_this());
-			if (!protocol) {
-				close(FORCE_CLOSE);
-				return;
-			}
-		} else {
-			msg.skip(1);    // Skip protocol ID
-		}
+	if (!protocol) {
+    // Game protocol has already been created at this point
+    protocol = service_port->make_protocol(checksummed, msg, shared_from_this());
+    if (!protocol) {
+      close(FORCE_CLOSE);
+      return;
+    }
+	} 
+  
+  // if non-encrypted then its first message
+  if (!protocol->encryptionEnabled){
+    // we want to skip the first byte (protocol identification) from now on
+    // since its only useful if the protocol is undefined
+    msg.setBufferPosition(1);
 		protocol->onRecvFirstMessage(msg);
-	} else if (checksummed) {
+  } else if (checksummed) {
     protocol->onRecvMessage(msg);
     return;
-	}
+  }
 
-  resumeWork(true);
+  // reading loop
+  recv(true);
 }
 
-void Connection::resumeWork(bool checkTimer)
+void Connection::recv(bool checkTimer)
 {
 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
 
 	try {
     if (checkTimer) {
       readTimer.expires_from_now(boost::posix_time::seconds(CONNECTION_READ_TIMEOUT));
-      readTimer.async_wait(std::bind(&Connection::handleTimeout, std::weak_ptr<Connection>(shared_from_this()), std::placeholders::_1));
+      readTimer.async_wait(
+        std::bind(
+          &Connection::handleTimeout, 
+          std::weak_ptr<Connection>(shared_from_this()), 
+          std::placeholders::_1
+      ));
     }
 
 		// Wait to the next packet
-		boost::asio::async_read(socket, boost::asio::buffer(m_inputStream.prepare(CanaryLib::WRAPPER_HEADER_SIZE)), std::bind(&Connection::parseHeader, shared_from_this(), std::placeholders::_1));
+		boost::asio::async_read(
+      socket, 
+      boost::asio::buffer(m_inputStream.prepare(CanaryLib::WRAPPER_HEADER_SIZE)), 
+      std::bind(&Connection::parseHeader, shared_from_this(), std::placeholders::_1)
+    );
 	} catch (boost::system::system_error& e) {
-    spdlog::error("[Connection::resumeWork]: Network error during reading - {}", e.what());
+    spdlog::error("[Connection::recv]: Network error during reading - {}", e.what());
 		close(FORCE_CLOSE);
 	}
 }
@@ -252,11 +271,17 @@ void Connection::internalSend(const Wrapper_ptr& wrapper)
 {
 	try {
 		writeTimer.expires_from_now(boost::posix_time::seconds(CONNECTION_WRITE_TIMEOUT));
-		writeTimer.async_wait(std::bind(&Connection::handleTimeout, std::weak_ptr<Connection>(shared_from_this()), std::placeholders::_1));
+		writeTimer.async_wait(
+      std::bind(
+        &Connection::handleTimeout, 
+        std::weak_ptr<Connection>(shared_from_this()), 
+        std::placeholders::_1
+    ));
 
 		boost::asio::async_write(socket,
-		                         boost::asio::buffer(wrapper->buffer(), wrapper->outputSize()),
-		                         std::bind(&Connection::onWriteOperation, shared_from_this(), std::placeholders::_1));
+      boost::asio::buffer(wrapper->buffer(), wrapper->outputSize()),
+      std::bind(&Connection::onWriteOperation, shared_from_this(), std::placeholders::_1)
+    );
 	} catch (boost::system::system_error& e) {
 		std::cout << "[Network error - Connection::internalSend] " << e.what() << std::endl;
 		close(FORCE_CLOSE);

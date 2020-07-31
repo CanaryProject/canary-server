@@ -87,7 +87,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     void onRecv(const boost::system::error_code& error, size_t recvSize);
 
-		void resumeWork(bool checkTimer = false);
+		void recv(bool checkTimer = false);
 		void send(const Wrapper_ptr& wrapper);
 
 		uint32_t getIP();
@@ -125,8 +125,6 @@ class Connection : public std::enable_shared_from_this<Connection>
 		time_t timeConnected;
 		uint32_t packetsSent = 0;
 
-		bool receivedFirst = false;
-    
     boost::asio::streambuf m_inputStream;
     Wrapper inputWrapper;
 };
