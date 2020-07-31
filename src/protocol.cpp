@@ -52,10 +52,6 @@ void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
 
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
-	if (encryptionEnabled && !msg.decryptXTEA(xtea, CanaryLib::CHECKSUM_METHOD_SEQUENCE)) {
-		return false;
-	}
-
 	using ProtocolWeak_ptr = std::weak_ptr<Protocol>;
 	ProtocolWeak_ptr protocolWeak = std::weak_ptr<Protocol>(shared_from_this());
 

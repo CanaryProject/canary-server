@@ -274,10 +274,10 @@ void Connection::parsePacket(const boost::system::error_code& error)
   inputWrapper.deserialize();
   
   msg.reset();
-  msg.write(inputWrapper.body(), inputWrapper.msgSize(), CanaryLib::MESSAGE_OPERATION_PEEK);
 
 	bool skipReadingNextPacket = false;
 	if (!receivedFirst) {
+    msg.write(inputWrapper.body(), inputWrapper.msgSize(), CanaryLib::MESSAGE_OPERATION_PEEK);
 		// First message received
 		receivedFirst = true;
 
@@ -294,6 +294,9 @@ void Connection::parsePacket(const boost::system::error_code& error)
 
 		protocol->onRecvFirstMessage(msg);
 	} else {
+    inputWrapper.decryptXTEA(protocol->xtea);
+    msg.write(inputWrapper.body(), inputWrapper.msgSize(), CanaryLib::MESSAGE_OPERATION_PEEK);
+    
     if (!checksummed) {
       skipReadingNextPacket = false;
     } else {
