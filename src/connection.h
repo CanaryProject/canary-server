@@ -93,6 +93,8 @@ class Connection : public std::enable_shared_from_this<Connection>
 		void accept(Protocol_ptr protocol);
 		void accept();
 
+    void onRecv(const boost::system::error_code& error, size_t recvSize);
+
 		void resumeWork();
 		void send(const Wrapper_ptr& wrapper);
 
@@ -135,6 +137,9 @@ class Connection : public std::enable_shared_from_this<Connection>
 
 		std::underlying_type<ConnectionState_t>::type connectionState = CONNECTION_STATE_OPEN;
 		bool receivedFirst = false;
+    
+    boost::asio::streambuf m_inputStream;
+    Wrapper inputWrapper;
 };
 
 #endif

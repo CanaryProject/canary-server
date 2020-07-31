@@ -76,9 +76,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		void setupXTEA(const uint32_t* key) {
       xtea.setKey(key);
 		}
-		void setChecksumMethod(CanaryLib::ChecksumMethods_t method) {
-			checksumMethod = method;
-		}
 		void enableCompression();
 		static bool decryptRSA(NetworkMessage& msg);
 
@@ -100,7 +97,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		CanaryLib::XTEA xtea;
 		uint32_t serverSequenceNumber = 0;
 		uint32_t clientSequenceNumber = 0;
-	  CanaryLib::ChecksumMethods_t checksumMethod = CanaryLib::CHECKSUM_METHOD_NONE;
 		bool encryptionEnabled = false;
 		bool rawMessages = false;
 		bool compreesionEnabled = false;

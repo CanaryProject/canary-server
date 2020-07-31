@@ -52,7 +52,7 @@ void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
 
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
-	if (encryptionEnabled && !msg.decryptXTEA(xtea, checksumMethod)) {
+	if (encryptionEnabled && !msg.decryptXTEA(xtea, CanaryLib::CHECKSUM_METHOD_SEQUENCE)) {
 		return false;
 	}
 
@@ -85,7 +85,7 @@ Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 
 bool Protocol::decryptRSA(NetworkMessage& msg)
 {
-	if ((msg.getLength() - msg.getBufferPosition()) < 128) {
+	if ((msg.getLength() - msg.getBufferPosition() + CanaryLib::MAX_HEADER_SIZE) < 128) {
 		return false;
 	}
 

@@ -279,27 +279,8 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 		return;
 	}
 
-	OperatingSystem_t operatingSystem = static_cast<OperatingSystem_t>(msg.readByte());
-	OperatingSystem_t TFCoperatingSystem = static_cast<OperatingSystem_t>(msg.readByte());
-	msg.read<uint16_t>();
-  
-  setChecksumMethod(CanaryLib::CHECKSUM_METHOD_ADLER32);
-
-	#if GAME_FEATURE_CLIENT_VERSION > 0
-	msg.skip(4);
-	#endif
-	#if GAME_FEATURE_CONTENT_REVISION > 0
-	msg.skip(2);
-	#endif
-	#if GAME_FEATURE_PREVIEW_STATE > 0
-	msg.skip(1);
-	#endif
-	#if GAME_FEATURE_CLIENT_VERSION > 0
-	// if (msg.getLength() - msg.getBufferPosition() > 128) {
-	// 	addExivaRestrictions = true;
-	// 	msg.skip(1);
-	// }
-	#endif
+	OperatingSystem_t operatingSystem = static_cast<OperatingSystem_t>(msg.read<uint16_t>());
+	OperatingSystem_t TFCoperatingSystem = OperatingSystem_t::CLIENTOS_NONE;
 
 	if (!decryptRSA(msg)) {
 		disconnect();
@@ -316,8 +297,6 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 		disconnectClient("OTClientV8 extended features are not supported on this server.");
 		return;
 	}
-
-	msg.skip(1); // gamemaster flag
 
 	#if GAME_FEATURE_SESSIONKEY > 0
 	std::string sessionKey = msg.readString();
@@ -344,20 +323,6 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	}
 
 	std::string characterName = msg.readString();
-	#else
-	#if GAME_FEATURE_ACCOUNT_NAME > 0
-	std::string accountName = msg.readString();
-	#else
-	std::string accountName = std::to_string(msg.read<uint32_t>());
-	#endif
-
-	std::string characterName = msg.readString();
-	std::string password = msg.readString();
-	#if GAME_FEATURE_AUTHENTICATOR > 0
-	// should we even try implementing pre sessionkey tokens?
-	// it is only for 10.72 and 10.73 and we don't have timestamp
-	msg.readString();
-	#endif
 	#endif
 
 	if (characterName.empty() || characterName.size() > NETWORKMESSAGE_PLAYERNAME_MAXLENGTH) {

@@ -116,7 +116,7 @@ void Connection::accept(Protocol_ptr protocol)
 
 		// Read header bytes to identify if it is proxy identification
 		boost::asio::async_read(socket,
-								boost::asio::buffer(msg.getBuffer(), CanaryLib::HEADER_LENGTH),
+		                        boost::asio::buffer(m_inputStream.prepare(CanaryLib::WRAPPER_HEADER_SIZE)),
 								std::bind(&Connection::parseProxyIdentification, shared_from_this(), std::placeholders::_1));
 	}
 	catch (boost::system::system_error& e) {
@@ -134,7 +134,7 @@ void Connection::accept()
 
 		// Read size of the first packet
 		boost::asio::async_read(socket,
-		                        boost::asio::buffer(msg.getBuffer(), CanaryLib::HEADER_LENGTH),
+		                        boost::asio::buffer(m_inputStream.prepare(CanaryLib::WRAPPER_HEADER_SIZE)),
 		                        std::bind(&Connection::parseHeader, shared_from_this(), std::placeholders::_1));
 	} catch (boost::system::system_error& e) {
 		std::cout << "[Network error - Connection::accept] " << e.what() << std::endl;
@@ -154,10 +154,11 @@ void Connection::parseProxyIdentification(const boost::system::error_code& error
 		return;
 	}
 
-	uint8_t* msgBuffer = msg.getBuffer();
+	const uint8_t* msgBuffer = boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data());
 	std::string serverName = g_config().getString(ConfigManager::SERVER_NAME) + "\n";
+  m_inputStream.consume(CanaryLib::WRAPPER_HEADER_SIZE);
 	if (connectionState == CONNECTION_STATE_IDENTIFYING) {
-		if (msgBuffer[1] == 0x00 || strncasecmp(reinterpret_cast<char*>(msgBuffer), &serverName[0], 2) != 0) {
+		if (msgBuffer[1] == 0x00 || strncasecmp(reinterpret_cast<const char*>(msgBuffer), &serverName[0], 2) != 0) {
 			//Probably not proxy identification so let's try standard parsing method
 			connectionState = CONNECTION_STATE_OPEN;
 			parseHeader(error);
@@ -172,7 +173,7 @@ void Connection::parseProxyIdentification(const boost::system::error_code& error
 
 					// Read the remainder of proxy identification
 					boost::asio::async_read(socket,
-											boost::asio::buffer(msg.getBuffer(), remainder),
+                      boost::asio::buffer(m_inputStream.prepare(remainder)),
 											std::bind(&Connection::parseProxyIdentification, shared_from_this(), std::placeholders::_1));
 				}
 				catch (boost::system::system_error& e) {
@@ -186,7 +187,7 @@ void Connection::parseProxyIdentification(const boost::system::error_code& error
 		}
 	} else if (connectionState == CONNECTION_STATE_READINGS) {
 		size_t remainder = serverName.length()-2;
-		if (strncasecmp(reinterpret_cast<char*>(msgBuffer), &serverName[2], remainder) == 0) {
+		if (strncasecmp(reinterpret_cast<const char*>(msgBuffer), &serverName[2], remainder) == 0) {
 			connectionState = CONNECTION_STATE_OPEN;
 		} else {
 			close(FORCE_CLOSE);
@@ -200,7 +201,7 @@ void Connection::parseProxyIdentification(const boost::system::error_code& error
 
 		// Wait to the next packet
 		boost::asio::async_read(socket,
-		                        boost::asio::buffer(msg.getBuffer(), CanaryLib::HEADER_LENGTH),
+		                        boost::asio::buffer(m_inputStream.prepare(CanaryLib::WRAPPER_HEADER_SIZE)),
 		                        std::bind(&Connection::parseHeader, shared_from_this(), std::placeholders::_1));
 	} catch (boost::system::system_error& e) {
 		std::cout << "[Network error - Connection::parseProxyIdentification] " << e.what() << std::endl;
@@ -232,7 +233,9 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		packetsSent = 0;
 	}
 
-	uint16_t size = msg.getHeaderSize();
+  inputWrapper.copy(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()), true);
+	uint16_t size = inputWrapper.size();
+  m_inputStream.consume(2);
 	if (size == 0 || size > INPUTMESSAGE_MAXSIZE) {
 		close(FORCE_CLOSE);
 		return;
@@ -243,9 +246,8 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		readTimer.async_wait(std::bind(&Connection::handleTimeout, std::weak_ptr<Connection>(shared_from_this()), std::placeholders::_1));
 
 		// Read packet content
-		msg.setLength(size + CanaryLib::HEADER_LENGTH);
 		boost::asio::async_read(socket,
-								boost::asio::buffer(msg.getBody(), size),
+		                        boost::asio::buffer(m_inputStream.prepare(size)),
 		                        std::bind(&Connection::parsePacket, shared_from_this(), std::placeholders::_1));
 	} catch (boost::system::system_error& e) {
 		std::cout << "[Network error - Connection::parseHeader] " << e.what() << std::endl;
@@ -265,8 +267,14 @@ void Connection::parsePacket(const boost::system::error_code& error)
 		return;
 	}
 
+  inputWrapper.write(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()), inputWrapper.size());
+  m_inputStream.consume(inputWrapper.size());
   // validate checksum
-  bool checksummed = msg.readChecksum();
+  bool checksummed = inputWrapper.readChecksum();
+  inputWrapper.deserialize();
+  
+  msg.reset();
+  msg.write(inputWrapper.body(), inputWrapper.msgSize(), CanaryLib::MESSAGE_OPERATION_PEEK);
 
 	bool skipReadingNextPacket = false;
 	if (!receivedFirst) {
@@ -274,11 +282,6 @@ void Connection::parsePacket(const boost::system::error_code& error)
 		receivedFirst = true;
 
 		if (!protocol) {
-      // it might not have been the checksum, step back
-      if (!checksummed) {
-        msg.skip(-CanaryLib::CHECKSUM_LENGTH);
-      }
-
 			// Game protocol has already been created at this point
 			protocol = service_port->make_protocol(checksummed, msg, shared_from_this());
 			if (!protocol) {
@@ -304,7 +307,7 @@ void Connection::parsePacket(const boost::system::error_code& error)
 
 		if (!skipReadingNextPacket) {
 			// Wait to the next packet
-			boost::asio::async_read(socket, boost::asio::buffer(msg.getBuffer(), CanaryLib::HEADER_LENGTH), std::bind(&Connection::parseHeader, shared_from_this(), std::placeholders::_1));
+			boost::asio::async_read(socket, boost::asio::buffer(m_inputStream.prepare(CanaryLib::WRAPPER_HEADER_SIZE)), std::bind(&Connection::parseHeader, shared_from_this(), std::placeholders::_1));
 		}
 	} catch (boost::system::system_error& e) {
 		std::cout << "[Network error - Connection::parsePacket] " << e.what() << std::endl;
@@ -318,7 +321,7 @@ void Connection::resumeWork()
 
 	try {
 		// Wait to the next packet
-		boost::asio::async_read(socket, boost::asio::buffer(msg.getBuffer(), CanaryLib::HEADER_LENGTH), std::bind(&Connection::parseHeader, shared_from_this(), std::placeholders::_1));
+		boost::asio::async_read(socket, boost::asio::buffer(m_inputStream.prepare(CanaryLib::WRAPPER_HEADER_SIZE)), std::bind(&Connection::parseHeader, shared_from_this(), std::placeholders::_1));
 	} catch (boost::system::system_error& e) {
 		std::cout << "[Network error - Connection::parsePacket] " << e.what() << std::endl;
 		close(FORCE_CLOSE);
