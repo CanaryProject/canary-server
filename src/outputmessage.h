@@ -26,23 +26,6 @@
 
 class Protocol;
 
-class OutputMessage : public NetworkMessage
-{
-	public:
-		OutputMessage() = default;
-
-		// non-copyable
-		OutputMessage(const OutputMessage&) = delete;
-		OutputMessage& operator=(const OutputMessage&) = delete;
-
-		void append(NetworkMessage& msg) {
-			auto msgLen = msg.getLength();
-			memcpy(m_buffer + m_info.m_bufferPos, msg.getDataBuffer(), msgLen);
-			m_info.m_messageSize += msgLen;
-			m_info.m_bufferPos += msgLen;
-		}
-};
-
 class OutputMessagePool
 {
 	public:

@@ -76,7 +76,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		void setupXTEA(const uint32_t* key) {
       xtea.setKey(key);
 		}
-		void enableCompression();
 		static bool decryptRSA(NetworkMessage& msg);
 
 		void setRawMessages(bool value) {
@@ -86,8 +85,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		virtual void release() {}
 
 	private:
-		bool compression(OutputMessage& msg);
-
 		friend class Connection;
 
 		Wrapper_ptr outputBuffer;
@@ -99,7 +96,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		uint32_t clientSequenceNumber = 0;
 		bool encryptionEnabled = false;
 		bool rawMessages = false;
-		bool compreesionEnabled = false;
 };
 
 #endif

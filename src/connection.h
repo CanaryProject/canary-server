@@ -29,7 +29,6 @@ static constexpr int32_t CONNECTION_READ_TIMEOUT = 30;
 
 class Protocol;
 using Protocol_ptr = std::shared_ptr<Protocol>;
-class OutputMessage;
 class Connection;
 using Connection_ptr = std::shared_ptr<Connection>;
 using ConnectionWeak_ptr = std::weak_ptr<Connection>;

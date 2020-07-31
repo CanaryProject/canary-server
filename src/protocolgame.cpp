@@ -1515,9 +1515,9 @@ void ProtocolGame::updateCreatureData(const Creature* creature)
 	if ((regularOS >= CLIENTOS_NEW_LINUX && regularOS < CLIENTOS_OTCLIENT_LINUX) || tfcOS >= CLIENTOS_TFC_ANDROID) {
 		//Using some hack so that I'm don't need to modify AddCreature function
 		playermsg.reset();
-		playermsg.setBufferPosition(CanaryLib::MAX_HEADER_SIZE - 1);
+		playermsg.setBufferPosition(-1);
 		AddCreature(creature, false, cid);
-		playermsg.setBufferPosition(CanaryLib::MAX_HEADER_SIZE);
+		playermsg.setBufferPosition(0);
 		playermsg.writeByte(0x03);
 		playermsg.setLength(playermsg.getLength() - 2);
 		writeToOutputBuffer();

@@ -23,7 +23,6 @@
 
 #include "configmanager.h"
 #include "connection.h"
-#include "outputmessage.h"
 #include "protocol.h"
 #include "tasks.h"
 #include "server.h"
