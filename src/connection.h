@@ -38,9 +38,6 @@ class ServicePort;
 using ServicePort_ptr = std::shared_ptr<ServicePort>;
 using ConstServicePort_ptr = std::shared_ptr<const ServicePort>;
 
-using Wrapper = CanaryLib::FlatbuffersWrapper;
-using Wrapper_ptr = std::shared_ptr<Wrapper>;
-
 class ConnectionManager
 {
 	public:

@@ -117,9 +117,10 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		return;
 	}
 
-	uint32_t packetsPerSec = (++packetsSent / std::max<uint32_t>(1, (time(nullptr) - timeConnected) + 1));
-  uint32_t packetsPerSecMax = static_cast<uint32_t>(g_config().getNumber(ConfigManager::MAX_PACKETS_PER_SECOND));
-	if (packetsPerSec > packetsPerSecMax) {
+  uint32_t timePassed = std::max<uint32_t>(1, (time(nullptr) - timeConnected) + 1);
+	uint32_t packetsRatio = (++packetsSent / timePassed);
+  uint32_t packetsRatioMax = static_cast<uint32_t>(g_config().getNumber(ConfigManager::MAX_PACKETS_PER_SECOND));
+	if (packetsRatio > packetsRatioMax) {
     spdlog::warn("{} disconnected for exceeding packet per second limit.", convertIPToString(getIP()));
 		close();
 		return;

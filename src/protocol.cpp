@@ -29,13 +29,14 @@ Protocol::~Protocol(){}
 
 void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
 {
-	if (!rawMessages) {
-		if (encryptionEnabled) {
-      wrapper->encryptXTEA(xtea);
-    }
+  // do not encapsulate status messages
+  if (rawMessages) return;
 
-    wrapper->serialize();
+  if (encryptionEnabled) {
+    wrapper->encryptXTEA(xtea);
   }
+
+  wrapper->serialize();
 }
 
 bool Protocol::onRecvMessage(NetworkMessage& msg)
