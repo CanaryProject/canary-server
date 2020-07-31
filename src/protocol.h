@@ -36,7 +36,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 
 		virtual void parsePacket(NetworkMessage&) {}
 
-		virtual void onSendMessage(const OutputMessage_ptr& msg);
+		virtual void onSendMessage(const Wrapper_ptr& wrapper);
 		bool onRecvMessage(NetworkMessage& msg);
 		virtual void onRecvFirstMessage(NetworkMessage& msg) = 0;
 		virtual void onConnect() {}
@@ -52,15 +52,15 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		uint32_t getIP() const;
 
 		//Use this function for autosend messages only
-		OutputMessage_ptr getOutputBuffer(int32_t size);
+		Wrapper_ptr getOutputBuffer(int32_t size);
 
-		OutputMessage_ptr& getCurrentBuffer() {
+		Wrapper_ptr& getCurrentBuffer() {
 			return outputBuffer;
 		}
 
-		void send(OutputMessage_ptr msg) const {
+		void send(Wrapper_ptr wrapper) const {
 			if (auto connection = getConnection()) {
-				connection->send(msg);
+				connection->send(wrapper);
 			}
 		}
 
@@ -73,8 +73,8 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		void enableXTEAEncryption() {
 			encryptionEnabled = true;
 		}
-		void setChecksumMethod(CanaryLib::ChecksumMethods_t method) {
-			checksumMethod = method;
+		void setupXTEA(const uint32_t* key) {
+      xtea.setKey(key);
 		}
 		void enableCompression();
 		static bool decryptRSA(NetworkMessage& msg);
@@ -90,16 +90,15 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 
 		friend class Connection;
 
-		OutputMessage_ptr outputBuffer;
+		Wrapper_ptr outputBuffer;
 		std::unique_ptr<z_stream> defStream;
 
 		const ConnectionWeak_ptr connection;
-		uint32_t key[4] = {};
+		CanaryLib::XTEA xtea;
 		uint32_t serverSequenceNumber = 0;
 		uint32_t clientSequenceNumber = 0;
-		std::underlying_type<CanaryLib::ChecksumMethods_t>::type checksumMethod = CanaryLib::CHECKSUM_METHOD_NONE;
 		bool encryptionEnabled = false;
-    bool rawMessages = false;
+		bool rawMessages = false;
 		bool compreesionEnabled = false;
 };
 

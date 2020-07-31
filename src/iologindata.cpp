@@ -812,7 +812,7 @@ bool IOLoginData::savePlayer(Player* player)
 		propWriteStream.writeString(learnedSpell);
 	}
 
-	propWriteStream.getStream(attributesSize);
+	attributes = propWriteStream.getStream(attributesSize);
 	if (attributesSize > 0) {
 		query.append(",`spells` = ").append(g_database().escapeBlob(attributes, attributesSize));
 	} else {
@@ -1045,7 +1045,7 @@ void IOLoginData::addVIPEntry(uint32_t accountId, uint32_t guid, const std::stri
 	std::stringExtended query(escapedDescription.length() + static_cast<size_t>(256));
 	query.append("INSERT IGNORE INTO `account_viplist` (`account_id`, `player_id`, `description`, `icon`, `notify`) VALUES (").appendInt(accountId).append(1, ',').appendInt(guid).append(1, ',');
 	query.append(escapedDescription).append(1, ',').appendInt(icon).append(1, ',').append(notify ? "1" : "0").append(1, ')');
-	g_databaseTasks().addTask(query);
+	g_databaseTasks().addTask(std::move(static_cast<std::string&>(query)));
 }
 
 void IOLoginData::editVIPEntry(uint32_t accountId, uint32_t guid, const std::string& description, uint32_t icon, bool notify)
@@ -1054,14 +1054,14 @@ void IOLoginData::editVIPEntry(uint32_t accountId, uint32_t guid, const std::str
 	std::stringExtended query(escapedDescription.length() + static_cast<size_t>(256));
 	query.append("UPDATE `account_viplist` SET `description` = ").append(escapedDescription).append(", `icon` = ").appendInt(icon).append(", `notify` = ").append(notify ? "1" : "0");
 	query.append(" WHERE `account_id` = ").appendInt(accountId).append(" AND `player_id` = ").appendInt(guid);
-	g_databaseTasks().addTask(query);
+	g_databaseTasks().addTask(std::move(static_cast<std::string&>(query)));
 }
 
 void IOLoginData::removeVIPEntry(uint32_t accountId, uint32_t guid)
 {
 	std::stringExtended query(128);
 	query.append("DELETE FROM `account_viplist` WHERE `account_id` = ").appendInt(accountId).append(" AND `player_id` = ").appendInt(guid);
-	g_databaseTasks().addTask(query);
+	g_databaseTasks().addTask(std::move(static_cast<std::string&>(query)));
 }
 
 void IOLoginData::addPremiumDays(uint32_t accountId, int32_t addDays)

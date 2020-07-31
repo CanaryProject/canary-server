@@ -187,7 +187,7 @@ class DBResult
 
 			T data;
 			try {
-				data = boost::lexical_cast<T>(row[it->second]);
+				data = boost::lexical_cast<T>(row[it->second], lengths[it->second]);
 			} catch (boost::bad_lexical_cast&) {
 				data = 0;
 			}
@@ -203,8 +203,9 @@ class DBResult
 	private:
 		MYSQL_RES* handle;
 		MYSQL_ROW row;
+		unsigned long* lengths;
 
-		std::map<std::string, size_t> listNames;
+		std::unordered_map<std::string, size_t> listNames;
 
 	friend class Database;
 };

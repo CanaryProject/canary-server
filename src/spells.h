@@ -65,15 +65,9 @@ class Spells final : public BaseEvents
 		static Position getCasterPosition(Creature* creature, Direction dir);
 		std::string getScriptBaseName() const override;
 
-		#if GAME_FEATURE_ROBINHOOD_HASH_MAP > 0
 		const robin_hood::unordered_map<std::string, InstantSpell_ptr>& getInstantSpells() const {
 			return instants;
 		};
-		#else
-		const std::unordered_map<std::string, InstantSpell_ptr>& getInstantSpells() const {
-			return instants;
-		};
-		#endif
 
 		void clearMaps(bool fromLua);
 		void clear(bool fromLua) override final;
@@ -86,11 +80,7 @@ class Spells final : public BaseEvents
 		bool registerEvent(Event_ptr event, const pugi::xml_node& node) override;
 
 		std::map<uint16_t, RuneSpell> runes;
-		#if GAME_FEATURE_ROBINHOOD_HASH_MAP > 0
 		robin_hood::unordered_map<std::string, InstantSpell_ptr> instants;
-		#else
-		std::unordered_map<std::string, InstantSpell_ptr> instants;
-		#endif
 
 		friend class CombatSpell;
 		LuaScriptInterface scriptInterface { "Spell Interface" };

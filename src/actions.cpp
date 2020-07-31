@@ -214,7 +214,7 @@ bool Actions::registerLuaEvent(Action_ptr event)
 
 	if (!event->getUniqueIdRange().empty()) {
 		for (uint16_t uniqueId : event->getUniqueIdRange()) {
-			auto res = actionItemMap.emplace(uniqueId, event);
+			auto res = uniqueItemMap.emplace(uniqueId, event);
 			if (!res.second) {
 				std::cout << "[Warning - Actions::registerLuaEvent] Duplicate registered item with uid: " << uniqueId << " in range from uid: " << event->getUniqueIdRange()[0] << ", to uid: " << event->getUniqueIdRange()[event->getUniqueIdRange().size() - 1] << std::endl;
 				continue;

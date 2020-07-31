@@ -32,73 +32,26 @@ Protocol::~Protocol()
 	}
 }
 
-void Protocol::onSendMessage(const OutputMessage_ptr& msg)
+void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
 {
 	if (!rawMessages) {
 		uint32_t _compression = 0;
-		if (compreesionEnabled && msg->getLength() >= 128) {
-			if (compression(*msg)) {
-				_compression = (1U << 31);
-			}
+		if (compreesionEnabled && wrapper->size() >= 128) {
+			// if (compression(*wrapper)) {
+			// 	_compression = (1U << 31);
+			// }
 		}
-
-		msg->writeMessageLength();
 
 		if (encryptionEnabled) {
-      msg->encryptXTEA();
-      if (checksumMethod == CanaryLib::CHECKSUM_METHOD_NONE) {
-        msg->addCryptoHeader(false, 0);
-      } else if (checksumMethod == CanaryLib::CHECKSUM_METHOD_ADLER32) {
-        msg->addCryptoHeader(true, NetworkMessage::getChecksum(msg->getOutputBuffer(), msg->getLength()));
-      } else if (checksumMethod == CanaryLib::CHECKSUM_METHOD_SEQUENCE) {
-        msg->addCryptoHeader(true, _compression | (++serverSequenceNumber));
-        if (serverSequenceNumber >= 0x7FFFFFFF) {
-          serverSequenceNumber = 0;
-        }
-      }
-		}
+      wrapper->encryptXTEA(xtea);
+    }
+
+    wrapper->serialize();
   }
 }
 
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
-	if (checksumMethod != CanaryLib::CHECKSUM_METHOD_NONE) {
-		uint32_t recvChecksum = msg.read<uint32_t>();
-		if (checksumMethod == CanaryLib::CHECKSUM_METHOD_SEQUENCE) {
-			if (recvChecksum == 0) {
-				// checksum 0 indicate that the packet should be connection ping - 0x1C packet header
-				// since we don't need that packet skip it
-				return false;
-			}
-
-			uint32_t checksum = ++clientSequenceNumber;
-			if (clientSequenceNumber >= 0x7FFFFFFF) {
-				clientSequenceNumber = 0;
-			}
-
-			if (recvChecksum != checksum) {
-				// incorrect packet - skip it
-				return false;
-			}
-		} else {
-			uint32_t checksum;
-			int32_t len = msg.getLength() - msg.getBufferPosition();
-			if (len > 0) {
-				checksum = NetworkMessage::getChecksum(msg.getBuffer() + msg.getBufferPosition(), len);
-			} else {
-				checksum = 0;
-			}
-
-			if (recvChecksum != checksum) {
-				// incorrect packet - skip it
-				return false;
-			}
-		}
-	}
-	if (encryptionEnabled && !msg.decryptXTEA(static_cast<CanaryLib::ChecksumMethods_t>(checksumMethod))) {
-		return false;
-	}
-
 	using ProtocolWeak_ptr = std::weak_ptr<Protocol>;
 	ProtocolWeak_ptr protocolWeak = std::weak_ptr<Protocol>(shared_from_this());
 
@@ -114,12 +67,12 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 	return true;
 }
 
-OutputMessage_ptr Protocol::getOutputBuffer(int32_t size)
+Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 {
 	//dispatcher thread
 	if (!outputBuffer) {
 		outputBuffer = OutputMessagePool::getOutputMessage();
-	} else if ((outputBuffer->getLength() + size) > CanaryLib::MAX_PROTOCOL_BODY_LENGTH) {
+	} else if ((outputBuffer->size() + size) > CanaryLib::MAX_PROTOCOL_BODY_LENGTH) {
 		send(outputBuffer);
 		outputBuffer = OutputMessagePool::getOutputMessage();
 	}
@@ -128,7 +81,7 @@ OutputMessage_ptr Protocol::getOutputBuffer(int32_t size)
 
 bool Protocol::decryptRSA(NetworkMessage& msg)
 {
-	if ((msg.getLength() - msg.getBufferPosition()) < 128) {
+	if ((msg.getLength() - msg.getBufferPosition() + CanaryLib::MAX_HEADER_SIZE) < 128) {
 		return false;
 	}
 

@@ -35,28 +35,9 @@ class OutputMessage : public NetworkMessage
 		OutputMessage(const OutputMessage&) = delete;
 		OutputMessage& operator=(const OutputMessage&) = delete;
 
-		void writeMessageLength() {
-			add_header(m_info.m_messageSize);
-		}
-
-		void addCryptoHeader(bool addChecksum, uint32_t checksum) {
-			if (addChecksum) {
-				add_header(checksum);
-			}
-
-			writeMessageLength();
-		}
-
 		void append(NetworkMessage& msg) {
 			auto msgLen = msg.getLength();
-			memcpy(m_buffer + m_info.m_bufferPos, msg.getBuffer() + CanaryLib::MAX_HEADER_SIZE, msgLen);
-			m_info.m_messageSize += msgLen;
-			m_info.m_bufferPos += msgLen;
-		}
-
-		void append(const OutputMessage_ptr& msg) {
-			auto msgLen = msg->getLength();
-			memcpy(m_buffer + m_info.m_bufferPos, msg->getBuffer() + CanaryLib::MAX_HEADER_SIZE, msgLen);
+			memcpy(m_buffer + m_info.m_bufferPos, msg.getDataBuffer(), msgLen);
 			m_info.m_messageSize += msgLen;
 			m_info.m_bufferPos += msgLen;
 		}
@@ -77,7 +58,7 @@ class OutputMessagePool
 		void sendAll();
 		void scheduleSendAll();
 
-		static OutputMessage_ptr getOutputMessage();
+		static Wrapper_ptr getOutputMessage();
 
 		void addProtocolToAutosend(Protocol_ptr protocol);
 		void removeProtocolFromAutosend(const Protocol_ptr& protocol);

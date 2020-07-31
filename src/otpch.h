@@ -29,7 +29,3 @@
 
 // Canary Lib
 #include "../canary-lib/include/include.hpp"
-
-#if GAME_FEATURE_ROBINHOOD_HASH_MAP > 0
-#include "robin_hood.h"
-#endif

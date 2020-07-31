@@ -112,10 +112,6 @@
 #define GAME_FEATURE_TOURNAMENTS 1
 #define GAME_FEATURE_PARTY_LIST 1
 
-//robinhood hash map is faster variant of hash map than std::unordered_map but it depends on std::unordered_map implementation
-//compared with visual studio stl library it is at least 2x faster
-#define GAME_FEATURE_ROBINHOOD_HASH_MAP 0
-
 //Xiaolin Wu's line algorithm for isSightClear - it seems cipsoft use this algorithm or at least something very similar
 //if disabled it'll fallback to Bresenham's line algorithm
 #define GAME_FEATURE_XIAOLIN_WU_SIGHT_CLEAR 1
