@@ -148,9 +148,7 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 			msg.writeString(ss.str());
 			msg.writeByte(static_cast<uint8_t>(retryTime));
 
-      Wrapper_ptr output = OutputMessagePool::getOutputMessage();
-      output->write(msg.getDataBuffer(), msg.getLength());
-			send(output);
+			send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
 			disconnect();
 			return;
 		}
@@ -382,9 +380,7 @@ void ProtocolGame::onConnect()
 	challengeRandom = randNumber(generator);
 	msg.writeByte(challengeRandom);
 
-  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
-  output->write(msg.getDataBuffer(), msg.getLength());
-	send(output);
+  send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
 }
 
 void ProtocolGame::disconnectClient(const std::string& message) const
@@ -393,9 +389,7 @@ void ProtocolGame::disconnectClient(const std::string& message) const
 	msg.writeByte(0x14);
 	msg.writeString(message);
 
-  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
-  output->write(msg.getDataBuffer(), msg.getLength());
-	send(output);
+  send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
   
 	disconnect();
 }
@@ -407,8 +401,7 @@ void ProtocolGame::writeToOutputBuffer()
 
 void ProtocolGame::writeToOutputBuffer(NetworkMessage& msg)
 {
-	Wrapper_ptr output = getOutputBuffer(msg.getLength());
-	output->write(msg.getDataBuffer(), msg.getLength(), true);
+  msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage(), true);
 }
 
 void ProtocolGame::parsePacket(NetworkMessage& msg)
