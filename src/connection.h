@@ -67,13 +67,6 @@ class Connection : public std::enable_shared_from_this<Connection>
 		Connection(const Connection&) = delete;
 		Connection& operator=(const Connection&) = delete;
 
-		enum ConnectionState_t : uint8_t {
-			CONNECTION_STATE_OPEN,
-			CONNECTION_STATE_IDENTIFYING,
-			CONNECTION_STATE_READINGS,
-			CONNECTION_STATE_CLOSED
-		};
-
 		enum { FORCE_CLOSE = true };
 
 		Connection(boost::asio::io_service& io_service,
@@ -88,13 +81,13 @@ class Connection : public std::enable_shared_from_this<Connection>
 		friend class ConnectionManager;
 
 		void close(bool force = false);
+    
 		// Used by protocols that require server to send first
-		void accept(Protocol_ptr protocol);
-		void accept();
+		void accept(Protocol_ptr protocol = nullptr);
 
     void onRecv(const boost::system::error_code& error, size_t recvSize);
 
-		void resumeWork();
+		void resumeWork(bool checkTimer = false);
 		void send(const Wrapper_ptr& wrapper);
 
 		uint32_t getIP();
@@ -117,8 +110,6 @@ class Connection : public std::enable_shared_from_this<Connection>
 		}
 		friend class ServicePort;
 
-		NetworkMessage msg;
-
 		boost::asio::deadline_timer readTimer;
 		boost::asio::deadline_timer writeTimer;
 
@@ -134,7 +125,6 @@ class Connection : public std::enable_shared_from_this<Connection>
 		time_t timeConnected;
 		uint32_t packetsSent = 0;
 
-		std::underlying_type<ConnectionState_t>::type connectionState = CONNECTION_STATE_OPEN;
 		bool receivedFirst = false;
     
     boost::asio::streambuf m_inputStream;
