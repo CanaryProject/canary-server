@@ -281,6 +281,8 @@ void Connection::internalSend(const Wrapper_ptr& wrapper)
         std::placeholders::_1
     ));
 
+    if (!wrapper) return;
+    
 		boost::asio::async_write(socket,
       boost::asio::buffer(wrapper->buffer(), wrapper->outputSize()),
       std::bind(&Connection::onWriteOperation, shared_from_this(), std::placeholders::_1)

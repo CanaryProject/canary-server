@@ -30,7 +30,7 @@ Protocol::~Protocol(){}
 void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
 {
   // do not encapsulate status messages
-  if (rawMessages) return;
+  if (rawMessages || !wrapper) return;
 
   wrapper->encryptXTEA(xtea);
   wrapper->serialize();
