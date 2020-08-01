@@ -176,8 +176,10 @@ void Connection::parsePacket(const boost::system::error_code& error)
   bool checksummed = inputWrapper.readChecksum();
   
   inputWrapper.deserialize();
-  
-  if (protocol && protocol->encryptionEnabled) {
+
+  // if non-encrypted then its first message
+  bool firstMessage = !inputWrapper.isEncrypted();
+  if (protocol && !firstMessage) {
     inputWrapper.decryptXTEA(protocol->xtea);
   }
 
@@ -194,7 +196,7 @@ void Connection::parsePacket(const boost::system::error_code& error)
 	} 
   
   // if non-encrypted then its first message
-  if (!protocol->encryptionEnabled){
+  if (firstMessage){
     // we want to skip the first byte (protocol identification) from now on
     // since its only useful if the protocol is undefined
     msg.setBufferPosition(1);

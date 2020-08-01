@@ -193,7 +193,6 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 	}
 
 	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
-	enableXTEAEncryption();
 	setupXTEA(key);
 
 	if (g_game().getGameState() == GAME_STATE_STARTUP) {

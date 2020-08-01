@@ -287,7 +287,6 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 
 	#if GAME_FEATURE_XTEA > 0
 	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
-	enableXTEAEncryption();
 	setupXTEA(key);
 	#endif
 
@@ -380,7 +379,9 @@ void ProtocolGame::onConnect()
 	challengeRandom = randNumber(generator);
 	msg.writeByte(challengeRandom);
 
-  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
+  auto wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  wrapper->disableEncryption();
+  send(msg.writeToFlatbuffersWrapper(wrapper));
 }
 
 void ProtocolGame::disconnectClient(const std::string& message) const

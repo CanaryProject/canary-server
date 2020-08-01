@@ -70,9 +70,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 				connection->close();
 			}
 		}
-		void enableXTEAEncryption() {
-			encryptionEnabled = true;
-		}
 		void setupXTEA(const uint32_t* key) {
       xtea.setKey(key);
 		}
@@ -94,7 +91,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		CanaryLib::XTEA xtea;
 		uint32_t serverSequenceNumber = 0;
 		uint32_t clientSequenceNumber = 0;
-		bool encryptionEnabled = false;
 		bool rawMessages = false;
 };
 
