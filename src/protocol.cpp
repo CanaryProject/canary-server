@@ -22,7 +22,7 @@
 
 #include "configmanager.h"
 #include "protocol.h"
-#include "outputmessage.h"
+#include "flatbuffers_wrapper_pool.h"
 #include "rsa.h"
 
 Protocol::~Protocol(){}
@@ -60,10 +60,10 @@ Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 {
 	//dispatcher thread
 	if (!outputBuffer) {
-		outputBuffer = OutputMessagePool::getOutputMessage();
+		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
 	} else if ((outputBuffer->size() + size) > CanaryLib::MAX_PROTOCOL_BODY_LENGTH) {
 		send(outputBuffer);
-		outputBuffer = OutputMessagePool::getOutputMessage();
+		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
 	}
 	return outputBuffer;
 }

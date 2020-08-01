@@ -21,7 +21,7 @@
 
 #include "protocollogin.h"
 
-#include "outputmessage.h"
+#include "flatbuffers_wrapper_pool.h"
 #include "tasks.h"
 
 #include "configmanager.h"
@@ -35,7 +35,7 @@ void ProtocolLogin::disconnectClient(const std::string& message)
 	msg.writeByte(0x0B);
 	msg.writeString(message);
 
-  send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
+  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
 
 	disconnect();
 }
@@ -94,7 +94,7 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 			msg.writeByte(0x0D);
 			msg.writeByte(0);
 
-      send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
+      send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
 			disconnect();
 			return;
 		}
@@ -175,7 +175,7 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	}
 	#endif
 
-  send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
+  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
 
 	disconnect();
 }

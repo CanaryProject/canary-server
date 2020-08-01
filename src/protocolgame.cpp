@@ -22,7 +22,7 @@
 #include "protocolgame.h"
 
 #include "modules.h"
-#include "outputmessage.h"
+#include "flatbuffers_wrapper_pool.h"
 
 #include "player.h"
 #include "monsters.h"
@@ -48,7 +48,7 @@ void ProtocolGame::release()
 		player = nullptr;
 	}
 
-	OutputMessagePool::getInstance().removeProtocolFromAutosend(shared_from_this());
+	FlatbuffersWrapperPool::getInstance().removeProtocolFromAutosend(shared_from_this());
 	Protocol::release();
 }
 
@@ -148,7 +148,7 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 			msg.writeString(ss.str());
 			msg.writeByte(static_cast<uint8_t>(retryTime));
 
-			send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
+			send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
 			disconnect();
 			return;
 		}
@@ -196,7 +196,7 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 			connect(foundPlayer->getID(), operatingSystem, tfcOperatingSystem);
 		}
 	}
-	OutputMessagePool::getInstance().addProtocolToAutosend(shared_from_this());
+	FlatbuffersWrapperPool::getInstance().addProtocolToAutosend(shared_from_this());
 }
 
 void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem)
@@ -380,7 +380,7 @@ void ProtocolGame::onConnect()
 	challengeRandom = randNumber(generator);
 	msg.writeByte(challengeRandom);
 
-  send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
+  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
 }
 
 void ProtocolGame::disconnectClient(const std::string& message) const
@@ -389,7 +389,7 @@ void ProtocolGame::disconnectClient(const std::string& message) const
 	msg.writeByte(0x14);
 	msg.writeString(message);
 
-  send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
+  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
   
 	disconnect();
 }

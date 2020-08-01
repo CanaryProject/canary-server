@@ -22,7 +22,7 @@
 #include "protocolstatus.h"
 #include "configmanager.h"
 #include "game.h"
-#include "outputmessage.h"
+#include "flatbuffers_wrapper_pool.h"
 
 std::map<uint32_t, int64_t> ProtocolStatus::ipConnectMap;
 const uint64_t ProtocolStatus::start = OTSYS_TIME();
@@ -147,7 +147,7 @@ void ProtocolStatus::sendStatusString()
 	std::string data = ss.str();
 	msg.write(data.c_str(), data.size());
 
-  send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
+  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
 	disconnect();
 }
 
@@ -220,6 +220,6 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 		msg.writeString(std::to_string(CLIENT_VERSION_UPPER) + "." + std::to_string(CLIENT_VERSION_LOWER));
 	}
 
-  send(msg.writeToFlatbuffersWrapper(OutputMessagePool::getOutputMessage()));
+  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
 	disconnect();
 }
