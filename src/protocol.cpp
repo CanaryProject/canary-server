@@ -27,15 +27,6 @@
 
 Protocol::~Protocol(){}
 
-void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
-{
-  // do not encapsulate status messages
-  if (rawMessages || !wrapper) return;
-
-  wrapper->encryptXTEA(xtea);
-  wrapper->serialize();
-}
-
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
 	using ProtocolWeak_ptr = std::weak_ptr<Protocol>;
@@ -58,7 +49,7 @@ Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 	//dispatcher thread
 	if (!outputBuffer) {
 		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
-	} else if ((outputBuffer->size() + size) > CanaryLib::MAX_PROTOCOL_BODY_LENGTH) {
+	} else if ((outputBuffer->Size() + size) > CanaryLib::WRAPPER_MAX_SIZE_TO_CONCAT) {
 		send(outputBuffer);
 		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
 	}

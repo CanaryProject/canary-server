@@ -131,10 +131,9 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		packetsSent = 0;
 	}
 
-  inputWrapper.copy(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()), true);
-	uint16_t size = inputWrapper.size();
+	readSize = CanaryLib::FlatbuffersWrapper2::loadSizeFromBuffer(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()));
   
-	if (size == 0 || size > INPUTMESSAGE_MAXSIZE) {
+	if (readSize == 0 || readSize > INPUTMESSAGE_MAXSIZE) {
 		close(FORCE_CLOSE);
 		return;
 	}
@@ -151,7 +150,7 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		// Read packet content
 		boost::asio::async_read(
       socket,
-      boost::asio::buffer(m_inputStream.prepare(size)),
+      boost::asio::buffer(m_inputStream.prepare(readSize)),
       std::bind(&Connection::parsePacket, shared_from_this(), std::placeholders::_1)
     );
 	} catch (boost::system::system_error& e) {
@@ -170,21 +169,34 @@ void Connection::parsePacket(const boost::system::error_code& error)
 		return;
 	}
 
-  inputWrapper.write(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()), inputWrapper.size());
+  inputWrapper.copy(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()), readSize);
 
   // validate checksum
   bool checksummed = inputWrapper.readChecksum();
-  
-  inputWrapper.deserialize();
 
+  auto enc_msg = inputWrapper.getEncryptedMessage();
+  auto header = enc_msg->header();
+  uint8_t *body_buffer = (uint8_t *) enc_msg->body()->Data();
+  
   // if non-encrypted then its first message
-  bool firstMessage = !inputWrapper.isEncrypted();
+  bool firstMessage = !header->encrypted();
   if (protocol && !firstMessage) {
-    inputWrapper.decryptXTEA(protocol->xtea);
+    protocol->xtea.decrypt(header->message_size(), body_buffer);
   }
 
+  auto content_msg = CanaryLib::GetContentMessage(body_buffer);
+
+  spdlog::critical("{} {}", readSize, checksummed);
+  spdlog::critical("{}", content_msg ? "true" : "false");
   NetworkMessage msg;
-  msg.write(inputWrapper.body(), inputWrapper.msgSize(), CanaryLib::MESSAGE_OPERATION_PEEK);
+  for (int i = 0; i < content_msg->data()->size(); i++) {
+    const CanaryLib::DataType type = content_msg->data_type()->GetEnum<CanaryLib::DataType>(i);
+    if (type == CanaryLib::DataType_RawData) {
+      const CanaryLib::RawData *raw_data = content_msg->data()->GetAs<CanaryLib::RawData>(i);
+      msg.write(raw_data->body()->data(), raw_data->size());
+    } 
+  }
+  msg.setBufferPosition(0);
 
 	if (!protocol) {
     // Game protocol has already been created at this point
@@ -264,7 +276,6 @@ void Connection::internalWorker()
 	if (!messageQueue.empty()) {
 		const Wrapper_ptr& wrapper = messageQueue.front();
 		lockClass.unlock();
-		protocol->onSendMessage(wrapper);
 		lockClass.lock();
 		internalSend(wrapper);
 	}
@@ -283,8 +294,12 @@ void Connection::internalSend(const Wrapper_ptr& wrapper)
 
     if (!wrapper) return;
     
+    auto buffer = wrapper->Finish(&protocol->xtea);
+    uint16_t size = CanaryLib::FlatbuffersWrapper2::loadSizeFromBuffer(buffer);
+    
+  spdlog::critical("{}", size);
 		boost::asio::async_write(socket,
-      boost::asio::buffer(wrapper->buffer(), wrapper->outputSize()),
+      boost::asio::buffer(buffer, size + CanaryLib::WRAPPER_HEADER_SIZE),
       std::bind(&Connection::onWriteOperation, shared_from_this(), std::placeholders::_1)
     );
 	} catch (boost::system::system_error& e) {
