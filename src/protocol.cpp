@@ -46,10 +46,17 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 
 Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 {
-	//dispatcher thread
-	if (!outputBuffer) {
+  if (!outputBuffer) {
 		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
-	} else if ((outputBuffer->Size() + size) > CanaryLib::WRAPPER_MAX_SIZE_TO_CONCAT) {
+    return outputBuffer;
+  }
+  spdlog::critical("Opbuf {} {}", size, outputBuffer->Size());
+
+  bool overflow = (outputBuffer->Size() + size) > CanaryLib::WRAPPER_MAX_SIZE_TO_CONCAT;
+  bool makeNewOutput = outputBuffer->Finished() || overflow;
+
+	//dispatcher thread
+	if (makeNewOutput) {
 		send(outputBuffer);
 		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
 	}

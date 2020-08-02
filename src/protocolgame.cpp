@@ -402,7 +402,7 @@ void ProtocolGame::writeToOutputBuffer()
 
 void ProtocolGame::writeToOutputBuffer(NetworkMessage& msg)
 {
-  msg.writeToFlatbuffersWrapper(getOutputBuffer(msg.getLength()), true);
+  msg.writeToFlatbuffersWrapper(getOutputBuffer(msg.getLength()));
 }
 
 void ProtocolGame::parsePacket(NetworkMessage& msg)
