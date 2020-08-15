@@ -35,7 +35,9 @@ void ProtocolLogin::disconnectClient(const std::string& message)
 	msg.writeByte(0x0B);
 	msg.writeString(message);
 
-  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
+  Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  wrapper->addRawMessage(msg);
+  send(wrapper);
 
 	disconnect();
 }
@@ -94,7 +96,9 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 			msg.writeByte(0x0D);
 			msg.writeByte(0);
 
-      send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
+      Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+      wrapper->addRawMessage(msg);
+      send(wrapper);
 			disconnect();
 			return;
 		}
@@ -175,7 +179,9 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	}
 	#endif
 
-  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
+  Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  wrapper->addRawMessage(msg);
+  send(wrapper);
 
 	disconnect();
 }

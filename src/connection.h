@@ -109,7 +109,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 
 		boost::asio::deadline_timer readTimer;
 		boost::asio::deadline_timer writeTimer;
-
+ 
 		std::recursive_mutex connectionLock;
 
 		std::list<Wrapper_ptr> messageQueue;
@@ -124,7 +124,6 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     boost::asio::streambuf m_inputStream;
     Wrapper inputWrapper;
-    uint16_t readSize = 0;
 };
 
 #endif

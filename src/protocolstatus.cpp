@@ -147,7 +147,10 @@ void ProtocolStatus::sendStatusString()
 	std::string data = ss.str();
 	msg.write(data.c_str(), data.size());
 
-  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
+  Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  wrapper->addRawMessage(msg);
+  send(wrapper);
+
 	disconnect();
 }
 
@@ -220,6 +223,9 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 		msg.writeString(std::to_string(CLIENT_VERSION_UPPER) + "." + std::to_string(CLIENT_VERSION_LOWER));
 	}
 
-  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
+  Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  wrapper->addRawMessage(msg);
+  send(wrapper);
+  
 	disconnect();
 }

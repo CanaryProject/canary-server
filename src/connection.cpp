@@ -131,7 +131,7 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		packetsSent = 0;
 	}
 
-	readSize = CanaryLib::FlatbuffersWrapper2::loadSizeFromBuffer(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()));
+	uint16_t readSize = inputWrapper.loadSizeFromBuffer(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()));
   
 	if (readSize == 0 || readSize > INPUTMESSAGE_MAXSIZE) {
 		close(FORCE_CLOSE);
@@ -169,25 +169,22 @@ void Connection::parsePacket(const boost::system::error_code& error)
 		return;
 	}
 
-  inputWrapper.copy(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()), readSize);
+  inputWrapper.copy(boost::asio::buffer_cast<const uint8_t*>(m_inputStream.data()), inputWrapper.Size());
 
   // validate checksum
   bool checksummed = inputWrapper.readChecksum();
 
   auto enc_msg = inputWrapper.getEncryptedMessage();
-  auto header = enc_msg->header();
   uint8_t *body_buffer = (uint8_t *) enc_msg->body()->Data();
   
   // if non-encrypted then its first message
-  bool firstMessage = !header->encrypted();
+  bool firstMessage = !enc_msg->header()->encrypted();
   if (protocol && !firstMessage) {
-    protocol->xtea.decrypt(header->message_size(), body_buffer);
+    protocol->xtea.decrypt(enc_msg->header()->message_size(), body_buffer);
   }
 
   auto content_msg = CanaryLib::GetContentMessage(body_buffer);
 
-  spdlog::critical("{} {}", readSize, checksummed);
-  spdlog::critical("{}", content_msg ? "true" : "false");
   NetworkMessage msg;
   for (int i = 0; i < content_msg->data()->size(); i++) {
     const CanaryLib::DataType type = content_msg->data_type()->GetEnum<CanaryLib::DataType>(i);
@@ -294,12 +291,10 @@ void Connection::internalSend(const Wrapper_ptr& wrapper)
 
     if (!wrapper) return;
     
-    auto buffer = wrapper->Finish(&protocol->xtea);
-    uint16_t size = CanaryLib::FlatbuffersWrapper2::loadSizeFromBuffer(buffer);
+    wrapper->Finish(&protocol->xtea);
     
-  spdlog::critical("{}", size);
 		boost::asio::async_write(socket,
-      boost::asio::buffer(buffer, size + CanaryLib::WRAPPER_HEADER_SIZE),
+      boost::asio::buffer(wrapper->Buffer(), wrapper->Size() + CanaryLib::WRAPPER_HEADER_SIZE),
       std::bind(&Connection::onWriteOperation, shared_from_this(), std::placeholders::_1)
     );
 	} catch (boost::system::system_error& e) {
@@ -325,7 +320,8 @@ uint32_t Connection::getIP()
 void Connection::onWriteOperation(const boost::system::error_code& error)
 {
 	writeTimer.cancel();
-	messageQueue.pop_front();
+  if (messageQueue.front())
+	  messageQueue.pop_front();
 
 	if (error) {
 		messageQueue.clear();

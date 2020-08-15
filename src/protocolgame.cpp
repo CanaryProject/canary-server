@@ -148,7 +148,9 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 			msg.writeString(ss.str());
 			msg.writeByte(static_cast<uint8_t>(retryTime));
 
-			send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
+      Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+      wrapper->addRawMessage(msg);
+			send(wrapper);
 			disconnect();
 			return;
 		}
@@ -381,7 +383,8 @@ void ProtocolGame::onConnect()
 
   auto wrapper = FlatbuffersWrapperPool::getOutputWrapper();
   wrapper->disableEncryption();
-  send(msg.writeToFlatbuffersWrapper(wrapper));
+  wrapper->addRawMessage(msg);
+  send(wrapper);
 }
 
 void ProtocolGame::disconnectClient(const std::string& message) const
@@ -390,8 +393,9 @@ void ProtocolGame::disconnectClient(const std::string& message) const
 	msg.writeByte(0x14);
 	msg.writeString(message);
 
-  send(msg.writeToFlatbuffersWrapper(FlatbuffersWrapperPool::getOutputWrapper()));
-  
+  Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  wrapper->addRawMessage(msg);
+  send(wrapper);
 	disconnect();
 }
 
@@ -402,7 +406,8 @@ void ProtocolGame::writeToOutputBuffer()
 
 void ProtocolGame::writeToOutputBuffer(NetworkMessage& msg)
 {
-  msg.writeToFlatbuffersWrapper(getOutputBuffer(msg.getLength()));
+  Wrapper_ptr wrapper = getOutputBuffer(msg.getLength());
+  wrapper->addRawMessage(msg);
 }
 
 void ProtocolGame::parsePacket(NetworkMessage& msg)

@@ -50,10 +50,8 @@ Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
     return outputBuffer;
   }
-  spdlog::critical("Opbuf {} {}", size, outputBuffer->Size());
-
   bool overflow = (outputBuffer->Size() + size) > CanaryLib::WRAPPER_MAX_SIZE_TO_CONCAT;
-  bool makeNewOutput = outputBuffer->Finished() || overflow;
+  bool makeNewOutput = outputBuffer->isWriteLocked() || overflow;
 
 	//dispatcher thread
 	if (makeNewOutput) {
