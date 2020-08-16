@@ -151,7 +151,7 @@ void Connection::parseHeader(const boost::system::error_code& error)
 		boost::asio::async_read(
       socket,
       boost::asio::buffer(m_inputStream.prepare(readSize)),
-      std::bind(&Connection::parsePacket, shared_from_this(), std::placeholders::_1)
+      std::bind(&Connection::parseEncryptedMessage, shared_from_this(), std::placeholders::_1)
     );
 	} catch (boost::system::system_error& e) {
     spdlog::error("[Connection::parseHeader]: Network error during header reading - {}", e.what());
@@ -159,7 +159,7 @@ void Connection::parseHeader(const boost::system::error_code& error)
 	}
 }
 
-void Connection::parsePacket(const boost::system::error_code& error)
+void Connection::parseEncryptedMessage(const boost::system::error_code& error)
 {
 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
 	readTimer.cancel();
@@ -178,45 +178,58 @@ void Connection::parsePacket(const boost::system::error_code& error)
   uint8_t *body_buffer = (uint8_t *) enc_msg->body()->Data();
   
   // if non-encrypted then its first message
-  bool firstMessage = !enc_msg->header()->encrypted();
-  if (protocol && !firstMessage) {
+  bool encrypted = enc_msg->header()->encrypted();
+  if (protocol && encrypted) {
     protocol->xtea.decrypt(enc_msg->header()->message_size(), body_buffer);
   }
 
-  auto content_msg = CanaryLib::GetContentMessage(body_buffer);
+  parseContentMessage(CanaryLib::GetContentMessage(body_buffer), checksummed, encrypted);
+}
 
-  NetworkMessage msg;
+void Connection::parseContentMessage(const CanaryLib::ContentMessage *content_msg, bool checksummed, bool encrypted) {
   for (int i = 0; i < content_msg->data()->size(); i++) {
-    const CanaryLib::DataType type = content_msg->data_type()->GetEnum<CanaryLib::DataType>(i);
-    if (type == CanaryLib::DataType_RawData) {
-      const CanaryLib::RawData *raw_data = content_msg->data()->GetAs<CanaryLib::RawData>(i);
-      msg.write(raw_data->body()->data(), raw_data->size());
-    } 
+    switch(content_msg->data_type()->GetEnum<CanaryLib::DataType>(i)) {
+      case CanaryLib::DataType_RawData:
+        parseRawData(content_msg->data()->GetAs<CanaryLib::RawData>(i), checksummed, encrypted);
+        break;
+        
+      case CanaryLib::DataType_WeaponData: {
+        const CanaryLib::WeaponData *weapon = content_msg->data()->GetAs<CanaryLib::WeaponData>(i);
+        spdlog::critical("You see a weapon \"{}\" {} dmg, id {} ", weapon->name()->str(), weapon->damage(), weapon->id());
+        break;
+      }
+        
+      default:
+        break;
+    }
   }
-  msg.setBufferPosition(0);
 
-	if (!protocol) {
+  // go back to TCP socket to read new incoming messages
+  recv(true);
+}
+
+void Connection::parseRawData(const CanaryLib::RawData *raw_data, bool checksummed, bool encrypted) {
+  NetworkMessage msg;
+  msg.write(raw_data->body()->data(), raw_data->size(), CanaryLib::MESSAGE_OPERATION_PEEK);
+
+  if (!protocol) {
     // Game protocol has already been created at this point
     protocol = service_port->make_protocol(checksummed, msg, shared_from_this());
     if (!protocol) {
       close(FORCE_CLOSE);
       return;
     }
-	} 
+  } 
   
   // if non-encrypted then its first message
-  if (firstMessage){
+  if (!encrypted){
     // we want to skip the first byte (protocol identification) from now on
     // since its only useful if the protocol is undefined
     msg.setBufferPosition(1);
-		protocol->onRecvFirstMessage(msg);
+    protocol->onRecvFirstMessage(msg);
   } else if (checksummed) {
     protocol->onRecvMessage(msg);
-    return;
   }
-
-  // reading loop
-  recv(true);
 }
 
 void Connection::recv(bool checkTimer)
