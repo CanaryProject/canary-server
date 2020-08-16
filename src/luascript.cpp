@@ -6043,11 +6043,11 @@ int LuaScriptInterface::luaNetworkMessageSendToPlayer(lua_State* L)
 int LuaScriptInterface::luaModalWindowCreate(lua_State* L)
 {
 	// ModalWindow(id, title, message)
-	const std::string& message = getString(L, 4);
-	const std::string& title = getString(L, 3);
+	std::string message = getString(L, 4);
+	std::string title = getString(L, 3);
 	uint32_t id = getNumber<uint32_t>(L, 2);
 
-	pushUserdata<ModalWindow>(L, new ModalWindow(id, title, message));
+	pushUserdata<ModalWindow>(L, new ModalWindow(id, std::move(title), std::move(message)));
 	setMetatable(L, -1, "ModalWindow");
 	return 1;
 }
@@ -6101,10 +6101,10 @@ int LuaScriptInterface::luaModalWindowGetMessage(lua_State* L)
 int LuaScriptInterface::luaModalWindowSetTitle(lua_State* L)
 {
 	// modalWindow:setTitle(text)
-	const std::string& text = getString(L, 2);
+	std::string text = getString(L, 2);
 	ModalWindow* window = getUserdata<ModalWindow>(L, 1);
 	if (window) {
-		window->title = text;
+		window->title = std::move(text);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -6115,10 +6115,10 @@ int LuaScriptInterface::luaModalWindowSetTitle(lua_State* L)
 int LuaScriptInterface::luaModalWindowSetMessage(lua_State* L)
 {
 	// modalWindow:setMessage(text)
-	const std::string& text = getString(L, 2);
+	std::string text = getString(L, 2);
 	ModalWindow* window = getUserdata<ModalWindow>(L, 1);
 	if (window) {
-		window->message = text;
+		window->message = std::move(text);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -6153,11 +6153,12 @@ int LuaScriptInterface::luaModalWindowGetChoiceCount(lua_State* L)
 int LuaScriptInterface::luaModalWindowAddButton(lua_State* L)
 {
 	// modalWindow:addButton(id, text)
-	const std::string& text = getString(L, 3);
+	std::string text = getString(L, 3);
 	uint8_t id = getNumber<uint8_t>(L, 2);
 	ModalWindow* window = getUserdata<ModalWindow>(L, 1);
 	if (window) {
-		window->buttons.emplace_back(text, id);
+		window->buttons.emplace_back(std::move(text), id);
+		window->buttons.shrink_to_fit();
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -6168,11 +6169,12 @@ int LuaScriptInterface::luaModalWindowAddButton(lua_State* L)
 int LuaScriptInterface::luaModalWindowAddChoice(lua_State* L)
 {
 	// modalWindow:addChoice(id, text)
-	const std::string& text = getString(L, 3);
+	std::string text = getString(L, 3);
 	uint8_t id = getNumber<uint8_t>(L, 2);
 	ModalWindow* window = getUserdata<ModalWindow>(L, 1);
 	if (window) {
-		window->choices.emplace_back(text, id);
+		window->choices.emplace_back(std::move(text), id);
+		window->buttons.shrink_to_fit();
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -9135,10 +9137,10 @@ int LuaScriptInterface::luaPlayerGetGuildNick(lua_State* L)
 int LuaScriptInterface::luaPlayerSetGuildNick(lua_State* L)
 {
 	// player:setGuildNick(nick)
-	const std::string& nick = getString(L, 2);
+	std::string nick = getString(L, 2);
 	Player* player = getUserdata<Player>(L, 1);
 	if (player) {
-		player->setGuildNick(nick);
+		player->setGuildNick(std::move(nick));
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -15917,6 +15919,7 @@ int LuaScriptInterface::luaCreateWeapon(lua_State* L)
 				pushUserdata<WeaponMelee>(L, weapon);
 				setMetatable(L, -1, "Weapon");
 				weapon->weaponType = type;
+				weapon->fromLua = true;
 			} else {
 				lua_pushnil(L);
 			}
@@ -15929,6 +15932,7 @@ int LuaScriptInterface::luaCreateWeapon(lua_State* L)
 				pushUserdata<WeaponDistance>(L, weapon);
 				setMetatable(L, -1, "Weapon");
 				weapon->weaponType = type;
+				weapon->fromLua = true;
 			} else {
 				lua_pushnil(L);
 			}
@@ -15940,6 +15944,7 @@ int LuaScriptInterface::luaCreateWeapon(lua_State* L)
 				pushUserdata<WeaponWand>(L, weapon);
 				setMetatable(L, -1, "Weapon");
 				weapon->weaponType = type;
+				weapon->fromLua = true;
 			} else {
 				lua_pushnil(L);
 			}
