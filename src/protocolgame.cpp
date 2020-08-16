@@ -144,7 +144,7 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 			   << currentSlot << " on the waiting list.";
 
 			CanaryLib::NetworkMessage msg;
-			msg.writeByte(0x16);
+			msg.writeByte(CanaryLib::GameServerLoginWait);
 			msg.writeString(ss.str());
 			msg.writeByte(static_cast<uint8_t>(retryTime));
 
@@ -171,7 +171,7 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 
 		if (operatingSystem >= CLIENTOS_OTCLIENT_LINUX) {
 			NetworkMessage opcodeMessage;
-			opcodeMessage.writeByte(0x32);
+			opcodeMessage.writeByte(CanaryLib::GameServerExtendedOpcode);
 			opcodeMessage.writeByte(0x00);
 			opcodeMessage.write<uint16_t>(0x00);
 			writeToOutputBuffer(opcodeMessage);
@@ -372,7 +372,7 @@ void ProtocolGame::onConnect()
 	static std::ranlux24 generator(rd());
 	static std::uniform_int_distribution<uint16_t> randNumber(0x00, 0xFF);
 
-	msg.writeByte(0x1F);
+	msg.writeByte(CanaryLib::GameServerChallenge);
 
 	// Add timestamp & random number
 	challengeTimestamp = static_cast<uint32_t>(time(nullptr));
@@ -390,7 +390,7 @@ void ProtocolGame::onConnect()
 void ProtocolGame::disconnectClient(const std::string& message) const
 {
 	CanaryLib::NetworkMessage msg;
-	msg.writeByte(0x14);
+	msg.writeByte(CanaryLib::GameServerLoginError);
 	msg.writeString(message);
 
   Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
@@ -419,7 +419,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 
 	uint8_t recvbyte = input_msg.readByte();
 	if (!player) {
-		if (recvbyte == 0x0F) {
+		if (recvbyte == CanaryLib::ClientEnterGame) {
 			disconnect();
 		}
 		return;
@@ -427,12 +427,12 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 
 	//a dead player can not performs actions
 	if (player->isRemoved() || player->getHealth() <= 0) {
-		if (recvbyte == 0x0F) {
+		if (recvbyte == CanaryLib::ClientEnterGame) {
 			disconnect();
 			return;
 		}
 
-		if (recvbyte != 0x14) {
+		if (recvbyte != CanaryLib::ClientLeaveGame) {
 			return;
 		}
 	}
@@ -2186,7 +2186,7 @@ void ProtocolGame::sendTournamentLeaderboard()
 void ProtocolGame::sendReLoginWindow(uint8_t unfairFightReduction)
 {
 	playermsg.reset();
-	playermsg.writeByte(0x28);
+	playermsg.writeByte(CanaryLib::GameServerDeath);
 	#if GAME_FEATURE_DEATH_TYPE > 0
 	playermsg.writeByte(0x00);
 	#endif
@@ -3253,9 +3253,9 @@ void ProtocolGame::sendPing()
 {
 	playermsg.reset();
 	#if GAME_FEATURE_PING > 0
-	playermsg.writeByte(0x1D);
+	playermsg.writeByte(CanaryLib::GameServerPingBack);
 	#else
-	playermsg.writeByte(0x1E);
+	playermsg.writeByte(CanaryLib::GameServerPing);
 	#endif
 	writeToOutputBuffer();
 }
@@ -3263,7 +3263,7 @@ void ProtocolGame::sendPing()
 void ProtocolGame::sendPingBack()
 {
 	playermsg.reset();
-	playermsg.writeByte(0x1E);
+	playermsg.writeByte(CanaryLib::GameServerPing);
 	writeToOutputBuffer();
 }
 
@@ -3426,7 +3426,7 @@ void ProtocolGame::sendPartyCreatureShowStatus(const Creature* target, bool show
 void ProtocolGame::sendFYIBox(const std::string& message)
 {
 	playermsg.reset();
-	playermsg.writeByte(0x15);
+	playermsg.writeByte(CanaryLib::GameServerLoginAdvice);
 	playermsg.writeString(message);
 	writeToOutputBuffer();
 }
@@ -3547,7 +3547,7 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 	playermsg.reset();
 
 	#if GAME_FEATURE_LOGIN_PENDING > 0
-	playermsg.writeByte(0x17);
+	playermsg.writeByte(CanaryLib::GameServerLoginSuccess);
 	#else
 	playermsg.writeByte(CanaryLib::GameServerLoginOrPendingState);
 	#endif

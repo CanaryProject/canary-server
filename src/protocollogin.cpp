@@ -32,7 +32,7 @@
 void ProtocolLogin::disconnectClient(const std::string& message)
 {
   CanaryLib::NetworkMessage msg;
-	msg.writeByte(0x0B);
+	msg.writeByte(CanaryLib::LoginServerErrorNew);
 	msg.writeString(message);
 
   Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
@@ -93,17 +93,9 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	uint32_t ticks = time(nullptr) / AUTHENTICATOR_PERIOD;
 	if (!account.key.empty()) {
 		if (token.empty() || !(token == generateToken(account.key, ticks) || token == generateToken(account.key, ticks - 1) || token == generateToken(account.key, ticks + 1))) {
-			msg.writeByte(0x0D);
-			msg.writeByte(0);
-
-      Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
-      wrapper->addRawMessage(msg);
-      send(wrapper);
-			disconnect();
+			disconnectClient("Invalid authentification token.");
 			return;
 		}
-		msg.writeByte(0x0C);
-		msg.writeByte(0);
 	}
 	#endif
 
@@ -123,7 +115,7 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 
 	#if GAME_FEATURE_SESSIONKEY > 0
 	//Add session key
-	msg.writeByte(0x28);
+	msg.writeByte(CanaryLib::LoginServerSessionKey);
 	msg.writeString(accountName + "\n" + password + "\n" + token + "\n" + std::to_string(ticks));
 	#endif
 
