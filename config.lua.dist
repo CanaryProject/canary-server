@@ -29,11 +29,6 @@ statusTimeout = 5000
 replaceKickOnLogin = true
 maxPacketsPerSecond = 25
 
--- Packet Compression
--- minimize network bandwith and reduce ping
--- levels: 0(off), 1(best speed) - 9(best compression)
-packetCompressionLevel = 6
-
 -- Party List limitations
 -- max distance in which players in party list are visible
 -- NOTE partyListMaxDistance set to 0 means no limit

@@ -262,6 +262,7 @@ target_sources(canary_server_lib
     ${CMAKE_CURRENT_LIST_DIR}/depotlocker.cpp
     ${CMAKE_CURRENT_LIST_DIR}/events.cpp
     ${CMAKE_CURRENT_LIST_DIR}/fileloader.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/flatbuffers_wrapper_pool.cpp
     ${CMAKE_CURRENT_LIST_DIR}/game.cpp
     ${CMAKE_CURRENT_LIST_DIR}/globalevent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/guild.cpp
@@ -287,7 +288,6 @@ target_sources(canary_server_lib
     ${CMAKE_CURRENT_LIST_DIR}/networkmessage.cpp
     ${CMAKE_CURRENT_LIST_DIR}/npc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/outfit.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/outputmessage.cpp
     ${CMAKE_CURRENT_LIST_DIR}/party.cpp
     ${CMAKE_CURRENT_LIST_DIR}/player.cpp
     ${CMAKE_CURRENT_LIST_DIR}/position.cpp

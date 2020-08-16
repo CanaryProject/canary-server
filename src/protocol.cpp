@@ -22,33 +22,10 @@
 
 #include "configmanager.h"
 #include "protocol.h"
-#include "outputmessage.h"
+#include "flatbuffers_wrapper_pool.h"
 #include "rsa.h"
 
-Protocol::~Protocol()
-{
-	if (compreesionEnabled) {
-		deflateEnd(defStream.get());
-	}
-}
-
-void Protocol::onSendMessage(const Wrapper_ptr& wrapper)
-{
-	if (!rawMessages) {
-		uint32_t _compression = 0;
-		if (compreesionEnabled && wrapper->size() >= 128) {
-			// if (compression(*wrapper)) {
-			// 	_compression = (1U << 31);
-			// }
-		}
-
-		if (encryptionEnabled) {
-      wrapper->encryptXTEA(xtea);
-    }
-
-    wrapper->serialize();
-  }
-}
+Protocol::~Protocol(){}
 
 bool Protocol::onRecvMessage(NetworkMessage& msg)
 {
@@ -59,7 +36,7 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 		if (auto protocol = protocolWeak.lock()) {
 			if (auto connection = protocol->getConnection()) {
 				protocol->parsePacket(msg);
-				connection->resumeWork();
+				connection->recv();
 			}
 		}
 	};
@@ -69,19 +46,24 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 
 Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 {
+  if (!outputBuffer) {
+		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
+    return outputBuffer;
+  }
+  bool overflow = (outputBuffer->Size() + size) > CanaryLib::WRAPPER_MAX_SIZE_TO_CONCAT;
+  bool makeNewOutput = outputBuffer->isWriteLocked() || overflow;
+
 	//dispatcher thread
-	if (!outputBuffer) {
-		outputBuffer = OutputMessagePool::getOutputMessage();
-	} else if ((outputBuffer->size() + size) > CanaryLib::MAX_PROTOCOL_BODY_LENGTH) {
+	if (makeNewOutput) {
 		send(outputBuffer);
-		outputBuffer = OutputMessagePool::getOutputMessage();
+		outputBuffer = FlatbuffersWrapperPool::getOutputWrapper();
 	}
 	return outputBuffer;
 }
 
 bool Protocol::decryptRSA(NetworkMessage& msg)
 {
-	if ((msg.getLength() - msg.getBufferPosition() + CanaryLib::MAX_HEADER_SIZE) < 128) {
+	if ((msg.getLength() - msg.getBufferPosition()) < 128) {
 		return false;
 	}
 
@@ -96,47 +78,4 @@ uint32_t Protocol::getIP() const
 	}
 
 	return 0;
-}
-
-void Protocol::enableCompression()
-{
-	if(!compreesionEnabled)
-	{
-		int32_t compressionLevel = g_config().getNumber(ConfigManager::COMPRESSION_LEVEL);
-		if (compressionLevel != 0) {
-			defStream.reset(new z_stream);
-			defStream->zalloc = Z_NULL;
-			defStream->zfree = Z_NULL;
-			defStream->opaque = Z_NULL;
-			if (deflateInit2(defStream.get(), compressionLevel, Z_DEFLATED, -15, 9, Z_DEFAULT_STRATEGY) != Z_OK) {
-				defStream.reset();
-				std::cout << "Zlib deflateInit2 error: " << (defStream->msg ? defStream->msg : "unknown error") << std::endl;
-			} else {
-				compreesionEnabled = true;
-			}
-		}
-	}
-}
-
-bool Protocol::compression(OutputMessage& msg)
-{
-	static thread_local uint8_t defBuffer[CanaryLib::NETWORKMESSAGE_MAXSIZE];
-	defStream->next_in = msg.getOutputBuffer();
-	defStream->avail_in = msg.getLength();
-	defStream->next_out = defBuffer;
-	defStream->avail_out = CanaryLib::NETWORKMESSAGE_MAXSIZE;
-
-	int32_t ret = deflate(defStream.get(), Z_FINISH);
-	if (ret != Z_OK && ret != Z_STREAM_END) {
-		return false;
-	}
-	uint32_t totalSize = static_cast<uint32_t>(defStream->total_out);
-	deflateReset(defStream.get());
-	if (totalSize == 0) {
-		return false;
-	}
-
-	msg.reset();
-	msg.write(reinterpret_cast<const char*>(defBuffer), static_cast<size_t>(totalSize));
-	return true;
 }

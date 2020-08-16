@@ -36,7 +36,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 
 		virtual void parsePacket(NetworkMessage&) {}
 
-		virtual void onSendMessage(const Wrapper_ptr& wrapper);
 		bool onRecvMessage(NetworkMessage& msg);
 		virtual void onRecvFirstMessage(NetworkMessage& msg) = 0;
 		virtual void onConnect() {}
@@ -70,13 +69,9 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 				connection->close();
 			}
 		}
-		void enableXTEAEncryption() {
-			encryptionEnabled = true;
-		}
 		void setupXTEA(const uint32_t* key) {
       xtea.setKey(key);
 		}
-		void enableCompression();
 		static bool decryptRSA(NetworkMessage& msg);
 
 		void setRawMessages(bool value) {
@@ -86,8 +81,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		virtual void release() {}
 
 	private:
-		bool compression(OutputMessage& msg);
-
 		friend class Connection;
 
 		Wrapper_ptr outputBuffer;
@@ -97,9 +90,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		CanaryLib::XTEA xtea;
 		uint32_t serverSequenceNumber = 0;
 		uint32_t clientSequenceNumber = 0;
-		bool encryptionEnabled = false;
 		bool rawMessages = false;
-		bool compreesionEnabled = false;
 };
 
 #endif

@@ -19,20 +19,20 @@
 
 #include "otpch.h"
 
-#include "outputmessage.h"
+#include "flatbuffers_wrapper_pool.h"
 #include "protocol.h"
 #include "lockfree.h"
 #include "tasks.h"
 
-const uint16_t OUTPUTMESSAGE_FREE_LIST_CAPACITY = 2048;
-const std::chrono::milliseconds OUTPUTMESSAGE_AUTOSEND_DELAY {10};
+const uint16_t OUTPUT_CAPACITY = 2048;
+const std::chrono::milliseconds OUTPUT_AUTOSEND_TIME {10};
 
-void OutputMessagePool::scheduleSendAll()
+void FlatbuffersWrapperPool::scheduleSendAll()
 {
-	g_dispatcher().addEvent(OUTPUTMESSAGE_AUTOSEND_DELAY.count(), std::bind(&OutputMessagePool::sendAll, this));
+	g_dispatcher().addEvent(OUTPUT_AUTOSEND_TIME.count(), std::bind(&FlatbuffersWrapperPool::sendAll, this));
 }
 
-void OutputMessagePool::sendAll()
+void FlatbuffersWrapperPool::sendAll()
 {
 	//dispatcher thread
 	for (auto& protocol : bufferedProtocols) {
@@ -47,7 +47,7 @@ void OutputMessagePool::sendAll()
 	}
 }
 
-void OutputMessagePool::addProtocolToAutosend(Protocol_ptr protocol)
+void FlatbuffersWrapperPool::addProtocolToAutosend(Protocol_ptr protocol)
 {
 	//dispatcher thread
 	if (bufferedProtocols.empty()) {
@@ -56,7 +56,7 @@ void OutputMessagePool::addProtocolToAutosend(Protocol_ptr protocol)
 	bufferedProtocols.emplace_back(protocol);
 }
 
-void OutputMessagePool::removeProtocolFromAutosend(const Protocol_ptr& protocol)
+void FlatbuffersWrapperPool::removeProtocolFromAutosend(const Protocol_ptr& protocol)
 {
 	//dispatcher thread
 	auto it = std::find(bufferedProtocols.begin(), bufferedProtocols.end(), protocol);
@@ -66,9 +66,9 @@ void OutputMessagePool::removeProtocolFromAutosend(const Protocol_ptr& protocol)
 	}
 }
 
-Wrapper_ptr OutputMessagePool::getOutputMessage()
+Wrapper_ptr FlatbuffersWrapperPool::getOutputWrapper()
 {
 	// LockfreePoolingAllocator<void,...> will leave (void* allocate) ill-formed because
 	// of sizeof(T), so this guaranatees that only one list will be initialized
-	return std::allocate_shared<Wrapper>(LockfreePoolingAllocator<void, OUTPUTMESSAGE_FREE_LIST_CAPACITY>());
+	return std::allocate_shared<Wrapper>(LockfreePoolingAllocator<void, OUTPUT_CAPACITY>());
 }

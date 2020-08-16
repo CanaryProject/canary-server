@@ -22,7 +22,7 @@
 #include "protocolgame.h"
 
 #include "modules.h"
-#include "outputmessage.h"
+#include "flatbuffers_wrapper_pool.h"
 
 #include "player.h"
 #include "monsters.h"
@@ -48,7 +48,7 @@ void ProtocolGame::release()
 		player = nullptr;
 	}
 
-	OutputMessagePool::getInstance().removeProtocolFromAutosend(shared_from_this());
+	FlatbuffersWrapperPool::getInstance().removeProtocolFromAutosend(shared_from_this());
 	Protocol::release();
 }
 
@@ -148,9 +148,9 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 			msg.writeString(ss.str());
 			msg.writeByte(static_cast<uint8_t>(retryTime));
 
-      Wrapper_ptr output = OutputMessagePool::getOutputMessage();
-      output->write(msg.getDataBuffer(), msg.getLength());
-			send(output);
+      Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+      wrapper->addRawMessage(msg);
+			send(wrapper);
 			disconnect();
 			return;
 		}
@@ -198,7 +198,7 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 			connect(foundPlayer->getID(), operatingSystem, tfcOperatingSystem);
 		}
 	}
-	OutputMessagePool::getInstance().addProtocolToAutosend(shared_from_this());
+	FlatbuffersWrapperPool::getInstance().addProtocolToAutosend(shared_from_this());
 }
 
 void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem)
@@ -289,7 +289,6 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 
 	#if GAME_FEATURE_XTEA > 0
 	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
-	enableXTEAEncryption();
 	setupXTEA(key);
 	#endif
 
@@ -382,9 +381,10 @@ void ProtocolGame::onConnect()
 	challengeRandom = randNumber(generator);
 	msg.writeByte(challengeRandom);
 
-  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
-  output->write(msg.getDataBuffer(), msg.getLength());
-	send(output);
+  auto wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  wrapper->disableEncryption();
+  wrapper->addRawMessage(msg);
+  send(wrapper);
 }
 
 void ProtocolGame::disconnectClient(const std::string& message) const
@@ -393,10 +393,9 @@ void ProtocolGame::disconnectClient(const std::string& message) const
 	msg.writeByte(0x14);
 	msg.writeString(message);
 
-  Wrapper_ptr output = OutputMessagePool::getOutputMessage();
-  output->write(msg.getDataBuffer(), msg.getLength());
-	send(output);
-  
+  Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  wrapper->addRawMessage(msg);
+  send(wrapper);
 	disconnect();
 }
 
@@ -407,8 +406,8 @@ void ProtocolGame::writeToOutputBuffer()
 
 void ProtocolGame::writeToOutputBuffer(NetworkMessage& msg)
 {
-	Wrapper_ptr output = getOutputBuffer(msg.getLength());
-	output->write(msg.getDataBuffer(), msg.getLength(), true);
+  Wrapper_ptr wrapper = getOutputBuffer(msg.getLength());
+  wrapper->addRawMessage(msg);
 }
 
 void ProtocolGame::parsePacket(NetworkMessage& msg)
@@ -1515,9 +1514,9 @@ void ProtocolGame::updateCreatureData(const Creature* creature)
 	if ((regularOS >= CLIENTOS_NEW_LINUX && regularOS < CLIENTOS_OTCLIENT_LINUX) || tfcOS >= CLIENTOS_TFC_ANDROID) {
 		//Using some hack so that I'm don't need to modify AddCreature function
 		playermsg.reset();
-		playermsg.setBufferPosition(CanaryLib::MAX_HEADER_SIZE - 1);
+		playermsg.setBufferPosition(-1);
 		AddCreature(creature, false, cid);
-		playermsg.setBufferPosition(CanaryLib::MAX_HEADER_SIZE);
+		playermsg.setBufferPosition(0);
 		playermsg.writeByte(0x03);
 		playermsg.setLength(playermsg.getLength() - 2);
 		writeToOutputBuffer();
