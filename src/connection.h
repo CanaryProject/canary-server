@@ -92,7 +92,10 @@ class Connection : public std::enable_shared_from_this<Connection>
 	private:
 		void parseProxyIdentification(const boost::system::error_code& error);
 		void parseHeader(const boost::system::error_code& error);
-		void parsePacket(const boost::system::error_code& error);
+
+		void parseEncryptedMessage(const boost::system::error_code& error);
+		void parseContentMessage(const CanaryLib::ContentMessage *content_msg, bool checksummed, bool encrypted);
+		void parseRawData(const CanaryLib::RawData *raw_data, bool checksummed, bool encrypted);
 
 		void onWriteOperation(const boost::system::error_code& error);
 
