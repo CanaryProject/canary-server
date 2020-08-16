@@ -803,6 +803,12 @@ int NpcScriptInterface::luaOpenShopWindow(lua_State* L)
 	}
 
 	std::vector<ShopInfo> items;
+	#if LUA_VERSION_NUM >= 502
+	items.reserve(lua_rawlen(L, -1));
+	#else
+	items.reserve(lua_objlen(L, -1));
+	#endif
+
 	lua_pushnil(L);
 	while (lua_next(L, -2) != 0) {
 		const auto tableIndex = lua_gettop(L);
@@ -1027,6 +1033,12 @@ int NpcScriptInterface::luaNpcOpenShopWindow(lua_State* L)
 	}
 
 	std::vector<ShopInfo> items;
+	#if LUA_VERSION_NUM >= 502
+	items.reserve(lua_rawlen(L, 3));
+	#else
+	items.reserve(lua_objlen(L, 3));
+	#endif
+  
 	lua_pushnil(L);
 	while (lua_next(L, 3) != 0) {
 		const auto tableIndex = lua_gettop(L);

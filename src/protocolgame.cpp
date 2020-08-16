@@ -811,8 +811,9 @@ void ProtocolGame::parseTrackedQuestFlags()
 {
 	std::vector<uint16_t> quests;
 	uint8_t missions = input_msg.readByte();
+	quests.resize(missions);
 	for (uint8_t i = 0; i < missions; ++i) {
-		quests.emplace_back(input_msg.read<uint16_t>());
+		quests[i] = input_msg.read<uint16_t>();
 	}
 	g_game().playerResetTrackedQuests(player, quests);
 }
@@ -2566,16 +2567,16 @@ void ProtocolGame::sendMarketEnter(uint32_t depotId)
 	player->setInMarket(true);
 
 	std::map<uint16_t, uint32_t> depotItems;
-	std::forward_list<Container*> containerList { depotChest, player->getInbox() };
+	std::vector<Container*> containers{ depotChest, player->getInbox() };
 
+  size_t ic = 0;
 	do {
-		Container* container = containerList.front();
-		containerList.pop_front();
+		Container* container = containers[ic++];
 
 		for (Item* item : container->getItemList()) {
 			Container* c = item->getContainer();
 			if (c && !c->empty()) {
-				containerList.push_front(c);
+				containers.push_back(c);
 				continue;
 			}
 
@@ -2594,7 +2595,7 @@ void ProtocolGame::sendMarketEnter(uint32_t depotId)
 
 			depotItems[itemType.wareId] += Item::countByType(item, -1);
 		}
-	} while (!containerList.empty());
+	} while (ic < containers.size());
 
 	uint16_t itemsToSend = std::min<size_t>(depotItems.size(), std::numeric_limits<uint16_t>::max());
 	playermsg.write<uint16_t>(itemsToSend);
@@ -3318,7 +3319,11 @@ void ProtocolGame::sendCreatureHealth(const Creature* creature, uint8_t healthPe
 	playermsg.reset();
 	playermsg.writeByte(0x8C);
 	playermsg.write<uint32_t>(creature->getID());
-	playermsg.writeByte(healthPercent);
+	if (creature->isHealthHidden() && creature != player) {
+		playermsg.writeByte(0x00);
+	} else {
+		playermsg.writeByte(healthPercent);
+	}
 	writeToOutputBuffer();
 }
 
@@ -4030,10 +4035,11 @@ void ProtocolGame::sendModalWindow(const ModalWindow& modalWindow)
 ////////////// Add common messages
 void ProtocolGame::AddCreature(const Creature* creature, bool known, uint32_t remove)
 {
-	CreatureType_t creatureType = creature->getType();
-	if (creature->isHealthHidden()) {
-		creatureType = CREATURETYPE_HIDDEN;
-	}
+  if (!creature) return;
+
+	CreatureType_t creatureType = creature->isHealthHidden()
+    ? CREATURETYPE_HIDDEN
+    : creature->getType();
 
 	const Player* otherPlayer = creature->getPlayer();
 	if (known) {
@@ -4051,7 +4057,11 @@ void ProtocolGame::AddCreature(const Creature* creature, bool known, uint32_t re
 		}
 	}
 
-	playermsg.writeByte(std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100));
+	if (creatureType == CREATURETYPE_HIDDEN && creature != player) {
+		playermsg.writeByte(0x00);
+	} else {
+		playermsg.writeByte(std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100));
+	}
 
 	playermsg.writeByte(creature->getDirection());
 	if (!creature->isInGhostMode() && !creature->isInvisible()) {

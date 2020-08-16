@@ -49,8 +49,10 @@ Game::Game()
 	offlineTrainingWindow.choices.emplace_back("Club Fighting and Shielding", SKILL_CLUB);
 	offlineTrainingWindow.choices.emplace_back("Distance Fighting and Shielding", SKILL_DISTANCE);
 	offlineTrainingWindow.choices.emplace_back("Magic Level and Shielding", SKILL_MAGLEVEL);
+	offlineTrainingWindow.choices.shrink_to_fit();
 	offlineTrainingWindow.buttons.emplace_back("Okay", 1);
 	offlineTrainingWindow.buttons.emplace_back("Cancel", 0);
+	offlineTrainingWindow.buttons.shrink_to_fit();
 	offlineTrainingWindow.defaultEnterButton = 1;
 	offlineTrainingWindow.defaultEscapeButton = 0;
 	offlineTrainingWindow.priority = true;
@@ -5569,7 +5571,7 @@ bool Game::reloadCreatureScripts(bool fromLua, bool reload)
 	std::map<uint32_t, std::vector<std::string>> cacheCreaturesEvents;
 	#define cacheCreatures(container)																	\
 		do {																							\
-			for (const auto& it : players) {															\
+			for (const auto& it : container) {															\
 				CreatureEventList& creatureEvents = it.second->getCreatureEvents();						\
 				for (auto creatureEvent : creatureEvents) {												\
 					cacheCreaturesEvents[it.second->getID()].emplace_back(creatureEvent->getName());	\
