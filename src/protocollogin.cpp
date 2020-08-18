@@ -31,12 +31,12 @@
 
 void ProtocolLogin::disconnectClient(const std::string& message)
 {
-  CanaryLib::NetworkMessage msg;
-	msg.writeByte(CanaryLib::LoginServerErrorNew);
-	msg.writeString(message);
-
   Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
-  wrapper->addRawMessage(msg);
+  flatbuffers::FlatBufferBuilder &fbb = wrapper->Builder();
+  auto error_message = fbb.CreateString(message);
+  auto error = CanaryLib::CreateErrorData(fbb, error_message);
+  wrapper->add(error.Union(), CanaryLib::DataType_ErrorData);
+  
   send(wrapper);
 
 	disconnect();
