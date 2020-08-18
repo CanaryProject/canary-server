@@ -4,6 +4,7 @@ TESTS="OFF"
 EXECUTE="OFF"
 WARNING_FLAGS="OFF"
 OPTIMIZATIONS="ON"
+BENCHMARKING="OFF"
 
 usage()
 {
@@ -11,8 +12,9 @@ usage()
     exit 1
 }
 
-while getopts "ehrstv" opt; do
+while getopts "behrstv" opt; do
   case "$opt" in
+    b) BENCHMARKING="ON" ;;
     e) EXECUTE="ON" ;;
     h) usage ;;
     r) TYPE="Release" ;;
@@ -23,7 +25,7 @@ while getopts "ehrstv" opt; do
 done
 
 cd build
-cmake -DOPTIONS_ENABLE_UNIT_TEST=${TESTS} -DCMAKE_BUILD_TYPE=${TYPE} -DOPTIONS_ENABLE_IPO=${OPTIMIZATIONS} -DOPTIONS_WARNINGS_FLAGS=${WARNING_FLAGS} .. ; make -j`nproc`
+cmake -DOPTIONS_ENABLE_UNIT_TEST=${TESTS} -DCMAKE_BUILD_TYPE=${TYPE} -DOPTIONS_ENABLE_IPO=${OPTIMIZATIONS} -DOPTIONS_WARNINGS_FLAGS=${WARNING_FLAGS} -DOPTIONS_ENABLE_BENCHMARKING=${BENCHMARKING} .. ; make -j`nproc`
 cd ..
 rm -rf canary
 cp build/bin/canary ./
