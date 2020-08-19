@@ -90,9 +90,7 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
   CanaryLib::AccountInfoBuilder accountBuilder(fbb);
   accountBuilder.add_session_key(sessionKey);
   accountBuilder.add_premium_days(account.premiumDays);
-	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
-    accountBuilder.add_free_premium(1);
-	}
+  accountBuilder.add_free_premium(g_config().getBoolean(ConfigManager::FREE_PREMIUM));
   auto accountInfo = accountBuilder.Finish();
 
   auto worldIp = fbb.CreateString(g_config().getString(ConfigManager::IP));
