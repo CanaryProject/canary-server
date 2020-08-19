@@ -193,12 +193,6 @@ void Connection::parseContentMessage(const CanaryLib::ContentMessage *content_ms
         parseRawData(content_msg->data()->GetAs<CanaryLib::RawData>(i), checksummed, encrypted);
         break;
         
-      case CanaryLib::DataType_WeaponData: {
-        const CanaryLib::WeaponData *weapon = content_msg->data()->GetAs<CanaryLib::WeaponData>(i);
-        spdlog::critical("You see a weapon \"{}\" {} dmg, id {} ", weapon->name()->str(), weapon->damage(), weapon->id());
-        break;
-      }
-        
       default:
         break;
     }

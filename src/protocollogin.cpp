@@ -33,6 +33,7 @@ void ProtocolLogin::disconnectClient(const std::string& message)
 {
   Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
   flatbuffers::FlatBufferBuilder &fbb = wrapper->Builder();
+
   auto error_message = fbb.CreateString(message);
   auto error = CanaryLib::CreateErrorData(fbb, error_message);
   wrapper->add(error.Union(), CanaryLib::DataType_ErrorData);
@@ -48,22 +49,6 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 void ProtocolLogin::getCharacterList(const std::string& accountName, const std::string& password)
 #endif
 {
-	#if !(GAME_FEATURE_LOGIN_EXTENDED > 0)
-	static uint32_t serverIp = INADDR_NONE;
-	if (serverIp == INADDR_NONE) {
-		std::string cfgIp = g_config().getString(ConfigManager::IP);
-		serverIp = inet_addr(cfgIp.c_str());
-		if (serverIp == INADDR_NONE) {
-			struct hostent* he = gethostbyname(cfgIp.c_str());
-			if (!he || he->h_addrtype != AF_INET) { //Only ipv4
-				disconnectClient("ERROR: Cannot resolve hostname.");
-				return;
-			}
-			memcpy(&serverIp, he->h_addr, sizeof(serverIp));
-		}
-	}
-	#endif
-
 	auto connection = getConnection();
 	if (!connection) {
 		return;
@@ -87,9 +72,6 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 		return;
 	}
 
-  CanaryLib::NetworkMessage msg;
-
-	#if GAME_FEATURE_SESSIONKEY > 0
 	uint32_t ticks = time(nullptr) / AUTHENTICATOR_PERIOD;
 	if (!account.key.empty()) {
 		if (token.empty() || !(token == generateToken(account.key, ticks) || token == generateToken(account.key, ticks - 1) || token == generateToken(account.key, ticks + 1))) {
@@ -97,82 +79,55 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 			return;
 		}
 	}
-	#endif
 
 	//Update premium days
 	Game::updatePremium(account);
 
-	//Check for MOTD
-	const std::string& motd = g_config().getString(ConfigManager::MOTD);
-	if (!motd.empty()) {
-		//Add MOTD
-		msg.writeByte(CanaryLib::LoginServerMotd);
-
-		std::ostringstream ss;
-		ss << g_game().getMotdNum() << "\n" << motd;
-		msg.writeString(ss.str());
-	}
-
-	#if GAME_FEATURE_SESSIONKEY > 0
-	//Add session key
-	msg.writeByte(CanaryLib::LoginServerSessionKey);
-	msg.writeString(accountName + "\n" + password + "\n" + token + "\n" + std::to_string(ticks));
-	#endif
-
-	//Add char list
-	msg.writeByte(CanaryLib::LoginServerCharacterList);
-
-	#if GAME_FEATURE_LOGIN_EXTENDED > 0
-	msg.writeByte(1); // number of worlds
-
-	msg.writeByte(0); // world id
-	msg.writeString(g_config().getString(ConfigManager::SERVER_NAME));
-	msg.writeString(g_config().getString(ConfigManager::IP));
-	msg.write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
-	msg.writeByte(0);
-
-	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
-	msg.writeByte(size);
-	for (uint8_t i = 0; i < size; i++) {
-		msg.writeByte(0);
-		msg.writeString(account.characters[i]);
-	}
-	#else
-	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
-	msg.writeByte(size);
-	for (uint8_t i = 0; i < size; i++) {
-		msg.writeString(account.characters[i]);
-		msg.writeString(g_config().getString(ConfigManager::SERVER_NAME));
-		msg.write<uint32_t>(serverIp);
-		msg.write<uint16_t>(g_config().getNumber(ConfigManager::GAME_PORT));
-		#if GAME_FEATURE_PREVIEW_STATE > 0
-		msg.writeByte(0);
-		#endif
-	}
-	#endif
-
-	//Add premium days
-	#if GAME_FEATURE_LOGIN_PREMIUM_TIMESTAMP > 0
-	#if GAME_FEATURE_LOGIN_PREMIUM_TYPE > 0
-	msg.writeByte(0);
-	#endif
-	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
-		msg.writeByte(1);
-		msg.write<uint32_t>(0);
-	} else {
-		msg.writeByte(account.premiumDays > 0 ? 1 : 0);
-		msg.write<uint32_t>(time(nullptr) + (account.premiumDays * 86400));
-	}
-	#else
-	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
-		msg.write<uint16_t>(0xFFFF); //client displays free premium
-	} else {
-		msg.write<uint16_t>(account.premiumDays);
-	}
-	#endif
-
   Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
-  wrapper->addRawMessage(msg);
+  flatbuffers::FlatBufferBuilder &fbb = wrapper->Builder();
+  
+  auto sessionKey = fbb.CreateString(accountName + "\n" + password + "\n" + token + "\n" + std::to_string(ticks));
+  CanaryLib::AccountInfoBuilder accountBuilder(fbb);
+  accountBuilder.add_session_key(sessionKey);
+  accountBuilder.add_premium_days(account.premiumDays);
+	if (g_config().getBoolean(ConfigManager::FREE_PREMIUM)) {
+    accountBuilder.add_free_premium(1);
+	}
+  auto accountInfo = accountBuilder.Finish();
+
+  auto worldIp = fbb.CreateString(g_config().getString(ConfigManager::IP));
+  auto worldName = fbb.CreateString(g_config().getString(ConfigManager::SERVER_NAME));
+  CanaryLib::WorldInfoBuilder worldBuilder(fbb);
+  worldBuilder.add_ip(worldIp);
+  worldBuilder.add_name(worldName);
+  worldBuilder.add_port(g_config().getNumber(ConfigManager::GAME_PORT));
+  auto worldInfo = worldBuilder.Finish();
+
+  std::vector<flatbuffers::Offset<CanaryLib::CharacterInfo>> character_vector;
+	uint8_t size = std::min<size_t>(std::numeric_limits<uint8_t>::max(), account.characters.size());
+	for (uint8_t i = 0; i < size; i++) {
+    auto characterName = fbb.CreateString(account.characters[i]);
+    auto characterInfo = CanaryLib::CreateCharacterInfo(fbb, characterName);
+    character_vector.emplace_back(characterInfo);
+	}
+  auto charactersList = fbb.CreateVector(character_vector);
+
+	const std::string& motd_str = g_config().getString(ConfigManager::MOTD);
+  flatbuffers::Offset<flatbuffers::String> motd;
+	if (!motd_str.empty()) {
+    motd = fbb.CreateString(
+      std::to_string(g_game().getMotdNum()) + "\n" + motd_str
+    );
+	}
+
+  auto characters = CanaryLib::CreateCharactersListData(
+    fbb,
+    accountInfo,
+    charactersList,
+    worldInfo,
+    motd
+  );
+  wrapper->add(characters.Union(), CanaryLib::DataType_CharactersListData);
   send(wrapper);
 
 	disconnect();
