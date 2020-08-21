@@ -77,6 +77,7 @@ class ServicePort : public std::enable_shared_from_this<ServicePort>
 
 		bool add_service(const Service_ptr& new_svc);
 		Protocol_ptr make_protocol(bool checksummed, NetworkMessage& msg, const Connection_ptr& connection) const;
+		Protocol_ptr make_protocol(bool checksummed, uint8_t protocolID, const Connection_ptr& connection) const;
 
 		void onStopServer();
 		void onAccept(Connection_ptr connection, const boost::system::error_code& error);

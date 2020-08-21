@@ -37,7 +37,6 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		virtual void parsePacket(NetworkMessage&) {}
 
 		bool onRecvMessage(NetworkMessage& msg);
-		virtual void onRecvFirstMessage(NetworkMessage& msg) = 0;
 		virtual void onConnect() {}
 
 		bool isConnectionExpired() const {
@@ -63,7 +62,10 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 			}
 		}
 
+		virtual void onRecvFirstMessage(NetworkMessage& msg) = 0;
+
 	protected:
+
 		void disconnect() const {
 			if (auto connection = getConnection()) {
 				connection->close();
@@ -79,6 +81,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		}
 
 		virtual void release() {}
+		virtual void parseLoginData(const CanaryLib::LoginInfo * login_info) {};
 
 	private:
 		friend class Connection;

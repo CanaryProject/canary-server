@@ -192,6 +192,29 @@ void Connection::parseContentMessage(const CanaryLib::ContentMessage *content_ms
       case CanaryLib::DataType_RawData:
         parseRawData(content_msg->data()->GetAs<CanaryLib::RawData>(i), checksummed, encrypted);
         break;
+
+      case CanaryLib::DataType_LoginData: {
+        auto login_data = content_msg->data()->GetAs<CanaryLib::LoginData>(i);
+        auto body = login_data->body();
+        if (body && body->size() == 128) {
+          uint8_t *body_buffer = (uint8_t *) body->Data();
+          g_RSA().decrypt((char *) body_buffer);
+          
+          if (!body_buffer[0]) {
+            uint8_t buffer[128];
+            memcpy(buffer, body_buffer + sizeof(uint8_t), 127);
+            if (!protocol) {
+              // Game protocol has already been created at this point
+              protocol = service_port->make_protocol(checksummed, 0x01, shared_from_this());
+              if (!protocol) {
+                close(FORCE_CLOSE);
+                return;
+              }
+              protocol->parseLoginData(CanaryLib::GetLoginInfo(body_buffer + 1));
+            }
+          }
+        }
+      }
         
       default:
         break;

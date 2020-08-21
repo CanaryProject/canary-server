@@ -43,11 +43,7 @@ void ProtocolLogin::disconnectClient(const std::string& message)
 	disconnect();
 }
 
-#if GAME_FEATURE_SESSIONKEY > 0
 void ProtocolLogin::getCharacterList(const std::string& accountName, const std::string& password, const std::string& token)
-#else
-void ProtocolLogin::getCharacterList(const std::string& accountName, const std::string& password)
-#endif
 {
 	auto connection = getConnection();
 	if (!connection) {
@@ -131,61 +127,34 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	disconnect();
 }
 
-void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
-{
-	if (g_game().getGameState() == GAME_STATE_SHUTDOWN) {
-		disconnect();
+void ProtocolLogin::parseLoginData(const CanaryLib::LoginInfo * login_info) {
+  switch (g_game().getGameState()) {
+    case GAME_STATE_SHUTDOWN:
+      disconnect();
+      return;
+    case GAME_STATE_STARTUP:
+      disconnectClient("Gameworld is starting up.\nPlease wait.");
+      return;
+    case GAME_STATE_MAINTAIN:
+      disconnectClient("Gameworld is under maintenance..\nPlease re-connect in a while.");
+      return;
+    default:
+      break;
+  }
+
+  if (!login_info->account()->size() || !login_info->password()->size()) {
+		disconnectClient("Account name and password cannot be empty.");
 		return;
-	}
+  }
 
-	if (!decryptRSA(msg)) {
-		disconnect();
-		return;
-	}
-
-	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
-	setupXTEA(key);
-
-	if (g_game().getGameState() == GAME_STATE_STARTUP) {
-		disconnectClient("Gameworld is starting up. Please wait.");
-		return;
-	}
-
-	if (g_game().getGameState() == GAME_STATE_MAINTAIN) {
-		disconnectClient("Gameworld is under maintenance.\nPlease re-connect in a while.");
-		return;
-	}
-
-	#if GAME_FEATURE_ACCOUNT_NAME > 0
-	std::string accountName = msg.readString();
-	#else
-	std::string accountName = std::to_string(msg.read<uint32_t>());
-	#endif
-	if (accountName.empty()) {
-		disconnectClient("Invalid account name.");
-		return;
-	}
-
-	std::string password = msg.readString();
-	if (password.empty()) {
-		disconnectClient("Invalid password.");
-		return;
-	}
-
-	#if GAME_FEATURE_SESSIONKEY > 0
-	// read authenticator token and stay logged in flag from last 128 bytes
-	msg.skip((msg.getLength() - 128) - msg.getBufferPosition());
-	if (!decryptRSA(msg)) {
-		disconnectClient("Invalid authentification token.");
-		return;
-	}
-
-	std::string authToken = msg.readString();
-
-	auto thisPtr = std::static_pointer_cast<ProtocolLogin>(shared_from_this());
-	g_dispatcher().addTask(std::bind(&ProtocolLogin::getCharacterList, thisPtr, std::move(accountName), std::move(password), std::move(authToken)));
-	#else
-	auto thisPtr = std::static_pointer_cast<ProtocolLogin>(shared_from_this());
-	g_dispatcher().addTask(std::bind(&ProtocolLogin::getCharacterList, thisPtr, std::move(accountName), std::move(password)));
-	#endif
+  setupXTEA(login_info->xtea_key()->data());
+	g_dispatcher().addTask(
+    std::bind(
+      &ProtocolLogin::getCharacterList, 
+      std::static_pointer_cast<ProtocolLogin>(shared_from_this()), 
+      std::move(login_info->account()->str()), 
+      std::move(login_info->password()->str()), 
+      std::move("")
+    )
+  );
 }

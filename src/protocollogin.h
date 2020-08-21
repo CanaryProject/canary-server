@@ -41,7 +41,9 @@ class ProtocolLogin : public Protocol
 
 		explicit ProtocolLogin(Connection_ptr connection) : Protocol(connection) {}
 
-		void onRecvFirstMessage(NetworkMessage& msg) override;
+		void parseLoginData(const CanaryLib::LoginInfo * login_info) override;
+
+		void onRecvFirstMessage(NetworkMessage& msg) override {};
 
 	private:
 		void disconnectClient(const std::string& message);
