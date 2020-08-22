@@ -59,7 +59,7 @@ class ProtocolGame final : public Protocol
 {
 	public:
 		static const CanaryLib::Protocol_t id() {
-			return CanaryLib::PROTOCOL_GAME;
+			return CanaryLib::Protocol_t_PROTOCOL_GAME;
 		}
 
 		static const char* protocol_name() {
@@ -78,12 +78,16 @@ class ProtocolGame final : public Protocol
 		NetworkMessage playermsg;
 		NetworkMessage input_msg;
 
+  protected:
+    // Flatbuffer
+		void parseLoginInfo(const CanaryLib::LoginInfo *login_info) override;
+
 	private:
 		ProtocolGame_ptr getThis() {
 			return std::static_pointer_cast<ProtocolGame>(shared_from_this());
 		}
 		void connect(uint32_t playerId, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem);
-		void disconnectClient(const std::string& message) const;
+		void disconnectClient(const std::string& message) const override;
 		void writeToOutputBuffer(NetworkMessage& msg);
 		void writeToOutputBuffer();
 
@@ -97,7 +101,6 @@ class ProtocolGame final : public Protocol
 
 		// we have all the parse methods
 		void parsePacket(NetworkMessage& msg) override;
-		void onRecvFirstMessage(NetworkMessage& msg) override;
 		void onConnect() override;
 
 		//Parse methods

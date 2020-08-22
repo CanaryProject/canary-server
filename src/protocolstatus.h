@@ -27,7 +27,7 @@ class ProtocolStatus final : public Protocol
 {
 	public:
 		static const CanaryLib::Protocol_t id() {
-			return CanaryLib::PROTOCOL_STATUS;
+			return CanaryLib::Protocol_t_PROTOCOL_STATUS;
 		}
 
 		static const char* protocol_name() {
@@ -35,8 +35,6 @@ class ProtocolStatus final : public Protocol
 		}
 
 		explicit ProtocolStatus(Connection_ptr connection) : Protocol(connection) {}
-
-		void onRecvFirstMessage(NetworkMessage& msg) override;
 
 		void sendStatusString();
 		void sendInfo(uint16_t requestedInfo, const std::string& characterName);

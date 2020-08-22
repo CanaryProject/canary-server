@@ -63,7 +63,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		}
 
 	protected:
-		virtual void onRecvFirstMessage(NetworkMessage& msg) = 0;
+		virtual void disconnectClient(const std::string& message) const;
 
 		void disconnect() const {
 			if (auto connection = getConnection()) {
@@ -79,8 +79,11 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 			rawMessages = value;
 		}
 
-		virtual void release() {}
-		virtual void parseLoginData(const CanaryLib::LoginInfo * login_info) {};
+		virtual void release(){}
+
+    // Flatbuffer parsers
+		void parseLoginData(const CanaryLib::LoginData *login_data);
+		virtual void parseLoginInfo(const CanaryLib::LoginInfo * login_info){}
 
 	private:
 		friend class Connection;

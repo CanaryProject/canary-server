@@ -52,11 +52,7 @@ void ProtocolGame::release()
 	Protocol::release();
 }
 
-#if GAME_FEATURE_SESSIONKEY > 0
 void ProtocolGame::login(const std::string& accountName, const std::string& password, std::string& characterName, std::string& token, uint32_t tokenTime, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem)
-#else
-void ProtocolGame::login(const std::string& accountName, const std::string& password, std::string& characterName, OperatingSystem_t operatingSystem, OperatingSystem_t tfcOperatingSystem)
-#endif
 {
 	//dispatcher thread
 	BanInfo banInfo;
@@ -71,19 +67,11 @@ void ProtocolGame::login(const std::string& accountName, const std::string& pass
 		return;
 	}
 	
-	#if GAME_FEATURE_SESSIONKEY > 0
 	uint32_t accountId = IOLoginData::gameworldAuthentication(accountName, password, characterName, token, tokenTime);
 	if (accountId == 0) {
 		disconnectClient("Account name or password is not correct.");
 		return;
 	}
-	#else
-	uint32_t accountId = IOLoginData::gameworldAuthentication(accountName, password, characterName);
-	if (accountId == 0) {
-		disconnectClient("Account name or password is not correct.");
-		return;
-	}
-	#endif
 
 	Player* foundPlayer = g_game().getPlayerByName(characterName);
 	if (!foundPlayer || g_config().getBoolean(ConfigManager::ALLOW_CLONES)) {
@@ -272,97 +260,62 @@ void ProtocolGame::logout(bool displayEffect, bool forced)
 	g_game().removeCreature(player);
 }
 
-void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
+void ProtocolGame::parseLoginInfo(const CanaryLib::LoginInfo * login_info) 
 {
-	if (g_game().getGameState() == GAME_STATE_SHUTDOWN) {
-		disconnect();
+  setupXTEA(login_info->xtea_key()->data());
+
+  auto game_login_info = login_info->game_login_info();
+  auto session_key = game_login_info->session_key()->str();
+  auto session_args = explodeString(session_key, "\n", 4);
+	if (session_args.size() != 4) {
+		disconnectClient("Invalid session key.");
 		return;
 	}
 
-	OperatingSystem_t operatingSystem = static_cast<OperatingSystem_t>(msg.read<uint16_t>());
-	OperatingSystem_t TFCoperatingSystem = OperatingSystem_t::CLIENTOS_NONE;
-
-	if (!decryptRSA(msg)) {
-		disconnect();
+  std::string characterName = game_login_info->char_name()->str();
+  if (characterName.empty()) {
+		disconnectClient("Invalid character name.");
 		return;
-	}
+  }
 
-	#if GAME_FEATURE_XTEA > 0
-	uint32_t key[4] = {msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>(), msg.read<uint32_t>()};
-	setupXTEA(key);
-	#endif
+  // auto challenge = game_login_info->challenge();
+	// if (challenge->timestamp() != challengeTimestamp || challenge->random() != challengeRandom) {
+	// 	disconnectClient("Invalid connection request.");
+	// 	return;
+	// }
 
-	if (operatingSystem >= (CLIENTOS_OTCLIENT_LINUX + CLIENTOS_OTCLIENT_LINUX)) {
-		disconnectClient("OTClientV8 extended features are not supported on this server.");
+	std::string& accountName = session_args[0];
+	std::string& password = session_args[1];
+	std::string& token = session_args[2];
+
+  if (accountName.empty() || password.empty()) {
+		disconnectClient("You must enter your account name and password.");
 		return;
-	}
+  }
 
-	#if GAME_FEATURE_SESSIONKEY > 0
-	std::string sessionKey = msg.readString();
-
-	auto sessionArgs = explodeString(sessionKey, "\n", 4);
-	if (sessionArgs.size() != 4) {
-		disconnect();
-		return;
-	}
-
-	std::string& accountName = sessionArgs[0];
-	std::string& password = sessionArgs[1];
-	std::string& token = sessionArgs[2];
+  // Validate token (session_args[3])
 	uint32_t tokenTime = 0;
-
 	try {
-		tokenTime = std::stoul(sessionArgs[3]);
+		tokenTime = std::stoul(session_args[3]);
 	} catch (const std::invalid_argument&) {
-		disconnectClient("Malformed token packet.");
+		disconnectClient("Invalid session key.");
 		return;
 	} catch (const std::out_of_range&) {
 		disconnectClient("Token time is too long.");
 		return;
 	}
 
-	std::string characterName = msg.readString();
-	#endif
-
-	if (characterName.empty() || characterName.size() > NETWORKMESSAGE_PLAYERNAME_MAXLENGTH) {
-		disconnectClient("Malformed packet.");
-		return;
-	}
-
-	if (accountName.empty()) {
-		disconnectClient("You must enter your account name.");
-		return;
-	}
-
-	if (password.empty()) {
-		disconnectClient("Invalid password.");
-		return;
-	}
-
-	#if GAME_FEATURE_SERVER_SENDFIRST > 0
-	uint32_t timeStamp = msg.read<uint32_t>();
-	uint8_t randNumber = msg.readByte();
-	if (challengeTimestamp != timeStamp || challengeRandom != randNumber) {
-		disconnect();
-		return;
-	}
-	#endif
-
-	if (g_game().getGameState() == GAME_STATE_STARTUP) {
-		disconnectClient("Gameworld is starting up. Please wait.");
-		return;
-	}
-
-	if (g_game().getGameState() == GAME_STATE_MAINTAIN) {
-		disconnectClient("Gameworld is under maintenance. Please re-connect in a while.");
-		return;
-	}
-	
-	#if GAME_FEATURE_SESSIONKEY > 0
-	g_dispatcher().addTask(std::bind(&ProtocolGame::login, getThis(), std::move(accountName), std::move(password), std::move(characterName), std::move(token), tokenTime, operatingSystem, TFCoperatingSystem));
-	#else
-	g_dispatcher().addTask(std::bind(&ProtocolGame::login, getThis(), std::move(accountName), std::move(password), std::move(characterName), operatingSystem, TFCoperatingSystem));
-	#endif
+	g_dispatcher().addTask(std::bind(
+      &ProtocolGame::login,
+      getThis(),
+      std::move(accountName),
+      std::move(password),
+      std::move(characterName),
+      std::move(token),
+      tokenTime,
+      OperatingSystem_t::CLIENTOS_OTCLIENT_LINUX,
+      OperatingSystem_t::CLIENTOS_NONE
+    ));
 }
 
 void ProtocolGame::onConnect()

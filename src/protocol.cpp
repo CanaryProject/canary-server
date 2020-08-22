@@ -17,12 +17,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "flatbuffers_wrapper_pool.h"
+#include "game.h"
+#include "protocol.h"
 #include "otpch.h"
 #include "tasks.h"
-
-#include "configmanager.h"
-#include "protocol.h"
-#include "flatbuffers_wrapper_pool.h"
 #include "rsa.h"
 
 Protocol::~Protocol(){}
@@ -60,16 +59,6 @@ Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
 	return outputBuffer;
 }
 
-bool Protocol::decryptRSA(NetworkMessage& msg)
-{
-	if ((msg.getLength() - msg.getBufferPosition()) < 128) {
-		return false;
-	}
-
-	g_RSA().decrypt(reinterpret_cast<char*>(msg.getBuffer()) + msg.getBufferPosition()); //does not break strict aliasing
-	return (msg.readByte() == 0);
-}
-
 uint32_t Protocol::getIP() const
 {
 	if (auto connection = getConnection()) {
@@ -77,4 +66,60 @@ uint32_t Protocol::getIP() const
 	}
 
 	return 0;
+}
+
+void Protocol::disconnectClient(const std::string& message) const
+{
+  Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
+  flatbuffers::FlatBufferBuilder &fbb = wrapper->Builder();
+
+  auto error_message = fbb.CreateString(message);
+  auto error = CanaryLib::CreateErrorData(fbb, error_message);
+  wrapper->add(error.Union(), CanaryLib::DataType_ErrorData);
+  
+  send(wrapper);
+
+	disconnect();
+}
+
+void Protocol::parseLoginData(const CanaryLib::LoginData *login_data) {
+  switch (g_game().getGameState()) {
+    case GAME_STATE_SHUTDOWN:
+      disconnect();
+      return;
+    case GAME_STATE_STARTUP:
+      disconnectClient("Gameworld is starting up.\nPlease wait.");
+      return; 
+    case GAME_STATE_MAINTAIN:
+      disconnectClient("Gameworld is under maintenance..\nPlease re-connect in a while.");
+      return;
+    default:
+      break;
+  }
+
+  if (login_data->client() != CanaryLib::Client_t_CANARY) {
+    disconnectClient("Canary server only accepts Canary Client.");
+    return;
+  }
+
+  auto enc_login_info = login_data->login_info();
+  size_t buffer_size = enc_login_info->size();
+
+  if (enc_login_info && buffer_size == CanaryLib::RSA_SIZE) {
+    uint8_t *login_info_buffer = (uint8_t *) enc_login_info->Data();
+    g_RSA().decrypt((char *) login_info_buffer);
+
+    // First RSA byte must be 0
+    if (login_info_buffer[0]) {
+      disconnectClient("Invalid RSA encryption.");
+      return;
+    }
+    
+    uint8_t buffer[buffer_size];
+    uint8_t offset = sizeof(uint8_t);
+    memcpy(buffer, login_info_buffer + offset, buffer_size -offset);
+    auto login_info = CanaryLib::GetLoginInfo(buffer);
+
+    parseLoginInfo(login_info);
+  }
 }

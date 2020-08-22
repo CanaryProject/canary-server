@@ -180,11 +180,12 @@ void Connection::parseBody(const boost::system::error_code& error)
 }
 
 void Connection::parseEncryptedMessage(const CanaryLib::EncryptedMessage *enc_msg) {
+  auto header = enc_msg->header();
   uint8_t *body_buffer = (uint8_t *) enc_msg->body()->Data();
+
+  if (!initializeProtocol(header->protocol_type())) return;
   
-  // if non-encrypted then its first message
-  encrypted = enc_msg->header()->encrypted();
-  if (protocol && encrypted) {
+  if (header->encrypted()) {
     protocol->xtea.decrypt(enc_msg->header()->message_size(), body_buffer);
   }
 
@@ -202,7 +203,7 @@ void Connection::parseContentMessage(const CanaryLib::ContentMessage *content_ms
   for (int i = 0; i < content_msg->data()->size(); i++) {
     switch (auto dataType = content_msg->data_type()->GetEnum<CanaryLib::DataType>(i)) {
       case CanaryLib::DataType_LoginData:
-        parseLogin(content_msg->data()->GetAs<CanaryLib::LoginData>(i));
+        protocol->parseLoginData(content_msg->data()->GetAs<CanaryLib::LoginData>(i));
         break;
 
       case CanaryLib::DataType_RawData:
@@ -217,52 +218,18 @@ void Connection::parseContentMessage(const CanaryLib::ContentMessage *content_ms
   }
 }
 
-void Connection::parseLogin(const CanaryLib::LoginData *login_data) {
-  initializeProtocol(CanaryLib::PROTOCOL_LOGIN);
-  auto body = login_data->body();
-  if (body && body->size() == CanaryLib::RSA_SIZE) {
-    uint8_t *body_buffer = (uint8_t *) body->Data();
-    g_RSA().decrypt((char *) body_buffer);
-    
-    if (!body_buffer[0]) {
-      uint8_t buffer[CanaryLib::RSA_SIZE];
-      memcpy(buffer, body_buffer + sizeof(uint8_t), CanaryLib::RSA_SIZE - 1);
-      protocol->parseLoginData(CanaryLib::GetLoginInfo(body_buffer + 1));
-    }
-  }
-}
-
 void Connection::parseRawData(const CanaryLib::RawData *raw_data) {
   NetworkMessage msg;
   msg.write(raw_data->body()->data(), raw_data->size(), CanaryLib::MESSAGE_OPERATION_PEEK);
-
-  if (!protocol) {
-    // Game protocol has already been created at this point
-    protocol = service_port->make_protocol(msg, shared_from_this());
-    if (!protocol) {
-      close(FORCE_CLOSE);
-      return;
-    }
-  } 
-  
-  // if non-encrypted then its first message
-  if (!encrypted){
-    // we want to skip the first byte (protocol identification) from now on
-    // since its only useful if the protocol is undefined
-    msg.setBufferPosition(1);
-    protocol->onRecvFirstMessage(msg);
-    return;
-  }
-  
   protocol->onRecvMessage(msg);
 }
 
-void Connection::initializeProtocol(CanaryLib::Protocol_t id) {
-  if (protocol) return;
-  if (!(protocol = service_port->make_protocol(id, shared_from_this()))) {
+bool Connection::initializeProtocol(CanaryLib::Protocol_t id) {
+  if (!protocol && !(protocol = service_port->make_protocol(id, shared_from_this()))) {
     close(FORCE_CLOSE);
-    return;
+    return false;
   }
+  return true;
 }
 
 void Connection::recv(bool checkTimer)

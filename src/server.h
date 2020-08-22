@@ -41,7 +41,7 @@ class Service final : public ServiceBase
 {
 	public:
 		bool is_single_socket() const override {
-			return get_protocol_identifier() == CanaryLib::PROTOCOL_GAME;
+			return get_protocol_identifier() == CanaryLib::Protocol_t_PROTOCOL_GAME;
 		}
 		uint8_t get_protocol_identifier() const override {
 			return ProtocolType::id();

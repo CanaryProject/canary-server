@@ -28,19 +28,17 @@ class ProtocolLogin : public Protocol
 {
 	public:
 		static const CanaryLib::Protocol_t id() {
-			return CanaryLib::PROTOCOL_LOGIN;
+			return CanaryLib::Protocol_t_PROTOCOL_LOGIN;
 		}
 
 		static const char* protocol_name() {
 			return "login protocol";
 		}
 
-		explicit ProtocolLogin(Connection_ptr connection) : Protocol(connection) {}
-		void parseLoginData(const CanaryLib::LoginInfo * login_info) override;
-		void onRecvFirstMessage(NetworkMessage& msg) override {};
+		explicit ProtocolLogin(Connection_ptr connection) : Protocol(connection){}
+		void parseLoginInfo(const CanaryLib::LoginInfo * login_info) override;
 
 	private:
-		void disconnectClient(const std::string& message);
 		void getCharacterList(const std::string& accountName, const std::string& password, const std::string& token);
 };
 

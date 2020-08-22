@@ -38,49 +38,6 @@ enum RequestedInfo_t : uint16_t {
 	REQUEST_SERVER_SOFTWARE_INFO = 1 << 7,
 };
 
-void ProtocolStatus::onRecvFirstMessage(NetworkMessage& msg)
-{
-	uint32_t ip = getIP();
-	if (ip != 0x0100007F) {
-		std::string ipStr = convertIPToString(ip);
-		if (ipStr != g_config().getString(ConfigManager::IP)) {
-			std::map<uint32_t, int64_t>::const_iterator it = ipConnectMap.find(ip);
-			if (it != ipConnectMap.end() && (OTSYS_TIME() < (it->second + g_config().getNumber(ConfigManager::STATUSQUERY_TIMEOUT)))) {
-				disconnect();
-				return;
-			}
-		}
-	}
-
-	ipConnectMap[ip] = OTSYS_TIME();
-
-	switch (msg.readByte()) {
-		//XML info protocol
-		case 0xFF: {
-			if (!tfs_strcmp(msg.readString(4).c_str(), "info")) {
-				g_dispatcher().addTask(std::bind(&ProtocolStatus::sendStatusString, std::static_pointer_cast<ProtocolStatus>(shared_from_this())));
-				return;
-			}
-			break;
-		}
-
-		//Another ServerInfo protocol
-		case 0x01: {
-			uint16_t requestedInfo = msg.read<uint16_t>(); // only a Byte is necessary, though we could add new info here
-			std::string characterName;
-			if (requestedInfo & REQUEST_PLAYER_STATUS_INFO) {
-				characterName = msg.readString();
-			}
-			g_dispatcher().addTask(std::bind(&ProtocolStatus::sendInfo, std::static_pointer_cast<ProtocolStatus>(shared_from_this()), requestedInfo, std::move(characterName)));
-			return;
-		}
-
-		default:
-			break;
-	}
-	disconnect();
-}
-
 void ProtocolStatus::sendStatusString()
 {
   CanaryLib::NetworkMessage msg;

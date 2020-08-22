@@ -29,20 +29,6 @@
 #include "ban.h"
 #include "game.h"
 
-void ProtocolLogin::disconnectClient(const std::string& message)
-{
-  Wrapper_ptr wrapper = FlatbuffersWrapperPool::getOutputWrapper();
-  flatbuffers::FlatBufferBuilder &fbb = wrapper->Builder();
-
-  auto error_message = fbb.CreateString(message);
-  auto error = CanaryLib::CreateErrorData(fbb, error_message);
-  wrapper->add(error.Union(), CanaryLib::DataType_ErrorData);
-  
-  send(wrapper);
-
-	disconnect();
-}
-
 void ProtocolLogin::getCharacterList(const std::string& accountName, const std::string& password, const std::string& token)
 {
 	auto connection = getConnection();
@@ -127,21 +113,7 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	disconnect();
 }
 
-void ProtocolLogin::parseLoginData(const CanaryLib::LoginInfo * login_info) {
-  switch (g_game().getGameState()) {
-    case GAME_STATE_SHUTDOWN:
-      disconnect();
-      return;
-    case GAME_STATE_STARTUP:
-      disconnectClient("Gameworld is starting up.\nPlease wait.");
-      return;
-    case GAME_STATE_MAINTAIN:
-      disconnectClient("Gameworld is under maintenance..\nPlease re-connect in a while.");
-      return;
-    default:
-      break;
-  }
-
+void ProtocolLogin::parseLoginInfo(const CanaryLib::LoginInfo * login_info) {
   if (!login_info->account()->size() || !login_info->password()->size()) {
 		disconnectClient("Account name and password cannot be empty.");
 		return;

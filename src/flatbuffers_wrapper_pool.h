@@ -20,7 +20,6 @@
 #ifndef FS_FLATBUFFERS_WRAPPER_POOL_H_C06AAED85C7A43939F22D229297C0CC1
 #define FS_FLATBUFFERS_WRAPPER_POOL_H_C06AAED85C7A43939F22D229297C0CC1
 
-#include "networkmessage.h"
 #include "connection.h"
 #include "tools.h"
 

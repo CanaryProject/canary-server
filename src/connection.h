@@ -90,7 +90,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 		uint32_t getIP();
 
 	private:
-    void initializeProtocol(CanaryLib::Protocol_t id);
+    bool initializeProtocol(CanaryLib::Protocol_t id);
 
 		void parseProxyIdentification(const boost::system::error_code& error);
 		void parseHeader(const boost::system::error_code& error);
