@@ -58,18 +58,10 @@ class Mission;
 class ProtocolGame final : public Protocol
 {
 	public:
-		// static protocol information
-		#if GAME_FEATURE_SERVER_SENDFIRST > 0
-		enum {server_sends_first = true};
-		#else
-		enum {server_sends_first = false};
-		#endif
-		enum {protocol_identifier = 0x0A};
-		#if GAME_FEATURE_PROTOCOLSEQUENCE > 0 || GAME_FEATURE_ADLER32_CHECKSUM > 0
-		enum {use_checksum = true};
-		#else
-		enum {use_checksum = false};
-		#endif
+		static const CanaryLib::Protocol_t id() {
+			return CanaryLib::PROTOCOL_GAME;
+		}
+
 		static const char* protocol_name() {
 			return "gameworld protocol";
 		}

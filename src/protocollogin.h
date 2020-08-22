@@ -27,32 +27,21 @@ class NetworkMessage;
 class ProtocolLogin : public Protocol
 {
 	public:
-		// static protocol information
-		enum {server_sends_first = false};
-		enum {protocol_identifier = 0x01};
-		#if GAME_FEATURE_ADLER32_CHECKSUM > 0
-		enum {use_checksum = true};
-		#else
-		enum {use_checksum = false};
-		#endif
+		static const CanaryLib::Protocol_t id() {
+			return CanaryLib::PROTOCOL_LOGIN;
+		}
+
 		static const char* protocol_name() {
 			return "login protocol";
 		}
 
 		explicit ProtocolLogin(Connection_ptr connection) : Protocol(connection) {}
-
 		void parseLoginData(const CanaryLib::LoginInfo * login_info) override;
-
 		void onRecvFirstMessage(NetworkMessage& msg) override {};
 
 	private:
 		void disconnectClient(const std::string& message);
-
-		#if GAME_FEATURE_SESSIONKEY > 0
 		void getCharacterList(const std::string& accountName, const std::string& password, const std::string& token);
-		#else
-		void getCharacterList(const std::string& accountName, const std::string& password);
-		#endif
 };
 
 #endif

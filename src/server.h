@@ -30,7 +30,6 @@ class ServiceBase
 {
 	public:
 		virtual bool is_single_socket() const = 0;
-		virtual bool is_checksummed() const = 0;
 		virtual uint8_t get_protocol_identifier() const = 0;
 		virtual const char* get_protocol_name() const = 0;
 
@@ -42,13 +41,10 @@ class Service final : public ServiceBase
 {
 	public:
 		bool is_single_socket() const override {
-			return ProtocolType::server_sends_first;
-		}
-		bool is_checksummed() const override {
-			return ProtocolType::use_checksum;
+			return get_protocol_identifier() == CanaryLib::PROTOCOL_GAME;
 		}
 		uint8_t get_protocol_identifier() const override {
-			return ProtocolType::protocol_identifier;
+			return ProtocolType::id();
 		}
 		const char* get_protocol_name() const override {
 			return ProtocolType::protocol_name();
@@ -76,8 +72,8 @@ class ServicePort : public std::enable_shared_from_this<ServicePort>
 		std::string get_protocol_names() const;
 
 		bool add_service(const Service_ptr& new_svc);
-		Protocol_ptr make_protocol(bool checksummed, NetworkMessage& msg, const Connection_ptr& connection) const;
-		Protocol_ptr make_protocol(bool checksummed, uint8_t protocolID, const Connection_ptr& connection) const;
+		Protocol_ptr make_protocol(NetworkMessage& msg, const Connection_ptr& connection) const;
+		Protocol_ptr make_protocol(CanaryLib::Protocol_t protocolID, const Connection_ptr& connection) const;
 
 		void onStopServer();
 		void onAccept(Connection_ptr connection, const boost::system::error_code& error);
@@ -144,7 +140,7 @@ bool ServiceManager::add(uint16_t port)
 	} else {
 		service_port = foundServicePort->second;
 
-		if (service_port->is_single_socket() || ProtocolType::server_sends_first) {
+		if (service_port->is_single_socket()) {
 			std::cout << "ERROR: " << ProtocolType::protocol_name() <<
 			          " and " << service_port->get_protocol_names() <<
 			          " cannot use the same port " << port << '.' << std::endl;

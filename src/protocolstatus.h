@@ -26,10 +26,10 @@
 class ProtocolStatus final : public Protocol
 {
 	public:
-		// static protocol information
-		enum {server_sends_first = false};
-		enum {protocol_identifier = 0xFF};
-		enum {use_checksum = false};
+		static const CanaryLib::Protocol_t id() {
+			return CanaryLib::PROTOCOL_STATUS;
+		}
+
 		static const char* protocol_name() {
 			return "status protocol";
 		}

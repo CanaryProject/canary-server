@@ -90,12 +90,18 @@ class Connection : public std::enable_shared_from_this<Connection>
 		uint32_t getIP();
 
 	private:
+    void initializeProtocol(CanaryLib::Protocol_t id);
+
 		void parseProxyIdentification(const boost::system::error_code& error);
 		void parseHeader(const boost::system::error_code& error);
+		void parseBody(const boost::system::error_code& error);
 
-		void parseEncryptedMessage(const boost::system::error_code& error);
-		void parseContentMessage(const CanaryLib::ContentMessage *content_msg, bool checksummed, bool encrypted);
-		void parseRawData(const CanaryLib::RawData *raw_data, bool checksummed, bool encrypted);
+
+    // Flatbuffer
+    void parseContentMessage(const CanaryLib::ContentMessage *content_msg);
+		void parseEncryptedMessage(const CanaryLib::EncryptedMessage *enc_msg);
+    void parseLogin(const CanaryLib::LoginData *login);
+		void parseRawData(const CanaryLib::RawData *raw_data);
 
 		void onWriteOperation(const boost::system::error_code& error);
 
@@ -127,6 +133,9 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     boost::asio::streambuf m_inputStream;
     Wrapper inputWrapper;
+
+    //temporary during the migration to flatbuffer, remove when its finished
+    bool encrypted;
 };
 
 #endif

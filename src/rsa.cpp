@@ -80,14 +80,14 @@ void RSA::decrypt(char* msg) const
 	mpz_init2(c, 1024);
 	mpz_init2(m, 1024);
 
-	mpz_import(c, 128, 1, 1, 0, 0, msg);
+	mpz_import(c, CanaryLib::RSA_SIZE, 1, 1, 0, 0, msg);
 
 	// m = c^d mod n
 	mpz_powm(m, c, d, n);
 
 	size_t count = (mpz_sizeinbase(m, 2) + 7) / 8;
-	memset(msg, 0, 128 - count);
-	mpz_export(msg + (128 - count), nullptr, 1, 1, 0, 0, m);
+	memset(msg, 0, CanaryLib::RSA_SIZE - count);
+	mpz_export(msg + (CanaryLib::RSA_SIZE - count), nullptr, 1, 1, 0, 0, m);
 
 	mpz_clear(c);
 	mpz_clear(m);

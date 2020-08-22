@@ -62,9 +62,8 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 			}
 		}
 
-		virtual void onRecvFirstMessage(NetworkMessage& msg) = 0;
-
 	protected:
+		virtual void onRecvFirstMessage(NetworkMessage& msg) = 0;
 
 		void disconnect() const {
 			if (auto connection = getConnection()) {
