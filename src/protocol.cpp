@@ -122,10 +122,7 @@ void Protocol::parseLoginData(const CanaryLib::LoginData *login_data) {
       return;
     }
     
-    uint8_t buffer[buffer_size];
-    uint8_t offset = sizeof(uint8_t);
-    memcpy(buffer, login_info_buffer + offset, buffer_size -offset);
-    auto login_info = CanaryLib::GetLoginInfo(buffer);
+    auto login_info = CanaryLib::GetLoginInfo(login_info_buffer + sizeof(uint8_t));
 
     parseLoginInfo(login_info);
   }
