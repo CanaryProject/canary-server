@@ -176,60 +176,17 @@ void Connection::parseBody(const boost::system::error_code& error)
     return;
   }
 
-  parseEncryptedMessage(inputWrapper.getEncryptedMessage());
-}
-
-void Connection::parseEncryptedMessage(const CanaryLib::EncryptedMessage *enc_msg) {
-  auto header = enc_msg->header();
-  uint8_t *body_buffer = (uint8_t *) enc_msg->body()->Data();
-
-  if (!initializeProtocol(header->protocol_type())) return;
-  
-  if (header->encrypted()) {
-    protocol->xtea.decrypt(enc_msg->header()->message_size(), body_buffer);
+  auto enc_msg = inputWrapper.getEncryptedMessage();
+  auto protocol_type = enc_msg->header()->protocol_type();
+  if (!protocol && !(protocol = service_port->make_protocol(protocol_type, shared_from_this()))) {
+    close(FORCE_CLOSE);
+    return;
   }
 
-  parseContentMessage(CanaryLib::GetContentMessage(body_buffer));
+  protocol->parseEncryptedMessage(enc_msg);
 
   // go back to TCP socket to read new incoming messages
   recv(true);
-}
-
-/**
- * Controls the content message routing.
- * It will identify the type and call the proper parser method.
-*/
-void Connection::parseContentMessage(const CanaryLib::ContentMessage *content_msg) {
-  for (int i = 0; i < content_msg->data()->size(); i++) {
-    switch (auto dataType = content_msg->data_type()->GetEnum<CanaryLib::DataType>(i)) {
-      case CanaryLib::DataType_LoginData:
-        protocol->parseLoginData(content_msg->data()->GetAs<CanaryLib::LoginData>(i));
-        break;
-
-      case CanaryLib::DataType_RawData:
-        parseRawData(content_msg->data()->GetAs<CanaryLib::RawData>(i));
-        break;
-      
-      case CanaryLib::DataType_NONE:
-      default:
-        spdlog::warn("[Protocol::parseContentMessage] Invalid {} content message data type was skipped.", dataType);
-        break;
-    }
-  }
-}
-
-void Connection::parseRawData(const CanaryLib::RawData *raw_data) {
-  NetworkMessage msg;
-  msg.write(raw_data->body()->data(), raw_data->size(), CanaryLib::MESSAGE_OPERATION_PEEK);
-  protocol->onRecvMessage(msg);
-}
-
-bool Connection::initializeProtocol(CanaryLib::Protocol_t id) {
-  if (!protocol && !(protocol = service_port->make_protocol(id, shared_from_this()))) {
-    close(FORCE_CLOSE);
-    return false;
-  }
-  return true;
 }
 
 void Connection::recv(bool checkTimer)

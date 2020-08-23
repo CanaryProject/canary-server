@@ -24,19 +24,22 @@
 
 #include "connection.h"
 
-class Protocol : public std::enable_shared_from_this<Protocol>
+class Protocol : public std::enable_shared_from_this<Protocol>, public CanaryLib::FlatbuffersParser
 {
 	public:
-		explicit Protocol(Connection_ptr connection) : connection(connection) {}
+		explicit Protocol(){}
 		virtual ~Protocol();
 
 		// non-copyable
 		Protocol(const Protocol&) = delete;
 		Protocol& operator=(const Protocol&) = delete;
 
+    void setConnection(ConnectionWeak_ptr c) {
+      connection = c;
+    }
+
 		virtual void parsePacket(NetworkMessage&) {}
 
-		bool onRecvMessage(NetworkMessage& msg);
 		virtual void onConnect() {}
 
 		bool isConnectionExpired() const {
@@ -83,6 +86,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 
     // Flatbuffer parsers
 		void parseLoginData(const CanaryLib::LoginData *login_data);
+		void onRecvMessage(CanaryLib::NetworkMessage& msg) override;
 		virtual void parseLoginInfo(const CanaryLib::LoginInfo * login_info){}
 
 	private:
@@ -91,8 +95,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>
 		Wrapper_ptr outputBuffer;
 		std::unique_ptr<z_stream> defStream;
 
-		const ConnectionWeak_ptr connection;
-		CanaryLib::XTEA xtea;
+		ConnectionWeak_ptr connection;
 		uint32_t serverSequenceNumber = 0;
 		uint32_t clientSequenceNumber = 0;
 		bool rawMessages = false;

@@ -51,7 +51,9 @@ class Service final : public ServiceBase
 		}
 
 		Protocol_ptr make_protocol(const Connection_ptr& c) const override {
-			return std::make_shared<ProtocolType>(c);
+			std::shared_ptr<ProtocolType> protocol = std::make_shared<ProtocolType>();
+      protocol->setConnection(c);
+      return protocol;
 		}
 };
 

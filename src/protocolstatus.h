@@ -34,7 +34,7 @@ class ProtocolStatus final : public Protocol
 			return "status protocol";
 		}
 
-		explicit ProtocolStatus(Connection_ptr connection) : Protocol(connection) {}
+		explicit ProtocolStatus() {}
 
 		void sendStatusString();
 		void sendInfo(uint16_t requestedInfo, const std::string& characterName);

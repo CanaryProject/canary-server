@@ -26,7 +26,7 @@
 
 Protocol::~Protocol(){}
 
-bool Protocol::onRecvMessage(NetworkMessage& msg)
+void Protocol::onRecvMessage(CanaryLib::NetworkMessage& msg)
 {
 	using ProtocolWeak_ptr = std::weak_ptr<Protocol>;
 	ProtocolWeak_ptr protocolWeak = std::weak_ptr<Protocol>(shared_from_this());
@@ -34,12 +34,11 @@ bool Protocol::onRecvMessage(NetworkMessage& msg)
 	std::function<void (void)> callback = [protocolWeak, &msg]() {
 		if (auto protocol = protocolWeak.lock()) {
 			if (auto connection = protocol->getConnection()) {
-				protocol->parsePacket(msg);
+				protocol->parsePacket((NetworkMessage&) msg);
 			}
 		}
 	};
 	g_dispatcher().addTask(callback);
-	return true;
 }
 
 Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
