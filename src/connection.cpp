@@ -177,6 +177,11 @@ void Connection::parseBody(const boost::system::error_code& error)
   }
 
   auto enc_msg = inputWrapper.getEncryptedMessage();
+  if (!enc_msg || !enc_msg->header() || !enc_msg->body()) {
+    close(FORCE_CLOSE);
+    return;
+  }
+
   auto protocol_type = enc_msg->header()->protocol_type();
   if (!protocol && !(protocol = service_port->make_protocol(protocol_type, shared_from_this()))) {
     close(FORCE_CLOSE);

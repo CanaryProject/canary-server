@@ -262,6 +262,11 @@ void ProtocolGame::logout(bool displayEffect, bool forced)
 
 void ProtocolGame::parseLoginInfo(const CanaryLib::LoginInfo * login_info) 
 {
+  if (!login_info) {
+    disconnectClient("Malformed login info");
+    return; 
+  }
+
   setupXTEA(login_info->xtea_key()->data());
 
   auto game_login_info = login_info->game_login_info();

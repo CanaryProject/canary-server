@@ -82,6 +82,11 @@ void Protocol::disconnectClient(const std::string& message) const
 }
 
 void Protocol::parseLoginData(const CanaryLib::LoginData *login_data) {
+  if (!login_data) {
+    disconnectClient("Malformed login data");
+    return; 
+  }
+
   switch (g_game().getGameState()) {
     case GAME_STATE_SHUTDOWN:
       disconnect();
@@ -115,6 +120,11 @@ void Protocol::parseLoginData(const CanaryLib::LoginData *login_data) {
   }
 
   auto enc_login_info = login_data->login_info();
+  if (!enc_login_info) {
+    disconnectClient("Malformed login data");
+    return; 
+  }
+
   size_t buffer_size = enc_login_info->size();
 
   if (enc_login_info && buffer_size == CanaryLib::RSA_SIZE) {
