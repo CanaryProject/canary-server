@@ -134,11 +134,6 @@ void ServicePort::onAccept(Connection_ptr connection, const boost::system::error
 	}
 }
 
-Protocol_ptr ServicePort::make_protocol(NetworkMessage& msg, const Connection_ptr& connection) const
-{
-  make_protocol(static_cast<CanaryLib::Protocol_t>(msg.readByte()), connection);
-}
-
 Protocol_ptr ServicePort::make_protocol(CanaryLib::Protocol_t protocolID, const Connection_ptr& connection) const
 {
 	for (auto& service : services) {

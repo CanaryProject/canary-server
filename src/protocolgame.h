@@ -81,6 +81,12 @@ class ProtocolGame final : public Protocol
   protected:
     // Flatbuffer
 		void parseLoginInfo(const CanaryLib::LoginInfo *login_info) override;
+    bool validateLoginChallenge(const CanaryLib::Challenge *challenge) override {
+      if (challenge && (challenge->timestamp() != challengeTimestamp || challenge->random() != challengeRandom)) {
+        return false;
+      }
+      return true;
+    }
 
 	private:
 		ProtocolGame_ptr getThis() {

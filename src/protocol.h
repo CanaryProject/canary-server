@@ -88,6 +88,9 @@ class Protocol : public std::enable_shared_from_this<Protocol>, public CanaryLib
 		void parseLoginData(const CanaryLib::LoginData *login_data);
 		void onRecvMessage(CanaryLib::NetworkMessage& msg) override;
 		virtual void parseLoginInfo(const CanaryLib::LoginInfo * login_info){}
+    virtual bool validateLoginChallenge(const CanaryLib::Challenge *challenge){
+      return true;
+    }
 
 	private:
 		friend class Connection;

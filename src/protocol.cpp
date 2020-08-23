@@ -96,6 +96,11 @@ void Protocol::parseLoginData(const CanaryLib::LoginData *login_data) {
       break;
   }
 
+  if (!validateLoginChallenge(login_data->challenge())) {
+    disconnectClient("Invalid connection request.");
+    return;
+  }
+
   if (login_data->client() != CanaryLib::Client_t_CANARY) {
     char msg[] = {
       0x4d, 0x79, 0x20, 0x79, 0x65, 0x6c, 0x6c, 0x6f, 0x77, 0x20, 0x6c, 0x69, 0x74, 0x74, 0x6c, 0x65,

@@ -104,7 +104,7 @@ void Connection::accept(Protocol_ptr protocol /* = nullptr */)
 	  this->protocol = protocol;
 	  g_dispatcher().addTask(std::bind(&Protocol::onConnect, protocol));
   }
-  recv(true);
+  recv();
 }
 
 void Connection::parseHeader(const boost::system::error_code& error)
@@ -186,23 +186,21 @@ void Connection::parseBody(const boost::system::error_code& error)
   protocol->parseEncryptedMessage(enc_msg);
 
   // go back to TCP socket to read new incoming messages
-  recv(true);
+  recv();
 }
 
-void Connection::recv(bool checkTimer)
+void Connection::recv()
 {
 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
 
 	try {
-    if (checkTimer) {
-      readTimer.expires_from_now(boost::posix_time::seconds(CONNECTION_READ_TIMEOUT));
-      readTimer.async_wait(
-        std::bind(
-          &Connection::handleTimeout, 
-          std::weak_ptr<Connection>(shared_from_this()), 
-          std::placeholders::_1
-      ));
-    }
+    readTimer.expires_from_now(boost::posix_time::seconds(CONNECTION_READ_TIMEOUT));
+    readTimer.async_wait(
+      std::bind(
+        &Connection::handleTimeout, 
+        std::weak_ptr<Connection>(shared_from_this()), 
+        std::placeholders::_1
+    ));
 
 		// Wait to the next packet
 		boost::asio::async_read(

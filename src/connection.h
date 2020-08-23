@@ -84,7 +84,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     void onRecv(const boost::system::error_code& error, size_t recvSize);
 
-		void recv(bool checkTimer = false);
+		void recv();
 		void send(const Wrapper_ptr& wrapper);
 
 		uint32_t getIP();

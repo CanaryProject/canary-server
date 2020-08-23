@@ -74,7 +74,6 @@ class ServicePort : public std::enable_shared_from_this<ServicePort>
 		std::string get_protocol_names() const;
 
 		bool add_service(const Service_ptr& new_svc);
-		Protocol_ptr make_protocol(NetworkMessage& msg, const Connection_ptr& connection) const;
 		Protocol_ptr make_protocol(CanaryLib::Protocol_t protocolID, const Connection_ptr& connection) const;
 
 		void onStopServer();

@@ -278,12 +278,6 @@ void ProtocolGame::parseLoginInfo(const CanaryLib::LoginInfo * login_info)
 		return;
   }
 
-  // auto challenge = game_login_info->challenge();
-	// if (challenge->timestamp() != challengeTimestamp || challenge->random() != challengeRandom) {
-	// 	disconnectClient("Invalid connection request.");
-	// 	return;
-	// }
-
 	std::string& accountName = session_args[0];
 	std::string& password = session_args[1];
 	std::string& token = session_args[2];
