@@ -8,6 +8,15 @@ project(canary VERSION 1.0.0 LANGUAGES CXX)
 
 
 # *****************************************************************************
+# Windows needed vcpkg CMAKE_TOOLCHAIN_FILE 
+# *****************************************************************************
+if(CMAKE_TOOLCHAIN_FILE)
+    message(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
+    include(${CMAKE_TOOLCHAIN_FILE})
+endif(CMAKE_TOOLCHAIN_FILE)
+
+
+# *****************************************************************************
 # Options
 # *****************************************************************************
 option(OPTIONS_ENABLE_CCACHE "Enable ccache" ON)
