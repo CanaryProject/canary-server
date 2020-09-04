@@ -3386,6 +3386,8 @@ void ProtocolGame::sendFYIBox(const std::string& message)
 //tile
 void ProtocolGame::sendMapDescription(const Position& pos)
 {
+  flatbuffers::FlatBufferBuilder fbb;
+  BuildCreatureBuffer()
 	playermsg.reset();
 	playermsg.writeByte(0x64);
 	playermsg.addPosition(player->getPosition());
@@ -3985,111 +3987,165 @@ void ProtocolGame::sendModalWindow(const ModalWindow& modalWindow)
 }
 
 ////////////// Add common messages
+flatbuffers::Offset<CanaryLib::CreatureInfo> ProtocolGame::BuildCreatureBuffer(const Creature* creature, bool known, uint32_t remove)
+{
+  flatbuffers::FlatBufferBuilder fbb;
+  if (!creature) return CanaryLib::CreateCreatureInfo(fbb);
+
+  auto name = fbb.CreateString(creature->isHealthHidden() ? std::string() : creature->getName());
+
+  // Add creatures identifications
+  CanaryLib::CreatureInfoBuilder creature_builder(fbb);
+  creature_builder.add_id(creature->getID());
+  creature_builder.add_remove_id(remove);
+  // TODO move getType to CanaryLib::CreatureType_t
+  creature_builder.add_type(static_cast<CanaryLib::CreatureType_t>(creature->getType()));
+
+  // Add creature descriptive info
+  creature_builder.add_name(name);
+  creature_builder.add_direction(creature->getDirection());
+  creature_builder.add_health_percent(creature->isHealthHidden() && creature != player
+    ? 0x00
+    : std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100)
+  );
+  creature_builder.add_speed(creature->getStepSpeed() / 2);
+  creature_builder.add_walkable(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
+
+  // Add light - TODO move getCreatureLight to CanaryLib::Light
+  LightInfo light = creature->getCreatureLight();
+  CanaryLib::Light _light(light.color, player->isAccessPlayer() ? 0xFF : light.level);
+  creature_builder.add_light(&_light);
+
+  // Add outfit - TODO move getCurrentOutfit to CanaryLib::Outfit
+  Outfit_t outfit;
+  if (!creature->isInGhostMode() && !creature->isInvisible()) {
+    outfit = creature->getCurrentOutfit();
+  }
+  CanaryLib::Outfit _outfit(
+    outfit.lookType,
+    outfit.lookBody,
+    outfit.lookFeet,
+    outfit.lookHead,
+    outfit.lookLegs,
+    outfit.lookAddons,
+    outfit.lookMount,
+    outfit.lookTypeEx
+  );
+  creature_builder.add_outfit(&_outfit);
+
+  const Player* otherPlayer = creature->getPlayer();
+
+  creature_builder.add_guild_emblem(player->getGuildEmblem(!known ? otherPlayer : nullptr));
+  creature_builder.add_party_shield(player->getPartyShield(otherPlayer));
+  creature_builder.add_icon(creature->getSpeechBubble());
+  creature_builder.add_skull(player->getSkullClient(creature));
+  creature_builder.add_square_mark(0xFF);
+
+  if (Creature* master = creature->getMaster()) {
+    creature_builder.add_master_id(master->getID());
+  }
+  return creature_builder.Finish();
+}
+
+////////////// Add common messages
 void ProtocolGame::AddCreature(const Creature* creature, bool known, uint32_t remove)
 {
   if (!creature) return;
 
-	CreatureType_t creatureType = creature->isHealthHidden()
-    ? CREATURETYPE_HIDDEN
-    : creature->getType();
+  CreatureType_t creatureType = creature->getType();
 
-	const Player* otherPlayer = creature->getPlayer();
-	if (known) {
-		playermsg.write<uint16_t>(0x62);
-		playermsg.write<uint32_t>(creature->getID());
-	} else {
-		playermsg.write<uint16_t>(0x61);
-		playermsg.write<uint32_t>(remove);
-		playermsg.write<uint32_t>(creature->getID());
-		playermsg.writeByte(creatureType);
-		if (creatureType == CREATURETYPE_HIDDEN) {
-			playermsg.writeString(std::string());
-		} else {
-			playermsg.writeString(creature->getName());
-		}
-	}
+  const Player* otherPlayer = creature->getPlayer();
+  if (known) {
+    playermsg.write<uint16_t>(0x62);
+    playermsg.write<uint32_t>(creature->getID());
+  }
+  else {
+    playermsg.write<uint16_t>(0x61);
+    playermsg.write<uint32_t>(remove);
+    playermsg.write<uint32_t>(creature->getID());
+    playermsg.writeByte(creatureType);
+    playermsg.writeString(creature->getName());
+  }
+  playermsg.writeByte(std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100));
 
-	if (creatureType == CREATURETYPE_HIDDEN && creature != player) {
-		playermsg.writeByte(0x00);
-	} else {
-		playermsg.writeByte(std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100));
-	}
+  playermsg.writeByte(creature->getDirection());
+  if (!creature->isInGhostMode() && !creature->isInvisible()) {
+    const Outfit_t& outfit = creature->getCurrentOutfit();
+    AddOutfit(outfit);
+  }
+  else {
+    static Outfit_t outfit;
+    AddOutfit(outfit);
+  }
 
-	playermsg.writeByte(creature->getDirection());
-	if (!creature->isInGhostMode() && !creature->isInvisible()) {
-		const Outfit_t& outfit = creature->getCurrentOutfit();
-		AddOutfit(outfit);
-	} else {
-		static Outfit_t outfit;
-		AddOutfit(outfit);
-	}
+  LightInfo lightInfo = creature->getCreatureLight();
+  playermsg.writeByte(player->isAccessPlayer() ? 0xFF : lightInfo.level);
+  playermsg.writeByte(lightInfo.color);
 
-	LightInfo lightInfo = creature->getCreatureLight();
-	playermsg.writeByte(player->isAccessPlayer() ? 0xFF : lightInfo.level);
-	playermsg.writeByte(lightInfo.color);
+#if GAME_FEATURE_NEWSPEED_LAW > 0
+  playermsg.write<uint16_t>(creature->getStepSpeed() / 2);
+#else
+  playermsg.write<uint16_t>(creature->getStepSpeed());
+#endif
 
-	#if GAME_FEATURE_NEWSPEED_LAW > 0
-	playermsg.write<uint16_t>(creature->getStepSpeed() / 2);
-	#else
-	playermsg.write<uint16_t>(creature->getStepSpeed());
-	#endif
+  // TODO: sync with 1240 protocol
+  // #if CLIENT_VERSION >= 1240
+  // playermsg.writeByte(0);//icons
+  // #endif
 
-	// TODO: sync with 1240 protocol
-	// #if CLIENT_VERSION >= 1240
-	// playermsg.writeByte(0);//icons
-	// #endif
+  playermsg.writeByte(player->getSkullClient(creature));
+  playermsg.writeByte(player->getPartyShield(otherPlayer));
+#if GAME_FEATURE_GUILD_EMBLEM > 0
+  if (!known) {
+    playermsg.writeByte(player->getGuildEmblem(otherPlayer));
+  }
+#endif
 
-	playermsg.writeByte(player->getSkullClient(creature));
-	playermsg.writeByte(player->getPartyShield(otherPlayer));
-	#if GAME_FEATURE_GUILD_EMBLEM > 0
-	if (!known) {
-		playermsg.writeByte(player->getGuildEmblem(otherPlayer));
-	}
-	#endif
+#if GAME_FEATURE_CREATURE_TYPE > 0
+  if (creatureType == CREATURETYPE_MONSTER) {
+    const Creature* master = creature->getMaster();
+    if (master) {
+      const Player* masterPlayer = master->getPlayer();
+      if (masterPlayer) {
+        if (masterPlayer == player) {
+          creatureType = CREATURETYPE_SUMMON_OWN;
+        }
+        else {
+          creatureType = CREATURETYPE_SUMMON_OTHERS;
+        }
+      }
+    }
+  }
 
-	#if GAME_FEATURE_CREATURE_TYPE > 0
-	if (creatureType == CREATURETYPE_MONSTER) {
-		const Creature* master = creature->getMaster();
-		if (master) {
-			const Player* masterPlayer = master->getPlayer();
-			if (masterPlayer) {
-				if (masterPlayer == player) {
-					creatureType = CREATURETYPE_SUMMON_OWN;
-				} else {
-					creatureType = CREATURETYPE_SUMMON_OTHERS;
-				}
-			}
-		}
-	}
+  if (creatureType == CREATURETYPE_SUMMON_OTHERS) {
+    creatureType = CREATURETYPE_SUMMON_OWN;
+  }
+  playermsg.writeByte(creatureType);
+  if (creatureType == CREATURETYPE_SUMMON_OWN) {
+    const Creature* master = creature->getMaster();
+    if (master) {
+      playermsg.write<uint32_t>(master->getID());
+    }
+    else {
+      playermsg.write<uint32_t>(0);
+    }
+  }
+  else if (creatureType == CREATURETYPE_PLAYER) {
+    playermsg.writeByte(creature->getPlayer()->getVocation()->getClientId());
+  }
+#endif
 
-	if (creatureType == CREATURETYPE_SUMMON_OTHERS) {
-		creatureType = CREATURETYPE_SUMMON_OWN;
-	}
-	playermsg.writeByte(creatureType);
-	if (creatureType == CREATURETYPE_SUMMON_OWN) {
-		const Creature* master = creature->getMaster();
-		if (master) {
-			playermsg.write<uint32_t>(master->getID());
-		} else {
-			playermsg.write<uint32_t>(0);
-		}
-	}
-	else if (creatureType == CREATURETYPE_PLAYER) {
-		playermsg.writeByte(creature->getPlayer()->getVocation()->getClientId());
-	}
-	#endif
+#if GAME_FEATURE_CREATURE_ICONS > 0
+  playermsg.writeByte(creature->getSpeechBubble());
+#endif
+#if GAME_FEATURE_CREATURE_MARK > 0
+  playermsg.writeByte(0xFF); // MARK_UNMARKED
+#endif
+#if GAME_FEATURE_INSPECTION > 0
+  playermsg.writeByte(0); // inspection type
+#endif
 
-	#if GAME_FEATURE_CREATURE_ICONS > 0
-	playermsg.writeByte(creature->getSpeechBubble());
-	#endif
-	#if GAME_FEATURE_CREATURE_MARK > 0
-	playermsg.writeByte(0xFF); // MARK_UNMARKED
-	#endif
-	#if GAME_FEATURE_INSPECTION > 0
-	playermsg.writeByte(0); // inspection type
-	#endif
-
-	playermsg.writeByte(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
+  playermsg.writeByte(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
 }
 
 void ProtocolGame::AddPlayerStats()
@@ -4388,12 +4444,6 @@ void ProtocolGame::AddItem(uint16_t id, uint8_t count)
 		playermsg.writeByte(serverFluidToClient(count));
 	}
 
-	#if GAME_FEATURE_QUICK_LOOT > 0
-	// if (it.isContainer()) {
-	// 	playermsg.writeByte(0);
-	// }
-	#endif
-
 	#if GAME_FEATURE_ITEM_ANIMATION_PHASES > 0
 	if (it.isAnimation) {
 		playermsg.writeByte(0xFE); // random phase (0xFF for async)
@@ -4412,12 +4462,6 @@ void ProtocolGame::AddItem(const Item* item)
 	} else if (it.isSplash() || it.isFluidContainer()) {
 		playermsg.writeByte(serverFluidToClient(item->getFluidType()));
 	}
-
-	#if GAME_FEATURE_QUICK_LOOT > 0
-	// if (it.isContainer()) {
-	// 	playermsg.writeByte(0);
-	// }
-	#endif
 
 	#if GAME_FEATURE_ITEM_ANIMATION_PHASES > 0
 	if (it.isAnimation) {

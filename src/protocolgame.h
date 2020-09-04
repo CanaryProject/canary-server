@@ -82,11 +82,10 @@ class ProtocolGame final : public Protocol
     // Flatbuffer
 		void parseLoginInfo(const CanaryLib::LoginInfo *login_info) override;
     bool validateLoginChallenge(const CanaryLib::Challenge *challenge) override {
-      if (challenge && (challenge->timestamp() != challengeTimestamp || challenge->random() != challengeRandom)) {
-        return false;
-      }
+      if (challenge && (challenge->timestamp() != challengeTimestamp || challenge->random() != challengeRandom)) return false;
       return true;
     }
+    flatbuffers::Offset<CanaryLib::CreatureInfo> ProtocolGame::BuildCreatureBuffer(const Creature* creature, bool known, uint32_t remove);
 
 	private:
 		ProtocolGame_ptr getThis() {

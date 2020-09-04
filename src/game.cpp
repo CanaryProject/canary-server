@@ -4549,9 +4549,6 @@ void Game::updateCreatureType(Creature* creature)
 			}
 		}
 	}
-	if (creature->isHealthHidden()) {
-		creatureType = CREATURETYPE_HIDDEN;
-	}
 
 	//send to clients
 	SpectatorVector spectators;
