@@ -85,7 +85,8 @@ class ProtocolGame final : public Protocol
       if (challenge && (challenge->timestamp() != challengeTimestamp || challenge->random() != challengeRandom)) return false;
       return true;
     }
-    flatbuffers::Offset<CanaryLib::CreatureInfo> ProtocolGame::BuildCreatureBuffer(const Creature* creature, bool known, uint32_t remove);
+    void ProtocolGame::sendCreature(const Creature* creature, Position pos, bool clean = false);
+    void ProtocolGame::sendItem(const Item* creature, Position pos, bool clean = false);
 
 	private:
 		ProtocolGame_ptr getThis() {

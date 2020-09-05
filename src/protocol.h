@@ -53,7 +53,7 @@ class Protocol : public std::enable_shared_from_this<Protocol>, public CanaryLib
 		uint32_t getIP() const;
 
 		//Use this function for autosend messages only
-		Wrapper_ptr getOutputBuffer(int32_t size);
+		Wrapper_ptr getOutputBuffer(int32_t size = 256);
 
 		Wrapper_ptr& getCurrentBuffer() {
 			return outputBuffer;

@@ -3387,12 +3387,60 @@ void ProtocolGame::sendFYIBox(const std::string& message)
 void ProtocolGame::sendMapDescription(const Position& pos)
 {
   flatbuffers::FlatBufferBuilder fbb;
-  BuildCreatureBuffer()
-	playermsg.reset();
-	playermsg.writeByte(0x64);
-	playermsg.addPosition(player->getPosition());
-	GetMapDescription(pos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), pos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), pos.z, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT);
-	writeToOutputBuffer();
+
+  int8_t startz = 7;
+  int8_t endz = 0;
+  int8_t zstep = -1;
+
+  if (pos.z > 7) {
+    startz = pos.z - 2;
+    endz = std::min<int8_t>(MAP_MAX_LAYERS - 1, pos.z + 2);
+    zstep = 1;
+  }
+
+  for (int8_t nz = startz; nz != endz + zstep; nz += zstep) {
+    int8_t offset = pos.z - nz;
+
+    std::vector<Tile*> tileVector = g_game().map.getFloorTiles(
+      pos.x + offset,
+      pos.y + offset,
+      CLIENT_MAP_WIDTH,
+      CLIENT_MAP_HEIGHT,
+      pos.z
+    );
+
+    for (Tile* tile : tileVector) {
+      if (!tile) continue;
+
+      uint8_t MAX_ITEMS_PER_TILE = 32;
+      uint8_t remainingItemSlots = MAX_ITEMS_PER_TILE;
+      bool isPlayerTile = tile->getPosition() == player->getPosition();
+
+      if (Item* ground = tile->getGround()) {
+        sendItem(ground, tile->getPosition(), true);
+        remainingItemSlots--;
+      }
+
+      if (const TileItemVector* items = tile->getItemList()) {
+        for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
+          sendItem(*it, tile->getPosition(), remainingItemSlots == MAX_ITEMS_PER_TILE);
+          if (--remainingItemSlots == 0) break;
+        }
+      }
+
+      if (isPlayerTile) {
+        sendCreature(player, tile->getPosition());
+      }
+
+      if (const CreatureVector* creatures = tile->getCreatures()) {
+        for (auto it = creatures->rbegin(), end = creatures->rend(); it != end; ++it) {
+          const Creature* creature = (*it);
+          if (creature->getID() == player->getID()) continue;
+          sendCreature(creature, tile->getPosition());
+        }
+      }
+    }
+  }
 }
 
 #if GAME_FEATURE_TILE_ADDTHING_STACKPOS > 0
@@ -3987,67 +4035,6 @@ void ProtocolGame::sendModalWindow(const ModalWindow& modalWindow)
 }
 
 ////////////// Add common messages
-flatbuffers::Offset<CanaryLib::CreatureInfo> ProtocolGame::BuildCreatureBuffer(const Creature* creature, bool known, uint32_t remove)
-{
-  flatbuffers::FlatBufferBuilder fbb;
-  if (!creature) return CanaryLib::CreateCreatureInfo(fbb);
-
-  auto name = fbb.CreateString(creature->isHealthHidden() ? std::string() : creature->getName());
-
-  // Add creatures identifications
-  CanaryLib::CreatureInfoBuilder creature_builder(fbb);
-  creature_builder.add_id(creature->getID());
-  creature_builder.add_remove_id(remove);
-  // TODO move getType to CanaryLib::CreatureType_t
-  creature_builder.add_type(static_cast<CanaryLib::CreatureType_t>(creature->getType()));
-
-  // Add creature descriptive info
-  creature_builder.add_name(name);
-  creature_builder.add_direction(creature->getDirection());
-  creature_builder.add_health_percent(creature->isHealthHidden() && creature != player
-    ? 0x00
-    : std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100)
-  );
-  creature_builder.add_speed(creature->getStepSpeed() / 2);
-  creature_builder.add_walkable(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
-
-  // Add light - TODO move getCreatureLight to CanaryLib::Light
-  LightInfo light = creature->getCreatureLight();
-  CanaryLib::Light _light(light.color, player->isAccessPlayer() ? 0xFF : light.level);
-  creature_builder.add_light(&_light);
-
-  // Add outfit - TODO move getCurrentOutfit to CanaryLib::Outfit
-  Outfit_t outfit;
-  if (!creature->isInGhostMode() && !creature->isInvisible()) {
-    outfit = creature->getCurrentOutfit();
-  }
-  CanaryLib::Outfit _outfit(
-    outfit.lookType,
-    outfit.lookBody,
-    outfit.lookFeet,
-    outfit.lookHead,
-    outfit.lookLegs,
-    outfit.lookAddons,
-    outfit.lookMount,
-    outfit.lookTypeEx
-  );
-  creature_builder.add_outfit(&_outfit);
-
-  const Player* otherPlayer = creature->getPlayer();
-
-  creature_builder.add_guild_emblem(player->getGuildEmblem(!known ? otherPlayer : nullptr));
-  creature_builder.add_party_shield(player->getPartyShield(otherPlayer));
-  creature_builder.add_icon(creature->getSpeechBubble());
-  creature_builder.add_skull(player->getSkullClient(creature));
-  creature_builder.add_square_mark(0xFF);
-
-  if (Creature* master = creature->getMaster()) {
-    creature_builder.add_master_id(master->getID());
-  }
-  return creature_builder.Finish();
-}
-
-////////////// Add common messages
 void ProtocolGame::AddCreature(const Creature* creature, bool known, uint32_t remove)
 {
   if (!creature) return;
@@ -4568,4 +4555,88 @@ uint8_t ProtocolGame::translateMessageClassToClient(MessageClasses messageType)
 		case MESSAGE_MARKET: return 0x2A;
 		default: return MESSAGE_NONE;
 	}
+}
+
+void ProtocolGame::sendCreature(const Creature* creature, Position pos, bool cleanTile)
+{
+  if (!creature || !player->canSeeCreature(creature)) {
+    return;
+  }
+
+  bool known;
+  uint32_t remove;
+  checkCreatureAsKnown(creature->getID(), known, remove);
+
+  Wrapper_ptr wrapper = getOutputBuffer();
+  flatbuffers::FlatBufferBuilder& fbb = wrapper->Builder();
+  auto name = fbb.CreateString(creature->isHealthHidden() ? std::string() : creature->getName());
+
+  // Add creatures identifications
+  CanaryLib::CreatureDataBuilder creature_builder(fbb);
+  creature_builder.add_id(creature->getID());
+  creature_builder.add_remove_id(remove);
+  // TODO move getType to CanaryLib::CreatureType_t
+  creature_builder.add_type(static_cast<CanaryLib::CreatureType_t>(creature->getType()));
+
+  // Add creature descriptive info
+  creature_builder.add_name(name);
+  creature_builder.add_direction(creature->getDirection());
+  creature_builder.add_health_percent(creature->isHealthHidden() && creature != player
+    ? 0x00
+    : std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100)
+  );
+  creature_builder.add_speed(creature->getStepSpeed() / 2);
+  creature_builder.add_walkable(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
+
+  // Add light - TODO move getCreatureLight to CanaryLib::Light
+  LightInfo light = creature->getCreatureLight();
+  CanaryLib::Light _light(light.color, player->isAccessPlayer() ? 0xFF : light.level);
+  creature_builder.add_light(&_light);
+
+  // Add outfit - TODO move getCurrentOutfit to CanaryLib::Outfit
+  Outfit_t outfit;
+  if (!creature->isInGhostMode() && !creature->isInvisible()) {
+    outfit = creature->getCurrentOutfit();
+  }
+  CanaryLib::Outfit _outfit(
+    outfit.lookType,
+    outfit.lookBody,
+    outfit.lookFeet,
+    outfit.lookHead,
+    outfit.lookLegs,
+    outfit.lookAddons,
+    outfit.lookMount,
+    outfit.lookTypeEx
+  );
+  creature_builder.add_outfit(&_outfit);
+
+  const Player* otherPlayer = creature->getPlayer();
+
+  creature_builder.add_guild_emblem(player->getGuildEmblem(!known ? otherPlayer : nullptr));
+  creature_builder.add_party_shield(player->getPartyShield(otherPlayer));
+  creature_builder.add_icon(creature->getSpeechBubble());
+  creature_builder.add_skull(player->getSkullClient(creature));
+  creature_builder.add_square_mark(0xFF);
+
+  if (Creature* master = creature->getMaster()) {
+    creature_builder.add_master_id(master->getID());
+  }
+
+  const CanaryLib::Position central_pos{ pos.x, pos.y, pos.z };
+  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_CreatureData, creature_builder.Finish().Union(), &central_pos, cleanTile);
+  wrapper->add(thing_data.Union(), CanaryLib::DataType_ThingData);
+}
+
+void ProtocolGame::sendItem(const Item* item, Position pos, bool cleanTile)
+{
+  if (!item) return;
+
+  Wrapper_ptr wrapper = getOutputBuffer();
+  flatbuffers::FlatBufferBuilder& fbb = wrapper->Builder();
+
+  auto item_data = fbb.CreateStruct(CanaryLib::ItemData{ Item::items[item->getID()].clientId, item->getItemCount(), item->getFluidType() });
+
+  const CanaryLib::Position central_pos{ pos.x, pos.y, pos.z };
+  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_ItemData, item_data.Union(), &central_pos, cleanTile);
+  wrapper->add(thing_data.Union(), CanaryLib::DataType_ThingData);
 }

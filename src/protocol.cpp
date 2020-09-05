@@ -48,7 +48,7 @@ Wrapper_ptr Protocol::getOutputBuffer(int32_t size)
     return outputBuffer;
   }
   bool overflow = (outputBuffer->Size() + size) > CanaryLib::WRAPPER_MAX_SIZE_TO_CONCAT;
-  bool makeNewOutput = outputBuffer->isWriteLocked() || overflow;
+  bool makeNewOutput = outputBuffer->isWriteLocked() || overflow || outputBuffer->Types().size() >= 255;
 
 	//dispatcher thread
 	if (makeNewOutput) {
