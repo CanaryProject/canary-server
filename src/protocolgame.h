@@ -85,8 +85,8 @@ class ProtocolGame final : public Protocol
       if (challenge && (challenge->timestamp() != challengeTimestamp || challenge->random() != challengeRandom)) return false;
       return true;
     }
-    void ProtocolGame::sendCreature(const Creature* creature, Position pos, bool clean = false);
-    void ProtocolGame::sendItem(const Item* creature, Position pos, bool clean = false);
+    void ProtocolGame::sendCreature(const Creature* creature, Position pos);
+    void ProtocolGame::sendItem(const Item* creature, Position pos, bool clean = false, bool isPlayerPos = false);
 
 	private:
 		ProtocolGame_ptr getThis() {

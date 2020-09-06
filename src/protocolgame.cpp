@@ -3397,13 +3397,16 @@ void ProtocolGame::sendMapDescription(const Position& pos)
     endz = std::min<int8_t>(MAP_MAX_LAYERS - 1, pos.z + 2);
     zstep = 1;
   }
+  uint16_t x = pos.x - (CLIENT_MAP_WIDTH_OFFSET - 1);
+  uint16_t y = pos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1);
+  GetMapDescription(x, y, pos.z, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT);
 
   for (int8_t nz = startz; nz != endz + zstep; nz += zstep) {
     int8_t offset = pos.z - nz;
 
     std::vector<Tile*> tileVector = g_game().map.getFloorTiles(
-      pos.x + offset,
-      pos.y + offset,
+      x + offset,
+      y + offset,
       CLIENT_MAP_WIDTH,
       CLIENT_MAP_HEIGHT,
       pos.z
@@ -3417,19 +3420,20 @@ void ProtocolGame::sendMapDescription(const Position& pos)
       bool isPlayerTile = tile->getPosition() == player->getPosition();
 
       if (Item* ground = tile->getGround()) {
-        sendItem(ground, tile->getPosition(), true);
+        sendItem(ground, tile->getPosition(), true, isPlayerTile);
         remainingItemSlots--;
       }
 
       if (const TileItemVector* items = tile->getItemList()) {
         for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
           sendItem(*it, tile->getPosition(), remainingItemSlots == MAX_ITEMS_PER_TILE);
-          if (--remainingItemSlots == 0) break;
+          remainingItemSlots--;
+          if (remainingItemSlots == 0) break;
         }
       }
 
       if (isPlayerTile) {
-        sendCreature(player, tile->getPosition());
+        sendCreature(player, player->getPosition());
       }
 
       if (const CreatureVector* creatures = tile->getCreatures()) {
@@ -4557,7 +4561,7 @@ uint8_t ProtocolGame::translateMessageClassToClient(MessageClasses messageType)
 	}
 }
 
-void ProtocolGame::sendCreature(const Creature* creature, Position pos, bool cleanTile)
+void ProtocolGame::sendCreature(const Creature* creature, Position pos)
 {
   if (!creature || !player->canSeeCreature(creature)) {
     return;
@@ -4622,12 +4626,12 @@ void ProtocolGame::sendCreature(const Creature* creature, Position pos, bool cle
     creature_builder.add_master_id(master->getID());
   }
 
-  const CanaryLib::Position central_pos{ pos.x, pos.y, pos.z };
-  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_CreatureData, creature_builder.Finish().Union(), &central_pos, cleanTile);
+  const CanaryLib::Position tile_pos{ pos.x, pos.y, pos.z };
+  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_CreatureData, creature_builder.Finish().Union(), &tile_pos);
   wrapper->add(thing_data.Union(), CanaryLib::DataType_ThingData);
 }
 
-void ProtocolGame::sendItem(const Item* item, Position pos, bool cleanTile)
+void ProtocolGame::sendItem(const Item* item, Position pos, bool cleanTile, bool isPlayerPos)
 {
   if (!item) return;
 
@@ -4636,7 +4640,7 @@ void ProtocolGame::sendItem(const Item* item, Position pos, bool cleanTile)
 
   auto item_data = fbb.CreateStruct(CanaryLib::ItemData{ Item::items[item->getID()].clientId, item->getItemCount(), item->getFluidType() });
 
-  const CanaryLib::Position central_pos{ pos.x, pos.y, pos.z };
-  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_ItemData, item_data.Union(), &central_pos, cleanTile);
+  const CanaryLib::Position tile_pos{ pos.x, pos.y, pos.z };
+  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_ItemData, item_data.Union(), &tile_pos, cleanTile, isPlayerPos);
   wrapper->add(thing_data.Union(), CanaryLib::DataType_ThingData);
 }
