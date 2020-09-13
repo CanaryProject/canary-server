@@ -293,7 +293,7 @@ uint32_t Connection::getIP()
 void Connection::onWriteOperation(const boost::system::error_code& error)
 {
 	writeTimer.cancel();
-  if (messageQueue.front())
+  if (!messageQueue.empty())
 	  messageQueue.pop_front();
 
 	if (error) {

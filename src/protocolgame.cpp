@@ -3388,8 +3388,8 @@ void ProtocolGame::sendMapDescription(const Position& pos)
 {
   flatbuffers::FlatBufferBuilder fbb;
 
-  int8_t startz = 7;
-  int8_t endz = 0;
+  int8_t startz = 0;
+  int8_t endz = 7;
   int8_t zstep = -1;
 
   if (pos.z > 7) {
@@ -3399,51 +3399,20 @@ void ProtocolGame::sendMapDescription(const Position& pos)
   }
   uint16_t x = pos.x - (CLIENT_MAP_WIDTH_OFFSET - 1);
   uint16_t y = pos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1);
-  GetMapDescription(x, y, pos.z, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT);
 
-  for (int8_t nz = startz; nz != endz + zstep; nz += zstep) {
+  std::vector<Tile*> tileVector = g_game().map.getFloorTiles(x, y, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, pos.z);
+  for (Tile* tile : tileVector) sendTile(tile);
+
+  for (int8_t nz = startz; nz < pos.z; nz++) {
     int8_t offset = pos.z - nz;
+    std::vector<Tile*> tileVector = g_game().map.getFloorTiles(x + offset, y + offset, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, nz);
+    for (Tile* tile : tileVector) sendTile(tile);
+  }
 
-    std::vector<Tile*> tileVector = g_game().map.getFloorTiles(
-      x + offset,
-      y + offset,
-      CLIENT_MAP_WIDTH,
-      CLIENT_MAP_HEIGHT,
-      pos.z
-    );
-
-    for (Tile* tile : tileVector) {
-      if (!tile) continue;
-
-      uint8_t MAX_ITEMS_PER_TILE = 32;
-      uint8_t remainingItemSlots = MAX_ITEMS_PER_TILE;
-      bool isPlayerTile = tile->getPosition() == player->getPosition();
-
-      if (Item* ground = tile->getGround()) {
-        sendItem(ground, tile->getPosition(), true, isPlayerTile);
-        remainingItemSlots--;
-      }
-
-      if (const TileItemVector* items = tile->getItemList()) {
-        for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
-          sendItem(*it, tile->getPosition(), remainingItemSlots == MAX_ITEMS_PER_TILE);
-          remainingItemSlots--;
-          if (remainingItemSlots == 0) break;
-        }
-      }
-
-      if (isPlayerTile) {
-        sendCreature(player, player->getPosition());
-      }
-
-      if (const CreatureVector* creatures = tile->getCreatures()) {
-        for (auto it = creatures->rbegin(), end = creatures->rend(); it != end; ++it) {
-          const Creature* creature = (*it);
-          if (creature->getID() == player->getID()) continue;
-          sendCreature(creature, tile->getPosition());
-        }
-      }
-    }
+  for (int8_t nz = endz; nz > pos.z; nz--) {
+    int8_t offset = pos.z - nz;
+    std::vector<Tile*> tileVector = g_game().map.getFloorTiles(x + offset, y + offset, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, nz);
+    for (Tile* tile : tileVector) sendTile(tile);
   }
 }
 
@@ -4561,18 +4530,18 @@ uint8_t ProtocolGame::translateMessageClassToClient(MessageClasses messageType)
 	}
 }
 
-void ProtocolGame::sendCreature(const Creature* creature, Position pos)
-{
+flatbuffers::Offset<CanaryLib::CreatureData> ProtocolGame::buildCreatureData(
+  flatbuffers::FlatBufferBuilder& fbb,
+  const Creature* creature
+) {
   if (!creature || !player->canSeeCreature(creature)) {
-    return;
+    return CanaryLib::CreateCreatureData(fbb);
   }
 
   bool known;
   uint32_t remove;
   checkCreatureAsKnown(creature->getID(), known, remove);
 
-  Wrapper_ptr wrapper = getOutputBuffer();
-  flatbuffers::FlatBufferBuilder& fbb = wrapper->Builder();
   auto name = fbb.CreateString(creature->isHealthHidden() ? std::string() : creature->getName());
 
   // Add creatures identifications
@@ -4590,7 +4559,7 @@ void ProtocolGame::sendCreature(const Creature* creature, Position pos)
     : std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100)
   );
   creature_builder.add_speed(creature->getStepSpeed() / 2);
-  creature_builder.add_walkable(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
+  creature_builder.add_walkable(player->canWalkthroughEx(creature));
 
   // Add light - TODO move getCreatureLight to CanaryLib::Light
   LightInfo light = creature->getCreatureLight();
@@ -4626,9 +4595,28 @@ void ProtocolGame::sendCreature(const Creature* creature, Position pos)
     creature_builder.add_master_id(master->getID());
   }
 
+  return creature_builder.Finish();
+}
+
+void ProtocolGame::sendCreature(const Creature* creature, Position pos)
+{
+  if (!creature || !player->canSeeCreature(creature)) {
+    return;
+  }
+
+  Wrapper_ptr wrapper = getOutputBuffer();
+  flatbuffers::FlatBufferBuilder& fbb = wrapper->Builder();
+
   const CanaryLib::Position tile_pos{ pos.x, pos.y, pos.z };
-  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_CreatureData, creature_builder.Finish().Union(), &tile_pos);
+  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_CreatureData, buildCreatureData(fbb, creature).Union(), &tile_pos);
   wrapper->add(thing_data.Union(), CanaryLib::DataType_ThingData);
+}
+
+CanaryLib::ItemData ProtocolGame::buildItemData(flatbuffers::FlatBufferBuilder& fbb, const Item* item) {
+  if (!item) {
+    CanaryLib::ItemData{};
+  }
+  return CanaryLib::ItemData{Item::items[item->getID()].clientId, item->getItemCount(), item->getFluidType()};
 }
 
 void ProtocolGame::sendItem(const Item* item, Position pos, bool cleanTile, bool isPlayerPos)
@@ -4638,9 +4626,68 @@ void ProtocolGame::sendItem(const Item* item, Position pos, bool cleanTile, bool
   Wrapper_ptr wrapper = getOutputBuffer();
   flatbuffers::FlatBufferBuilder& fbb = wrapper->Builder();
 
-  auto item_data = fbb.CreateStruct(CanaryLib::ItemData{ Item::items[item->getID()].clientId, item->getItemCount(), item->getFluidType() });
-
   const CanaryLib::Position tile_pos{ pos.x, pos.y, pos.z };
-  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_ItemData, item_data.Union(), &tile_pos, cleanTile, isPlayerPos);
+  auto thing_data = CanaryLib::CreateThingData(fbb, CanaryLib::Thing_ItemData, fbb.CreateStruct(buildItemData(fbb, item)).Union(), &tile_pos, cleanTile, isPlayerPos);
   wrapper->add(thing_data.Union(), CanaryLib::DataType_ThingData);
+}
+
+void ProtocolGame::sendTile(const Tile* tile) {
+  if (!tile) return;
+
+  uint8_t MAX_ITEMS_PER_TILE = 32;
+  uint8_t remainingItemSlots = MAX_ITEMS_PER_TILE;
+
+  Wrapper_ptr wrapper = getOutputBuffer();
+  flatbuffers::FlatBufferBuilder& fbb = wrapper->Builder();
+
+  Position pos = tile->getPosition();
+  const CanaryLib::Position tile_pos{ pos.x, pos.y, pos.z };
+
+  CanaryLib::ItemData* ground_data = 0;
+  flatbuffers::Offset<CanaryLib::CreatureData> player_data = 0;
+  flatbuffers::Offset<flatbuffers::Vector<const CanaryLib::ItemData*>> bottom_items_data = 0;
+  flatbuffers::Offset<flatbuffers::Vector<const CanaryLib::ItemData*>> top_items_data = 0;
+  flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CanaryLib::CreatureData>>> creatures_data = 0;
+  bool isPlayerTile = tile->getPosition() == player->getPosition();
+
+  if (Item* ground = tile->getGround()) {
+    ground_data = &buildItemData(fbb, ground);
+    remainingItemSlots--;
+  }
+
+  const TileItemVector* items = tile->getItemList();
+  if (items) {
+    std::vector<const CanaryLib::ItemData> bottom_items_vector;
+    for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
+      bottom_items_vector.emplace_back(&buildItemData(fbb, *it));
+      if (--remainingItemSlots == 0) break;
+    }
+    bottom_items_data = fbb.CreateVectorOfStructs(bottom_items_vector);
+  }
+
+  if (const CreatureVector* creatures = tile->getCreatures()) {
+    std::vector<flatbuffers::Offset<CanaryLib::CreatureData>> creatures_vector;
+    for (auto it = creatures->rbegin(), end = creatures->rend(); it != end; ++it)
+      if ((*it)->getID() != player->getID()) {
+        creatures_vector.emplace_back(buildCreatureData(fbb, *it));
+        if (--remainingItemSlots == 0) break;
+      }
+    creatures_data = fbb.CreateVector(creatures_vector);
+  }
+
+  if (items && remainingItemSlots) {
+    std::vector<const CanaryLib::ItemData> top_items_vector;
+    for (auto it = ItemVector::const_reverse_iterator(items->getEndDownItem()), end = ItemVector::const_reverse_iterator(items->getBeginDownItem()); it != end; ++it) {
+      top_items_vector.emplace_back(&buildItemData(fbb, *it));
+      if (--remainingItemSlots == 0) break;
+    }
+    top_items_data = fbb.CreateVectorOfStructs(top_items_vector);
+  }
+
+  if (isPlayerTile) {
+    player_data = buildCreatureData(fbb, player);
+  }
+
+  auto tile_data = CanaryLib::CreateTileData(fbb, &tile_pos, player_data, creatures_data, ground_data, bottom_items_data, top_items_data, isPlayerTile);
+  wrapper->add(tile_data.Union(), CanaryLib::DataType_TileData);
 }
