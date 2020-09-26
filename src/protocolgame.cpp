@@ -578,26 +578,6 @@ void ProtocolGame::GetTileDescription(const Tile* tile)
 
 void ProtocolGame::GetMapDescription(int32_t x, int32_t y, int32_t z, int32_t width, int32_t height)
 {
-	int32_t skip = -1;
-	int32_t startz, endz, zstep;
-	if (z > 7) {
-		startz = z - 2;
-		endz = std::min<int32_t>(MAP_MAX_LAYERS - 1, z + 2);
-		zstep = 1;
-	} else {
-		startz = 7;
-		endz = 0;
-		zstep = -1;
-	}
-
-	for (int32_t nz = startz; nz != endz + zstep; nz += zstep) {
-		GetFloorDescription(x, y, nz, width, height, z - nz, skip);
-	}
-
-	if (skip >= 0) {
-		playermsg.writeByte(skip);
-		playermsg.writeByte(0xFF);
-	}
 }
 
 void ProtocolGame::GetFloorDescription(int32_t x, int32_t y, int32_t z, int32_t width, int32_t height, int32_t offset, int32_t& skip)
@@ -3384,10 +3364,15 @@ void ProtocolGame::sendFYIBox(const std::string& message)
 }
 
 //tile
-void ProtocolGame::sendMapDescription(const Position& pos)
+void ProtocolGame::sendFullMapDescription(const Position& pos)
 {
-  flatbuffers::FlatBufferBuilder fbb;
+  uint16_t x = (pos.x - (CLIENT_MAP_WIDTH_OFFSET - 1)) > 0 ? pos.x - (CLIENT_MAP_WIDTH_OFFSET - 1) : 0;
+  uint16_t y = (pos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1)) > 0 ? pos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1) : 0;
+  sendMapDescription(Position{ x, y, pos.z }, pos);
+}
 
+void ProtocolGame::sendMapDescription(const Position& pos, const Position& centralPos, const uint8_t width, const uint8_t height)
+{
   int8_t startz = 0;
   int8_t endz = 7;
   int8_t zstep = -1;
@@ -3397,23 +3382,13 @@ void ProtocolGame::sendMapDescription(const Position& pos)
     endz = std::min<int8_t>(MAP_MAX_LAYERS - 1, pos.z + 2);
     zstep = 1;
   }
-  uint16_t x = pos.x - (CLIENT_MAP_WIDTH_OFFSET - 1);
-  uint16_t y = pos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1);
 
-  std::vector<Tile*> tileVector = g_game().map.getFloorTiles(x, y, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, pos.z);
-  for (Tile* tile : tileVector) sendTile(tile);
-
-  for (int8_t nz = startz; nz < pos.z; nz++) {
-    int8_t offset = pos.z - nz;
-    std::vector<Tile*> tileVector = g_game().map.getFloorTiles(x + offset, y + offset, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, nz);
-    for (Tile* tile : tileVector) sendTile(tile);
-  }
-
-  for (int8_t nz = endz; nz > pos.z; nz--) {
-    int8_t offset = pos.z - nz;
-    std::vector<Tile*> tileVector = g_game().map.getFloorTiles(x + offset, y + offset, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, nz);
-    for (Tile* tile : tileVector) sendTile(tile);
-  }
+  // Send player floor
+  sendFloor(pos, centralPos, width, height, pos.z);
+  // Send bottom floors
+  for (int8_t nz = startz; nz < pos.z; nz++) sendFloor(pos, centralPos, width, height, nz);
+  // Send top floors
+  for (int8_t nz = endz; nz > pos.z; nz--) sendFloor(pos, centralPos, width, height, nz);
 }
 
 #if GAME_FEATURE_TILE_ADDTHING_STACKPOS > 0
@@ -3572,7 +3547,7 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 	writeToOutputBuffer();
 
 	sendTibiaTime(g_game().getLightHour());
-	sendMapDescription(pos);
+	sendFullMapDescription(pos);
 	if (isLogin) {
 		sendMagicEffect(pos, CONST_ME_TELEPORT);
 	}
@@ -3597,12 +3572,12 @@ void ProtocolGame::sendMoveCreature(const Creature* creature, const Position& ne
 {
 	if (creature == player) {
 		if (oldStackPos >= 10) {
-			sendMapDescription(newPos);
+      sendFullMapDescription(newPos);
 		} else if (teleport) {
 			playermsg.reset();
 			RemoveTileThing(oldPos, oldStackPos);
 			writeToOutputBuffer();
-			sendMapDescription(newPos);
+      sendFullMapDescription(newPos);
 		} else {
 			playermsg.reset();
 			if (oldPos.z == 7 && newPos.z >= 8) {
@@ -3619,23 +3594,15 @@ void ProtocolGame::sendMoveCreature(const Creature* creature, const Position& ne
 			} else if (newPos.z < oldPos.z) {
 				MoveUpCreature(creature, newPos, oldPos);
 			}
+      writeToOutputBuffer();
 
-			if (oldPos.y > newPos.y) { // north, for old x
-				playermsg.writeByte(0x65);
-				GetMapDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), newPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), newPos.z, CLIENT_MAP_WIDTH, 1);
-			} else if (oldPos.y < newPos.y) { // south, for old x
-				playermsg.writeByte(0x67);
-				GetMapDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), newPos.y + CLIENT_MAP_HEIGHT_OFFFSET, newPos.z, CLIENT_MAP_WIDTH, 1);
-			}
+      uint16_t x = oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1);
+      uint16_t y = oldPos.y < newPos.y ? newPos.y + CLIENT_MAP_HEIGHT_OFFFSET : newPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1);
+      sendMapDescription(Position{ x, y, newPos.z }, newPos, CLIENT_MAP_WIDTH, 1);
 
-			if (oldPos.x < newPos.x) { // east, [with new y]
-				playermsg.writeByte(0x66);
-				GetMapDescription(newPos.x + CLIENT_MAP_WIDTH_OFFSET, newPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), newPos.z, 1, CLIENT_MAP_HEIGHT);
-			} else if (oldPos.x > newPos.x) { // west, [with new y]
-				playermsg.writeByte(0x68);
-				GetMapDescription(newPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), newPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), newPos.z, 1, CLIENT_MAP_HEIGHT);
-			}
-			writeToOutputBuffer();
+      x = oldPos.x < newPos.x ? newPos.x + CLIENT_MAP_WIDTH_OFFSET : newPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1);
+      y = newPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1);
+      sendMapDescription(Position{ x, y, newPos.z }, newPos, 1, CLIENT_MAP_HEIGHT);
 		}
 	} else if (canSee(oldPos) && canSee(creature->getPosition())) {
 		if (teleport || (oldPos.z == 7 && newPos.z >= 8) || oldStackPos >= 10) {
@@ -4298,41 +4265,26 @@ void ProtocolGame::MoveUpCreature(const Creature* creature, const Position& newP
 		return;
 	}
 
-	//floor change up
-	playermsg.writeByte(0xBE);
+  uint16_t x = oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1);
+  uint16_t y = oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1);
 
+  Position pos = Position{ x, y, newPos.z };
 	//going to surface
 	if (newPos.z == 7) {
-		int32_t skip = -1;
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), 5, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, 3, skip); //(floor 7 and 6 already set)
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), 4, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, 4, skip);
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), 3, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, 5, skip);
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), 2, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, 6, skip);
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), 1, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, 7, skip);
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), 0, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, 8, skip);
-		if (skip >= 0) {
-			playermsg.writeByte(skip);
-			playermsg.writeByte(0xFF);
-		}
+    for (int8_t dz = 3; dz <= 8; dz++) sendFloor(pos, newPos, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, pos.z - dz);
 	}
 	//underground, going one floor up (still underground)
 	else if (newPos.z > 7) {
-		int32_t skip = -1;
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), oldPos.getZ() - 3, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, 3, skip);
-		if (skip >= 0) {
-			playermsg.writeByte(skip);
-			playermsg.writeByte(0xFF);
-		}
+    sendFloor(pos, newPos, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, pos.z - 3);
 	}
 
-	//moving up a floor up makes us out of sync
-	//west
-	playermsg.writeByte(0x68);
-	GetMapDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 2), newPos.z, 1, CLIENT_MAP_HEIGHT);
+  // north
+  sendMapDescription(pos, newPos, CLIENT_MAP_WIDTH, 1);
 
-	//north
-	playermsg.writeByte(0x65);
-	GetMapDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), newPos.z, CLIENT_MAP_WIDTH, 1);
+	// moving up a floor up makes us out of sync
+	// west
+  y = oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 2);
+  sendMapDescription(Position{ x, y, newPos.z }, newPos, 1, CLIENT_MAP_HEIGHT);
 }
 
 void ProtocolGame::MoveDownCreature(const Creature* creature, const Position& newPos, const Position& oldPos)
@@ -4340,40 +4292,28 @@ void ProtocolGame::MoveDownCreature(const Creature* creature, const Position& ne
 	if (creature != player) {
 		return;
 	}
+  uint16_t x = oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1);
+  uint16_t y = oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1);
 
-	//floor change down
-	playermsg.writeByte(0xBF);
-
+  Position pos = Position{ x, y, newPos.z };
 	//going from surface to underground
 	if (newPos.z == 8) {
-		int32_t skip = -1;
-
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), newPos.z, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, -1, skip);
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), newPos.z + 1, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, -2, skip);
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), newPos.z + 2, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, -3, skip);
-		if (skip >= 0) {
-			playermsg.writeByte(skip);
-			playermsg.writeByte(0xFF);
-		}
+    for (int8_t dz = 1; dz <= 3; dz++) sendFloor(pos, newPos, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, pos.z + dz);
 	}
 	//going further down
 	else if (newPos.z > oldPos.z && newPos.z > 8 && newPos.z < 14) {
-		int32_t skip = -1;
-		GetFloorDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y - (CLIENT_MAP_HEIGHT_OFFFSET - 1), newPos.z + 2, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, -3, skip);
-		if (skip >= 0) {
-			playermsg.writeByte(skip);
-			playermsg.writeByte(0xFF);
-		}
+    sendFloor(pos, newPos, CLIENT_MAP_WIDTH, CLIENT_MAP_HEIGHT, pos.z - 3);
 	}
 
-	//moving down a floor makes us out of sync
-	//east
-	playermsg.writeByte(0x66);
-	GetMapDescription(oldPos.x + CLIENT_MAP_WIDTH_OFFSET, oldPos.y - CLIENT_MAP_HEIGHT_OFFFSET, newPos.z, 1, CLIENT_MAP_HEIGHT);
+  // south
+  y = oldPos.y + CLIENT_MAP_HEIGHT_OFFFSET;
+  sendMapDescription(Position{ x, y, newPos.z }, newPos, CLIENT_MAP_WIDTH, 1);
 
-	//south
-	playermsg.writeByte(0x67);
-	GetMapDescription(oldPos.x - (CLIENT_MAP_WIDTH_OFFSET - 1), oldPos.y + CLIENT_MAP_HEIGHT_OFFFSET, newPos.z, CLIENT_MAP_WIDTH, 1);
+  //moving down a floor makes us out of sync
+  // east
+  x = oldPos.x + CLIENT_MAP_WIDTH_OFFSET;
+  y = oldPos.y - CLIENT_MAP_HEIGHT_OFFFSET;
+  sendMapDescription(Position{ x, y, newPos.z }, newPos, 1, CLIENT_MAP_HEIGHT);
 }
 
 void ProtocolGame::AddShopItem(const ShopInfo& item)
@@ -4534,9 +4474,7 @@ flatbuffers::Offset<CanaryLib::CreatureData> ProtocolGame::buildCreatureData(
   flatbuffers::FlatBufferBuilder& fbb,
   const Creature* creature
 ) {
-  if (!creature || !player->canSeeCreature(creature)) {
-    return CanaryLib::CreateCreatureData(fbb);
-  }
+  assert(creature != nullptr);
 
   bool known;
   uint32_t remove;
@@ -4613,10 +4551,8 @@ void ProtocolGame::sendCreature(const Creature* creature, Position pos)
 }
 
 CanaryLib::ItemData ProtocolGame::buildItemData(flatbuffers::FlatBufferBuilder& fbb, const Item* item) {
-  if (!item) {
-    CanaryLib::ItemData{};
-  }
-  return CanaryLib::ItemData{Item::items[item->getID()].clientId, item->getItemCount(), item->getFluidType()};
+  assert(item != nullptr);
+  return CanaryLib::ItemData{ Item::items[item->getID()].clientId, item->getItemCount(), item->getFluidType() };
 }
 
 void ProtocolGame::sendItem(const Item* item, Position pos, bool cleanTile, bool isPlayerPos)
@@ -4631,16 +4567,14 @@ void ProtocolGame::sendItem(const Item* item, Position pos, bool cleanTile, bool
   wrapper->add(thing_data.Union(), CanaryLib::DataType_ThingData);
 }
 
-void ProtocolGame::sendTile(const Tile* tile) {
-  if (!tile) return;
+flatbuffers::Offset<CanaryLib::TileData> ProtocolGame::buildTileData(flatbuffers::FlatBufferBuilder& fbb, const Tile* tile, const Position& centralPos) {
+  assert(tile != nullptr);
 
   uint8_t MAX_ITEMS_PER_TILE = 32;
   uint8_t remainingItemSlots = MAX_ITEMS_PER_TILE;
 
-  Wrapper_ptr wrapper = getOutputBuffer();
-  flatbuffers::FlatBufferBuilder& fbb = wrapper->Builder();
-
   Position pos = tile->getPosition();
+  bool is_central = pos == centralPos;
   const CanaryLib::Position tile_pos{ pos.x, pos.y, pos.z };
 
   CanaryLib::ItemData* ground_data = 0;
@@ -4657,10 +4591,12 @@ void ProtocolGame::sendTile(const Tile* tile) {
 
   const TileItemVector* items = tile->getItemList();
   if (items) {
-    std::vector<const CanaryLib::ItemData> bottom_items_vector;
+    std::vector<CanaryLib::ItemData> bottom_items_vector;
     for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
-      bottom_items_vector.emplace_back(&buildItemData(fbb, *it));
-      if (--remainingItemSlots == 0) break;
+      if (*it) {
+        bottom_items_vector.emplace_back(buildItemData(fbb, *it));
+        if (--remainingItemSlots == 0) break;
+      }
     }
     bottom_items_data = fbb.CreateVectorOfStructs(bottom_items_vector);
   }
@@ -4668,7 +4604,7 @@ void ProtocolGame::sendTile(const Tile* tile) {
   if (const CreatureVector* creatures = tile->getCreatures()) {
     std::vector<flatbuffers::Offset<CanaryLib::CreatureData>> creatures_vector;
     for (auto it = creatures->rbegin(), end = creatures->rend(); it != end; ++it)
-      if ((*it)->getID() != player->getID()) {
+      if ((*it) && (*it)->getID() != player->getID()) {
         creatures_vector.emplace_back(buildCreatureData(fbb, *it));
         if (--remainingItemSlots == 0) break;
       }
@@ -4676,18 +4612,33 @@ void ProtocolGame::sendTile(const Tile* tile) {
   }
 
   if (items && remainingItemSlots) {
-    std::vector<const CanaryLib::ItemData> top_items_vector;
+    std::vector<CanaryLib::ItemData> top_items_vector;
     for (auto it = ItemVector::const_reverse_iterator(items->getEndDownItem()), end = ItemVector::const_reverse_iterator(items->getBeginDownItem()); it != end; ++it) {
-      top_items_vector.emplace_back(&buildItemData(fbb, *it));
-      if (--remainingItemSlots == 0) break;
+      if (*it) {
+        top_items_vector.emplace_back(buildItemData(fbb, *it));
+        if (--remainingItemSlots == 0) break;
+      }
     }
     top_items_data = fbb.CreateVectorOfStructs(top_items_vector);
   }
 
-  if (isPlayerTile) {
+  if (isPlayerTile && player) {
     player_data = buildCreatureData(fbb, player);
   }
 
-  auto tile_data = CanaryLib::CreateTileData(fbb, &tile_pos, player_data, creatures_data, ground_data, bottom_items_data, top_items_data, isPlayerTile);
-  wrapper->add(tile_data.Union(), CanaryLib::DataType_TileData);
+  return CanaryLib::CreateTileData(fbb, &tile_pos, player_data, creatures_data, ground_data, bottom_items_data, top_items_data, is_central);
+}
+
+void ProtocolGame::sendTile(const Tile* tile, const Position& centralPos) {
+  if (!tile) return;
+  Wrapper_ptr wrapper = getOutputBuffer();
+  wrapper->add(buildTileData(wrapper->Builder(), tile, centralPos).Union(), CanaryLib::DataType_TileData);
+}
+
+void ProtocolGame::sendFloor(const Position& pos, const Position& centralPos, const uint8_t width, const uint8_t height, const uint8_t z)
+{
+  int8_t offset = pos.z - z;
+  for (Tile* tile : g_game().map.getFloorTiles(pos.x + offset, pos.y + offset, width, height, z)) {
+    sendTile(tile, centralPos);
+  }
 }

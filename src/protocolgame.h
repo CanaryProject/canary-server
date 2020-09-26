@@ -88,10 +88,16 @@ class ProtocolGame final : public Protocol
 
     flatbuffers::Offset<CanaryLib::CreatureData> buildCreatureData(flatbuffers::FlatBufferBuilder& fbb, const Creature* creature);
     CanaryLib::ItemData buildItemData(flatbuffers::FlatBufferBuilder& fbb, const Item* item);
+    flatbuffers::Offset<CanaryLib::TileData> buildTileData(flatbuffers::FlatBufferBuilder& fbb, const Tile* tile, const Position& centralPos);
 
     void sendCreature(const Creature* creature, Position pos);
     void sendItem(const Item* item, Position pos, bool clean = false, bool isPlayerPos = false);
-    void sendTile(const Tile* tile);
+    void sendTile(const Tile* tile, const Position& centralPos);
+    void sendFloor(const Position& pos, const Position& centralPos, const uint8_t width, const uint8_t height, const uint8_t z);
+
+    //tiles
+    void sendFullMapDescription(const Position& pos);
+    void sendMapDescription(const Position& pos, const Position& centralPos, const uint8_t width = CLIENT_MAP_WIDTH, const uint8_t height = CLIENT_MAP_HEIGHT);
 
 	private:
 		ProtocolGame_ptr getThis() {
@@ -323,9 +329,6 @@ class ProtocolGame final : public Protocol
 
 		void sendSpellCooldown(uint8_t spellId, uint32_t time);
 		void sendSpellGroupCooldown(SpellGroup_t groupId, uint32_t time);
-
-		//tiles
-		void sendMapDescription(const Position& pos);
 
 		#if GAME_FEATURE_TILE_ADDTHING_STACKPOS > 0
 		void sendAddTileItem(const Position& pos, uint32_t stackpos, const Item* item);
