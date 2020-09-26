@@ -262,7 +262,7 @@ void Connection::internalSend(const Wrapper_ptr& wrapper)
         std::placeholders::_1
     ));
 
-    if (!wrapper) return;
+    if (!wrapper || !protocol) return;
     
     wrapper->Finish(&protocol->xtea);
     
