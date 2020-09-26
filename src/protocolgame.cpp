@@ -512,96 +512,6 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 	}
 }
 
-void ProtocolGame::GetTileDescription(const Tile* tile)
-{
-	int32_t count;
-	Item* ground = tile->getGround();
-	if (ground) {
-		AddItem(ground);
-		count = 1;
-	} else {
-		count = 0;
-	}
-
-	const TileItemVector* items = tile->getItemList();
-	if (items) {
-		for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
-			AddItem(*it);
-			if (++count == 10) {
-				break;
-			}
-		}
-	}
-
-	const CreatureVector* creatures = tile->getCreatures();
-	if (creatures) {
-		bool playerAdded = false;
-		if (count < 10) {
-			for (auto it = creatures->rbegin(), end = creatures->rend(); it != end; ++it) {
-				const Creature* creature = (*it);
-				if (!player->canSeeCreature(creature)) {
-					continue;
-				}
-
-				if (creature->getID() == player->getID()) {
-					playerAdded = true;
-				}
-
-				bool known;
-				uint32_t removedKnown;
-				checkCreatureAsKnown(creature->getID(), known, removedKnown);
-				AddCreature(creature, known, removedKnown);
-				if (++count == 10) {
-					break;
-				}
-			}
-		}
-		if (!playerAdded && tile->getPosition() == player->getPosition()) {
-			const Creature* creature = player;
-
-			bool known;
-			uint32_t removedKnown;
-			checkCreatureAsKnown(creature->getID(), known, removedKnown);
-			AddCreature(creature, known, removedKnown);
-		}
-	}
-
-	if (items && count < 10) {
-		for (auto it = ItemVector::const_reverse_iterator(items->getEndDownItem()), end = ItemVector::const_reverse_iterator(items->getBeginDownItem()); it != end; ++it) {
-			AddItem(*it);
-			if (++count == 10) {
-				return;
-			}
-		}
-	}
-}
-
-void ProtocolGame::GetMapDescription(int32_t x, int32_t y, int32_t z, int32_t width, int32_t height)
-{
-}
-
-void ProtocolGame::GetFloorDescription(int32_t x, int32_t y, int32_t z, int32_t width, int32_t height, int32_t offset, int32_t& skip)
-{
-	std::vector<Tile*> tileVector = g_game().map.getFloorTiles(x + offset, y + offset, width, height, z);
-	for (Tile* tile : tileVector) {
-		if (tile) {
-			if (skip >= 0) {
-				playermsg.writeByte(skip);
-				playermsg.writeByte(0xFF);
-			}
-
-			skip = 0;
-			GetTileDescription(tile);
-		} else if (skip == 0xFE) {
-			playermsg.writeByte(0xFF);
-			playermsg.writeByte(0xFF);
-			skip = -1;
-		} else {
-			++skip;
-		}
-	}
-}
-
 void ProtocolGame::checkCreatureAsKnown(uint32_t id, bool& known, uint32_t& removedKnown)
 {
 	auto result = knownCreatureSet.insert(id);
@@ -1480,7 +1390,7 @@ void ProtocolGame::updateCreatureData(const Creature* creature)
 		playermsg.addPosition(pos);
 		Tile* tile = player->getTile();
 		if (tile) {
-			GetTileDescription(tile);
+      sendTile(tile, pos);
 			playermsg.writeByte(0x00);
 			playermsg.writeByte(0xFF);
 		} else {
@@ -3446,7 +3356,7 @@ void ProtocolGame::sendUpdateTile(const Tile* tile, const Position& pos)
 	playermsg.writeByte(0x69);
 	playermsg.addPosition(pos);
 	if (tile) {
-		GetTileDescription(tile);
+    sendTile(tile);
 		playermsg.writeByte(0x00);
 		playermsg.writeByte(0xFF);
 	} else {
@@ -4629,7 +4539,7 @@ flatbuffers::Offset<CanaryLib::TileData> ProtocolGame::buildTileData(flatbuffers
   return CanaryLib::CreateTileData(fbb, &tile_pos, player_data, creatures_data, ground_data, bottom_items_data, top_items_data, is_central);
 }
 
-void ProtocolGame::sendTile(const Tile* tile, const Position& centralPos) {
+void ProtocolGame::sendTile(const Tile* tile, const Position& centralPos /* = Position{0, 0, 255} */) {
   if (!tile) return;
   Wrapper_ptr wrapper = getOutputBuffer();
   wrapper->add(buildTileData(wrapper->Builder(), tile, centralPos).Union(), CanaryLib::DataType_TileData);

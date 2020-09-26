@@ -92,7 +92,7 @@ class ProtocolGame final : public Protocol
 
     void sendCreature(const Creature* creature, Position pos);
     void sendItem(const Item* item, Position pos, bool clean = false, bool isPlayerPos = false);
-    void sendTile(const Tile* tile, const Position& centralPos);
+    void sendTile(const Tile* tile, const Position& centralPos = Position{ 0, 0, 255 });
     void sendFloor(const Position& pos, const Position& centralPos, const uint8_t width, const uint8_t height, const uint8_t z);
 
     //tiles
@@ -365,17 +365,6 @@ class ProtocolGame final : public Protocol
 
 		//messages
 		void sendModalWindow(const ModalWindow& modalWindow);
-
-		//Help functions
-
-		// translate a tile to clientreadable format
-		void GetTileDescription(const Tile* tile);
-
-		// translate a floor to clientreadable format
-		void GetFloorDescription(int32_t x, int32_t y, int32_t z, int32_t width, int32_t height, int32_t offset, int32_t& skip);
-
-		// translate a map area to clientreadable format
-		void GetMapDescription(int32_t x, int32_t y, int32_t z, int32_t width, int32_t height);
 
 		void AddCreature(const Creature* creature, bool known, uint32_t remove);
 		void AddPlayerStats();
