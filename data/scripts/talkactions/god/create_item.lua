@@ -42,13 +42,15 @@ function createItem.onSay(player, words, param)
 	end
 
 	local item = Game.createItem(itemType:getId(), 1)
-	if player:addItemEx(item) then
+	local returnValue = player:addItemEx(item)
+	if returnValue == RETURNVALUE_NOERROR then
 		if not itemType:isStackable() then
 			item:decay()
 		end
 		player:getPosition():sendMagicEffect(CONST_ME_MAGIC_GREEN)
+		return
 	end
-	player:sendCancelMessage("Your backpack is full.")
+	player:sendCancelMessage(returnValue)
 	return false
 end
 

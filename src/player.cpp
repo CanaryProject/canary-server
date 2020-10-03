@@ -2637,10 +2637,14 @@ ReturnValue Player::containerQueryAdd(const Item* item, slots_t slot) const
       return RETURNVALUE_NOERROR;
     }
 
+    bool isBackpack = item->getSlotPosition() & SLOTP_BACKPACK;
     Item *bp = getInventoryItem(CONST_SLOT_BACKPACK);
-	  if (!bp) {
-		  return RETURNVALUE_NOERROR;
-	  }
+	  if (!bp && !isBackpack) {
+		  return RETURNVALUE_NOTENOUGHROOM;
+    }
+    else if (isBackpack) {
+      return RETURNVALUE_NOERROR;
+    }
 	
 	  if (Container *container = bp->getContainer()){
 		  return container->queryAdd(INDEX_WHEREEVER, *item, 1, 0);
