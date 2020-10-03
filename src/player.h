@@ -1354,6 +1354,8 @@ class Player final : public Creature, public Cylinder
 			scheduledUpdate = false;
 		}
 
+		ReturnValue containerQueryAdd(const Item* item, slots_t slot) const;
+
 	private:
 		std::vector<Condition*> getMuteConditions() const;
 
