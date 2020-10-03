@@ -9408,8 +9408,7 @@ int LuaScriptInterface::luaPlayerAddItem(lua_State* L)
 
 int LuaScriptInterface::luaPlayerAddItemEx(lua_State* L)
 {
-	// player:addItemEx(item[, canDropOnMap = false[, index = INDEX_WHEREEVER[, flags = 0]]])
-	// player:addItemEx(item[, canDropOnMap = true[, slot = CONST_SLOT_WHEREEVER]])
+	// player:addItemEx(item[, canDropOnMap, slot = CONST_SLOT_WHEREEVER]])
 	Item* item = getUserdata<Item>(L, 2);
 	if (!item) {
 		reportErrorFunc(getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
@@ -9430,15 +9429,8 @@ int LuaScriptInterface::luaPlayerAddItemEx(lua_State* L)
 	}
 
 	bool canDropOnMap = getBoolean(L, 3, false);
-	ReturnValue returnValue;
-	if (canDropOnMap) {
-		slots_t slot = getNumber<slots_t>(L, 4, CONST_SLOT_WHEREEVER);
-		returnValue = g_game().internalPlayerAddItem(player, item, true, slot);
-	} else {
-		int32_t index = getNumber<int32_t>(L, 4, INDEX_WHEREEVER);
-		uint32_t flags = getNumber<uint32_t>(L, 5, 0);
-		returnValue = g_game().internalAddItem(player, item, index, flags);
-	}
+  slots_t slot = getNumber<slots_t>(L, 4, CONST_SLOT_WHEREEVER);
+  ReturnValue returnValue = g_game().internalPlayerAddItem(player, item, canDropOnMap, slot);
 
 	if (returnValue == RETURNVALUE_NOERROR) {
 		ScriptEnvironment::removeTempItem(item);

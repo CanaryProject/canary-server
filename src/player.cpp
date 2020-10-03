@@ -2470,7 +2470,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 
 		case CONST_SLOT_BACKPACK: {
 			if (slotPosition & SLOTP_BACKPACK) {
-				ret = RETURNVALUE_NOERROR;
+				ret = containerQueryAdd(item, static_cast<slots_t>(index));
 			}
 			break;
 		}
@@ -2624,10 +2624,29 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 		return RETURNVALUE_NOTENOUGHCAPACITY;
 	}
 
-	if (!g_moveEvents().onPlayerEquip(const_cast<Player*>(this), const_cast<Item*>(item), static_cast<slots_t>(index), true)) {
-		return RETURNVALUE_CANNOTBEDRESSED;
-	}
-	return ret;
+	return static_cast<ReturnValue>(g_moveEvents().onPlayerEquip(const_cast<Player*>(this), const_cast<Item*>(item), static_cast<slots_t>(index), true));
+}
+
+ReturnValue Player::containerQueryAdd(const Item* item, slots_t slot) const
+{
+    if (!item) {
+        return RETURNVALUE_NOTPOSSIBLE;
+    }
+
+    if (slot != CONST_SLOT_BACKPACK && slot > CONST_SLOT_WHEREEVER) {
+      return RETURNVALUE_NOERROR;
+    }
+
+    Item *bp = getInventoryItem(CONST_SLOT_BACKPACK);
+	  if (!bp) {
+		  return RETURNVALUE_NOERROR;
+	  }
+	
+	  if (Container *container = bp->getContainer()){
+		  return container->queryAdd(INDEX_WHEREEVER, *item, 1, 0);
+	  }
+
+    return RETURNVALUE_NOERROR;
 }
 
 ReturnValue Player::queryMaxCount(int32_t index, const Thing& thing, uint32_t count, uint32_t& maxQueryCount,

@@ -41,19 +41,14 @@ function createItem.onSay(player, words, param)
 		end
 	end
 
-	local result = player:addItem(itemType:getId(), count)
-	if result then
+	local item = Game.createItem(itemType:getId(), 1)
+	if player:addItemEx(item) then
 		if not itemType:isStackable() then
-			if type(result) == "table" then
-				for _, item in ipairs(result) do
-					item:decay()
-				end
-			else
-				result:decay()
-			end
+			item:decay()
 		end
 		player:getPosition():sendMagicEffect(CONST_ME_MAGIC_GREEN)
 	end
+	player:sendCancelMessage("Your backpack is full.")
 	return false
 end
 
